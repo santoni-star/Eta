@@ -61,8 +61,8 @@ internal object CharacterWorldbookDraftCodec {
     }
 
     fun write(card: CharacterCard, draft: CharacterBookDraft): CharacterCard {
-        require(draft.scanDepth == null || draft.scanDepth >= 0) { "підмітатислідглибокийвитрачатинемаєздатнийдлятягарномер" }
-        require(draft.tokenBudget == null || draft.tokenBudget >= 0) { "світмежакнигапопередньоОбчислитинемаєздатнийдлятягарномер" }
+        require(draft.scanDepth == null || draft.scanDepth >= 0) { "扫描深度不能为负数" }
+        require(draft.tokenBudget == null || draft.tokenBudget >= 0) { "世界书预算不能为负数" }
         val book = draft.raw.toMutableMap().apply {
             if (draft.name != draft.raw.text("name")) put("name", JsonPrimitive(draft.name))
             if (draft.scanDepth != (draft.raw["scan_depth"] as? JsonPrimitive)?.intOrNull) {
@@ -77,7 +77,7 @@ internal object CharacterWorldbookDraftCodec {
             if (draft.raw.isEmpty()) put("extensions", JsonObject(emptyMap()))
             if (draft.raw.isEmpty() || draft.raw.containsKey("entries") || draft.entries.isNotEmpty()) put("entries", JsonArray(draft.entries.map { entry ->
                 require(entry.position in setOf("before_char", "after_char") || entry.position == entry.raw.text("position")) {
-                    "немаєвідділенняутримуватизсвітмежакнигаВставкавведітьбітвстановити"
+                    "不支持的世界书插入位置"
                 }
                 JsonObject(entry.raw.toMutableMap().apply {
                     val fresh = entry.raw.isEmpty()

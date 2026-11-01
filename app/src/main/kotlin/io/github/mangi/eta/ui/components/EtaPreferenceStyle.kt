@@ -80,7 +80,7 @@ internal fun EtaPreferenceIcon(
     tint: Color = MiuixTheme.colorScheme.onBackground,
     enabled: Boolean = true,
 ) {
-    // Контур на всю ширину трохи оптично виправлено, але всі значки займають однакову ширину, щоб забезпечити вирівнювання основного тексту та розділових ліній.
+    // 满幅轮廓稍作光学校正，但所有图标都占相同宽度，保证正文和分割线对齐。
     val glyphSize = when (icon) {
         Icons.Rounded.Extension, Icons.Rounded.TheaterComedy, Icons.AutoMirrored.Rounded.MenuBook -> 22.dp
         else -> EtaPreferenceDefaults.IconSize

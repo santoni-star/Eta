@@ -235,7 +235,7 @@ internal class AgentFileReferenceGateway(
                 if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
             }
         } catch (_: RuntimeException) {
-            // Ім'я є необов'язковими метаданими; фактичний дозвіл на читання все ще перевіряється openInputStream.
+            // 名称是可选元数据；实际读取授权仍由 openInputStream 校验。
             null
         }
 
@@ -300,7 +300,7 @@ internal class AgentFileReferenceGateway(
                 }
             }
         } catch (_: RuntimeException) {
-            // Постачальник документа може відхилити нестандартні стовпці; це означає, що він не має локального абсолютного шляху до посилання.
+            // 文档提供方可以拒绝非标准列；这表示它没有可引用的本地绝对路径。
             null
         }
 

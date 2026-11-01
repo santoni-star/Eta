@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.tool
 
 import org.json.JSONObject
 
-/** Повернення команди та зчитування стану повідомляються окремо, і невідомі результати не можна замаскувати як змінені.*/
+/** 命令返回和状态读回分开报告，未知结果不能伪装成已改变。 */
 internal object DeviceMutationResult {
     fun observed(
         tool: String,
@@ -26,7 +26,7 @@ internal object DeviceMutationResult {
             .also { result ->
                 if (!verified) {
                     result.put("code", failureCode ?: "STATE_CHANGE_UNCONFIRMED")
-                    result.put("message", if (commandAccepted) "Тримайтеробитибудь ласкапроситивженестиплатити，алеще ніправильнорозпізнатиГоловазнакформустан；будь ласкапершеперевіритиперевіритиформустан，немаєхочутьпрямозловитиВажкаскладніТримайтеробити" else "Краваткасистемазловитиротще ністатидосягненнязакінченостатиТримайтеробити")
+                    result.put("message", if (commandAccepted) "操作请求已提交，但未确认目标状态；请先检查状态，不要直接重复操作" else "系统接口未成功完成操作")
                 }
             }
     }

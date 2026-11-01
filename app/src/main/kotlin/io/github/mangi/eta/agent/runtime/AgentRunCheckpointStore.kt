@@ -12,8 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 /**
- * Події інтерфейсу користувача, повні десенсибілізовані стенограми та знімки контексту моделі прогонів під час передавання.
- * Три функції незалежні; конфігурація та ключі не залишаються на диску, а необроблені дані конфіденційних інструментів фільтруються кодеком сеансу.
+ * 在途 run 的 UI 事件、完整脱敏 transcript 与模型上下文快照。
+ * 三者用途独立；配置和密钥不落盘，敏感工具原始数据由会话 codec 过滤。
  */
 internal object AgentRunCheckpointStore {
     data class Checkpoint(
@@ -77,7 +77,7 @@ internal object AgentRunCheckpointStore {
         }
     }
 
-    /** Повертає всі непідтверджені прогони; чи вони активні чи завершені, визначається координатором відновлення в поєднанні зі станом Runtime.*/
+    /** 返回所有未确认 run；是否 active 或已完成由恢复协调器结合 Runtime 状态判断。 */
     fun list(context: Context): List<Checkpoint> =
         runBlocking(Dispatchers.IO) {
             EtaDatabase.get(context.applicationContext)

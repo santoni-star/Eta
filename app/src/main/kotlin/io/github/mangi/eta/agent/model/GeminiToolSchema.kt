@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Gemini вимагає, щоб обов’язковий атрибут складеної гілки було оголошено локально в цій гілці, а вихідний контракт інструменту все ще зберігається в каталозі.*/
+/** Gemini 要求组合分支的 required 属性在该分支本地声明，原始工具合同仍由目录持有。 */
 internal object GeminiToolSchema {
     private val combinators = setOf("allOf", "anyOf", "oneOf")
     private val schemaMaps = setOf("properties", "patternProperties", "\$defs", "definitions", "dependentSchemas", "dependencies")
@@ -21,7 +21,7 @@ internal object GeminiToolSchema {
 
     private fun projectSchema(schema: JSONObject, inheritedProperties: Map<String, Any>) {
         val properties = schema.optJSONObject("properties") ?: JSONObject()
-        // Закриті правила можуть спостерігати за результатами оцінки власності підгалузей; зовнішні властивості не можуть обійти цей рівень і продовжують передаватись нащадкам.
+        // 封闭规则可能观察子分支的属性评估结果；外层属性不能绕过本层继续传入后代。
         val canDeclare = listOf("additionalProperties", "unevaluatedProperties").none {
             schema.has(it) && schema.opt(it) != true
         }
@@ -47,7 +47,7 @@ internal object GeminiToolSchema {
     private fun canCopy(definition: Any): Boolean {
         if (definition is Boolean) return true
         if (definition !is JSONObject || referenceKeywords.any(definition::has)) return false
-        // Ідентифікатори, прив’язки та посилання залишаються у своїх вихідних місцях, щоб уникнути зміни URI або динамічних посилань після копіювання.
+        // 标识、锚点及引用保持原位置，避免复制后改变 URI 或动态引用作用域。
         var safe = true
         forEachSubschema(definition) { child, _ -> if (!canCopy(child)) safe = false }
         return safe

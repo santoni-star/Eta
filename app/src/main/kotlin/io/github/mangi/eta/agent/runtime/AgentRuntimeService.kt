@@ -72,9 +72,9 @@ import top.yukonga.miuix.kmp.theme.darkColorScheme
 import top.yukonga.miuix.kmp.theme.lightColorScheme
 
 /**
- * Generic Agent Runtime в межах процесу модуля.
+ * 模块进程内的通用 Agent Runtime。
  *
- * Вхід Hook лише надсилає запити та отримує результати; виклик моделі, виконання інструментів і спливаючі вікна статусу роботи виконуються в цій службі.
+ * Hook 入口只发送请求和接收结果；模型调用、工具执行、运行状态浮窗都在本服务中完成。
  */
 internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 
@@ -105,10 +105,10 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
     private var resultCardParams: WindowManager.LayoutParams? = null
     private var resultCardBack: Pair<OnBackInvokedDispatcher, OnBackInvokedCallback>? = null
 
-    /** У вікні проектується лише поточний контролер мобільного телефону; статус кожної операції зберігається в окремому записі.*/
+    /** 窗口只投影当前手机控制者；各运行的状态保留在自己的记录中。 */
     private val state = mutableStateOf(AgentOverlayState.Initial)
     private val capsuleExpanded = mutableStateOf(false)
-    /** Справжнє, коли жест Агента проходить крізь капсулу: вікно недоторкане, а капсула зникає.*/
+    /** Agent 手势穿过胶囊时为 true：窗口不可触摸，胶囊淡出让路。 */
     private val capsuleYielded = mutableStateOf(false)
     private val restoreCapsule = Runnable { setCapsuleYielded(false) }
     private val clearanceHost = object : AgentOverlayClearance.Host {
@@ -173,7 +173,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         setKeepScreenOn(false)
         runs.all().forEach { run ->
             run.releaseIncoming()
-            run.session.cancel("Agent Runtime ОдягобслуговуваннявжеСТІЙкінець")
+            run.session.cancel("Agent Runtime 服务已停止")
         }
         displayedRun = null
         serviceScope.cancel()
@@ -208,7 +208,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 AgentRuntimeWire.MSG_START_RUN -> {
                     val data = msg.data
                     if (data == null) {
-                        finishWithFailure("Agent Runtime будь ласкапроситивідсутністьмаловидалитиінтерестіло", msg.replyTo)
+                        finishWithFailure("Agent Runtime 请求缺少消息体", msg.replyTo)
                         return
                     }
                     val incoming = runCatching {
@@ -217,13 +217,13 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                         AndroidAgentLogger.warnThrottled("runtime_invalid_start_request") {
                             "Agent runtime rejected invalid start request: type=${throwable.safeLogType()}"
                         }
-                        finishWithFailure("Agent Runtime будь ласкапроситисіткаРежимнемаєефект", msg.replyTo)
+                        finishWithFailure("Agent Runtime 请求格式无效", msg.replyTo)
                         return
                     }
                     val request = incoming.request
                     if (request.runId.isBlank() || (request.operation != AgentRuntimeWire.OP_COMPACT && request.prompt.isBlank() && incoming.images.isEmpty() && !incoming.hasDeferredPrompt)) {
                         incoming.close()
-                        finishWithFailure("Agent Runtime будь ласкапроситивідсутністьмало runId абовикористовуватипобутовівтратитивведіть", msg.replyTo)
+                        finishWithFailure("Agent Runtime 请求缺少 runId 或用户输入", msg.replyTo)
                         return
                     }
                     ingestRunRequest(incoming, msg.replyTo, msg.sendingUid == android.os.Process.myUid())
@@ -246,7 +246,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                     dispatchResultIo {
                         val target = AgentRuntimeResultStore.readOwned(this@AgentRuntimeService, runId, owner)
                         sendResultNow(replyTo, target?.result ?: AgentRuntimeWire.RunResult(
-                            runId, false, "", "закінченовсетранспортдобревузолфруктинемаєможевикористовувати", contextSnapshotRef = runId,
+                            runId, false, "", "完整运行结果不可用", contextSnapshotRef = runId,
                         ))
                     }
                 }
@@ -326,10 +326,10 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                             run,
                             when (throwable) {
                                 is AgentRuntimeImageTransfer.ImageTransferException ->
-                                    throwable.message ?: "Agent Runtime немаєЗакончитатиВиберітьмалюнокшматок"
+                                    throwable.message ?: "Agent Runtime 无法读取图片"
                                 is RuntimeConfigUnavailableException ->
-                                    "будь ласкапершеіснують Eta серединаматчвстановитиможевикористовуватизцвільтипу"
-                                else -> "Agent Runtime немаєЗакондозволяютьПриготуйтебудь ласкапросити"
+                                    "请先在 Eta 中配置可用的模型"
+                                else -> "Agent Runtime 无法准备请求"
                             },
                         )
                     },
@@ -355,7 +355,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         if (destroyed) {
             incoming?.close()
             sendRequestIngestedTo(replyTo, request.runId)
-            sendResultTo(replyTo, AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime ОдягобслуговуваннявжеСТІЙкінець"))
+            sendResultTo(replyTo, AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime 服务已停止"))
             return null
         }
         val admission = runs.admit(request) {
@@ -392,7 +392,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                         resultSink = { result -> sendResultTo(replyTo, result) },
                     )
                     if (!attached) sendResultTo(replyTo, AgentRuntimeWire.RunResult(
-                        request.runId, false, "", "призначитиобслуговуваннявжевузолпучок，будь ласкавідновитискладнізакінченовсевузолфрукти",
+                        request.runId, false, "", "任务已结束，请恢复完整结果",
                         contextSnapshotRef = request.runId, operation = request.operation,
                     ))
                 }
@@ -409,13 +409,13 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 return null
             }
         }
-        // Кореневий запис зберігає початковий життєвий цикл служби зв’язування; нещодавно доданий FGS не може стати новою попередньою авторизацією для входу виробника в серверну систему.
+        // Root 入口保留原有绑定服务生命周期；新增 FGS 不能成为厂商后台入口的新前置权限。
         val allowBoundFallback = RootAccess.isGranted
         val executionHeld = AgentExecutionService.acquire(
             this, "run:${request.runId}", allowBoundFallback = allowBoundFallback,
         ) { mainHandler.post { cancelRun(request.runId) } }
         if (!executionHeld && !allowBoundFallback) {
-            failBeforeExecution(run, "немаєЗаконпочатокрухатисяназадвежаВиконатидобреОдягобслуговування，будь ласкаповерненняповернення Eta назадВажкаспробувати")
+            failBeforeExecution(run, "无法启动后台执行服务，请返回 Eta 后重试")
             return null
         }
         admission.replacedRuns.forEach { cancelRun(it.runId) }
@@ -496,7 +496,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
             if (destroyed) return@post
             val guiState = guiControl.state.value
             val ownsGui = guiState.ownerRunId == run.runId
-            // StateFlow може поєднувати тимчасове отримання та випуск; остаточне державне право власності все ще базується на останньому власнику послідовного запису події.
+            // StateFlow 可以合并短暂的获得与释放；终态归属仍以顺序事件记录的最后所有者为准。
             if (event is AgentEvent.GuiControlChanged && event.status == GuiControlStatus.Acquired &&
                 !guiState.userPaused && lastGuiOwnerRunId == run.runId && (ownsGui || guiState.ownerRunId == null)) {
                 bindDisplayedRun(run)
@@ -524,7 +524,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         result: AgentRuntimeWire.RunResult,
         events: List<AgentEvent>,
     ) {
-        // Вихідна скринька — це точка подання між кінцевим станом і контрольною точкою в дорозі; у разі відмови контрольна точка зберігається для наступного відновлення.
+        // outbox 是终态与在途 checkpoint 之间的提交点；失败时保留 checkpoint 供下次恢复。
         persistCompletedRun(request, result)
         runCatching { persistArchivedRun(request, result, events) }
             .onFailure { throwable ->
@@ -560,7 +560,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                     enterFinalState(
                         AgentOverlayState(
                             phase = AgentOverlayPhase.FAILED,
-                            status = if (result.error == "вжеСТІЙкінець") {
+                            status = if (result.error == "已停止") {
                                 AgentOverlayStatus.Stopped
                             } else {
                                 AgentOverlayStatus.RunFailed
@@ -622,9 +622,9 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
             AndroidAgentLogger.warnThrottled("runtime_result_delivery_failed") {
                 "Agent runtime result delivery failed: type=${throwable.safeLogType()}"
             }
-            // Не маскуйте збої передавання за доставлені кінцеві стани; посилання дозволяють новим клієнтам зберігати вихідні, чекаючи повного відновлення.
+            // 不把传输失败伪装成已交付终态；引用使新客户端保留 outbox，等待完整恢复。
             val fallback = AgentRuntimeWire.RunResult(result.runId, false, "",
-                "закінченовсевузолфруктипропусквтратитивтратитипоразка，вжезберегтижитизкалендарісторіїще нівидалитивидалити。будь ласкаВажкановийбитиВІДЧИНЕНОзасіданняговоритивідновитискладні。",
+                "完整结果传输失败，已保存的历史未删除。请重新打开会话恢复。",
                 contextSnapshotRef = result.runId, operation = result.operation)
             try {
                 target?.send(Message.obtain(null, AgentRuntimeWire.MSG_RESULT).apply {
@@ -794,7 +794,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         val run = runs.get(runId) ?: return
         if (run.preparing) {
             run.session.controller.cancel()
-            failBeforeExecution(run, "вжеСТІЙкінець")
+            failBeforeExecution(run, "已停止")
             return
         }
         val session = run.session
@@ -913,7 +913,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 state.value = (owner?.overlayState ?: AgentOverlayState.Initial).copy(
                     phase = AgentOverlayPhase.PAUSED,
                     status = AgentOverlayStatus.Paused,
-                    detailText = "рукумашинаТримайтеробитивжетимчасовоСТІЙ",
+                    detailText = "手机操作已暂停",
                 )
                 owner?.overlayState = state.value
                 syncActiveRunOverlayVisibility(owner ?: displayedRun)
@@ -966,12 +966,12 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
 
     private fun showOverlay() {
         if (capsuleView != null) return
-        // TYPE_ACCESSIBILITY_OVERLAY не має дозволу SYSTEM_ALERT_WINDOW; потрібно перевірити лише резервний стан (доступність не ввімкнено).
+        // TYPE_ACCESSIBILITY_OVERLAY 免 SYSTEM_ALERT_WINDOW 权限；仅回退态（无障碍未启用）才需检查
         if (AgentAccessibilityService.current() == null && !Settings.canDrawOverlays(this)) return
         val wm = overlayContext().getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
         windowManager = wm
 
-        // ── Вікно навколишнього освітлення: проникнення дотиком у повноекранному режимі, райдужна діафрагма, фільтрація takeScreenshotOfWindow під час створення знімків екрана ─
+        // ── 氛围光窗口：全屏触摸穿透，彩虹光圈，截图时被 takeScreenshotOfWindow 过滤 ─
         val glow = createOverlayComposeView {
             AgentOverlayGlow(state = state.value, corners = screenCornerRadii())
         }
@@ -984,7 +984,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         glowView = glow
         glowParams = glowLp
 
-        // ── Вікно капсули стану: у центрі під рядком стану, у закритому вигляді вкажіть речення, натисніть, щоб розгорнути елемент керування ─────
+        // ── 状态胶囊窗口：状态栏下方居中，收起时一句状态，点击展开控制 ─────
         val capsule = createOverlayComposeView {
             val controlRunId = displayedRun?.runId
             AgentOverlayCapsule(
@@ -1013,8 +1013,8 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
     }
 
     /**
-     * Перемикайте сенсорне проникнення синхронно, коли поступаєтеся: знак починає діяти негайно, щоб гарантувати, що жест не перехоплюється, а візуальний перехід передається анімації в капсулі.
-     * Під час відновлення спочатку зникайте, а потім відтягуйте дотик. Порядок не має значення, оскільки відновлення відбувається після завершення жесту.
+     * 让路时同步切换触摸穿透：标志位立刻生效保证手势不被截走，视觉过渡交给胶囊内的动画。
+     * 恢复时先淡入再收回触摸，两者顺序无关紧要，因为恢复发生在手势结束之后。
      */
     private fun setCapsuleYielded(yielded: Boolean) {
         if (!yielded) mainHandler.removeCallbacks(restoreCapsule)
@@ -1038,7 +1038,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
 
     private fun toggleCapsule() {
         val expand = !capsuleExpanded.value
-        // Спочатку розгорніть вікно до розгорнутого файлу, а потім запустіть анімацію; капсула викличе CollapsedSettled після завершення анімації, щоб зменшити вікно.
+        // 先把窗口扩到展开档再开始动画；收起由胶囊在动画结束后回调 onCollapsedSettled 缩窗。
         if (expand) setCapsuleWindowHeight(CAPSULE_CONTROLS_HEIGHT_DP)
         capsuleExpanded.value = expand
     }
@@ -1085,12 +1085,12 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
     }
 
     /**
-     * Картка результатів — це інтерфейс перебування після виконання завдання. Коли система повертається, її слід спочатку закрити, а не повертатися до програми нижче.
-     * Вікно має бути фокусованим, щоб отримати повернення; зовнішня сторона картки все ще FLAG_NOT_TOUCH_MODAL, і дотик проникає на нижній рівень, як зазвичай.
+     * 结果卡片是任务结束后的停留界面，系统返回应先关闭它，而不是退回底下的应用。
+     * 窗口需可获焦才能收到返回；卡片外仍是 FLAG_NOT_TOUCH_MODAL，触摸照常穿透到下层。
      */
     /**
-     * Поверніться до самої Eta та знайдіть сеанс для цього завдання. Коли вікно картки видно, це операція користувача, видима на передньому плані.
-     * Дозволити запуск активності зі служби; зберігайте картку, коли запуск не вдається, щоб запобігти втраті користувачем результатів.
+     * 回到 Eta 本体并定位到本次任务的会话。卡片窗口可见时属于前台可见的用户操作，
+     * 允许从服务启动 Activity；启动失败时保留卡片，不让用户丢失结果。
      */
     private fun openEtaFromResult(run: RuntimeRunRegistry.Run?) {
         val handoff = run?.request?.handoff
@@ -1168,8 +1168,8 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
             setViewTreeSavedStateRegistryOwner(this@AgentRuntimeService)
             setContent {
                 MiuixTheme(colors = if (isNightMode()) darkColorScheme() else lightColorScheme()) {
-                    // Деякі ПЗУ призначають програмне полотно для TYPE_ACCESSIBILITY_OVERLAY; Miuix's
-                    // RuntimeShader перевіряє лише версію системи, тому системний плаваючий шар рівномірно використовує свій звичайний запасний варіант із закругленими кутами.
+                    // 部分 ROM 会给 TYPE_ACCESSIBILITY_OVERLAY 分配软件 Canvas；Miuix 的
+                    // RuntimeShader 只检查系统版本，因此系统浮层统一使用其普通圆角回退。
                     CompositionLocalProvider(LocalSquircleEnabled provides false) {
                         content()
                     }
@@ -1178,10 +1178,10 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         }
 
     /**
-     * Вікно капсули використовує фіксовану ширину та висоту групування, а анімація виконується лише всередині вікна.
-     * WRAP_CONTENT призведе до зміни розміру кожного кадру, щоб ініціювати WindowManager для перепланування всього вікна, що є джерелом затримки;
-     * Але прозора область у вікні також поглинає дотики (включно з клацаннями, введеними самим Агентом), тому висота збільшується лише за потреби:
-     * Розгортайте до цільового файлу перед розгортанням, а потім відтягуйте після завершення анімації згортання, див. [setCapsuleWindowHeight].
+     * 胶囊窗口使用固定宽度与分档高度，动画只在窗口内进行。
+     * WRAP_CONTENT 会让每一帧的尺寸变化都触发 WindowManager 重新布局整个窗口，这是卡顿的来源；
+     * 但窗口内透明区域同样会吞掉触摸（包括 Agent 自己注入的点击），所以高度只在需要时扩大：
+     * 展开前先扩到目标档，收起动画结束后再缩回，见 [setCapsuleWindowHeight]。
      */
     private fun capsuleLayoutParams(): WindowManager.LayoutParams =
         WindowManager.LayoutParams(
@@ -1194,7 +1194,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
-            // Розмістіть його в центрі під рядком стану: подалі від основної області клацання більшості програм і відповідно до звичок позиціонування системних капсул і рідинних хмар.
+            // 贴在状态栏下方居中：远离多数应用的主要点击区，也和系统胶囊、流体云的位置习惯一致。
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
             y = statusBarHeightPx()
             windowAnimations = 0
@@ -1220,7 +1220,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
-            // Нижня частина половини екрану розташована по центру, а торкайтеся проникнення за межі вікна
+            // 半屏底部居中，窗口外触摸穿透
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
             x = 0
             y = 0
@@ -1228,8 +1228,8 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         }
 
     private fun overlayType(): Int =
-        // Використовуйте TYPE_ACCESSIBILITY_OVERLAY, коли доступні служби доступності (без дозволу SYSTEM_ALERT_WINDOW і знімка екрана
-        // filterValidWindows (можна фільтрувати); потрібно створити з контекстом служби доступності, інакше — BadTokenException
+        // 无障碍服务可用时用 TYPE_ACCESSIBILITY_OVERLAY（免 SYSTEM_ALERT_WINDOW 权限，且截图
+        // filterValidWindows 可过滤）；需用无障碍服务 context 创建，否则 BadTokenException
         if (AgentAccessibilityService.current() != null)
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
         else
@@ -1240,7 +1240,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
 
     @Suppress("DEPRECATION")
     private fun glowLayoutParams(): WindowManager.LayoutParams {
-        // Реальна висота екрана (включно з рядком стану + панеллю навігації), MATCH_PARENT не включає системну панель на деяких пристроях
+        // 真实屏幕高度（含状态栏 + 导航栏），MATCH_PARENT 在部分设备不含系统栏
         val realHeight = runCatching {
             val point = android.graphics.Point()
             @Suppress("DEPRECATION")
@@ -1258,21 +1258,21 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
-            // Повне покриття екрана (включаючи панель стану/панель навігації), проникнення дотиком не перехоплює операції на сторінці;
-            // TYPE_ACCESSIBILITY_OVERLAY дозволяє відфільтрувати takeScreenshotOfWindow і зробити його прозорим для агента
+            // 全屏覆盖（含状态栏/导航栏），触摸穿透不拦截页面操作；
+            // TYPE_ACCESSIBILITY_OVERLAY 让 takeScreenshotOfWindow 过滤掉，对 Agent 透明
             gravity = Gravity.TOP or Gravity.START
             x = 0
             y = 0
-            // За замовчуванням вікна, які не є програмами, зменшують віконну раму, натискаючи системну панель і викопуючи отвори. Заокруглені кути, окреслені світловою смугою, рухатимуться вниз, не суміщаючись із фізичними кутами екрана.
-            // Тільки якщо явно не уникати жодної вставки, початок вікна збігатиметься з початком екрана, а радіус скруглення, який повідомляє Display, буде правильним.
+            // 非应用窗口默认按系统栏与挖孔收缩窗口框，光带画出的圆角就会整体下移，和物理屏幕角错位。
+            // 显式不避让任何 inset，窗口原点才与屏幕原点重合，Display 上报的圆角半径才对得上。
             setFitInsetsTypes(0)
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         }
     }
 
     /**
-     * Фізичний кутовий радіус чотирьох кутів екрана. Вікно світлового ефекту покриває весь екран і безпосередньо приймає значення, яке повідомляє дисплей;
-     * Якщо деякі ПЗУ не повідомляються, використовуйте 0 і оцініть консервативне значення на основі поширених моделей із великими заокругленими кутами. Краще бути трохи меншим, ніж пропускати світлову смугу через екран.
+     * 屏幕四角的物理圆角半径。光效窗口覆盖整屏，直接取 Display 上报的值；
+     * 部分 ROM 不上报时用 0，兜底按常见大圆角机型估一个保守值，宁可略小也不让光带越出屏幕。
      */
     private fun screenCornerRadii(): ScreenCornerRadii {
         val display = (overlayContext().getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
@@ -1327,7 +1327,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 etaUiInForeground = MainActivity.isInForeground,
             )
         ) {
-            // Видаліть капсулу та краєве світло та відобразіть картку результатів на половину екрана; коли немає взаємодії, карта сама вийде із затримкою та передзвонить, щоб закрити.
+            // 撤掉胶囊和边缘光，改显半屏结果卡片；无交互时由卡片自身延时退场并回调关闭
             capsuleExpanded.value = false
             removeAmbientWindows()
             if (windowManager == null && (AgentAccessibilityService.current() != null || Settings.canDrawOverlays(this))) {
@@ -1353,7 +1353,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
     }
 
     private fun dismissAndStop() {
-        // stopSelf не знищить сервіси, які все ще зв'язані клієнтом; повна історія запитів і результатів більше не зберігатиметься після закриття вікна.
+        // stopSelf 不会销毁仍被客户端绑定的服务；窗口关闭后不再保留完整请求与结果历史。
         displayedRun?.completedContext = null
         displayedRun = null
         removeOverlayWindows()
@@ -1401,7 +1401,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         @Volatile
         private var activeInstance: AgentRuntimeService? = null
 
-        // Проеціюються лише наявні вікна в додатку та графічному інтерфейсі, і система відновлює екран, коли вікно стає невидимим.
+        // 只投影到 App 与 GUI 浮层的现有窗口，窗口不可见时由系统恢复息屏。
         private val keepScreenOnState = MutableStateFlow(false)
         val keepScreenOn = keepScreenOnState.asStateFlow()
 
@@ -1419,7 +1419,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         private const val CAPSULE_COLLAPSED_HEIGHT_DP = 68
         private const val CAPSULE_CONTROLS_HEIGHT_DP = 124
         private const val CAPSULE_SUPPLEMENT_HEIGHT_DP = 260
-        /** Ін'єкційний клацання - це лише точка. Контроль цілі часто знаходиться близько до краю капсули, а діапазон оцінки залишається трохи далі назовні.*/
+        /** 注入点击只是一个点，目标控件常贴着胶囊边缘，判定范围向外多留一点。 */
         private const val CAPSULE_CLEARANCE_SLOP_DP = 8
         private const val FALLBACK_SCREEN_CORNER_DP = 28
         private const val MAX_ARCHIVED_USER_IMAGE_PREVIEWS = 4

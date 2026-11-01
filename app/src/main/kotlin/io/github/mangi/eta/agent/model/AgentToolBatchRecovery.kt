@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Явно позначайте невідомі результати в записах переривань, щоб уникнути повторного відтворення виконаних інструментів або надсилання завислих викликів інструментів під час відновлення.*/
+/** 中断记录中的未知结果显式标记，避免恢复时重放已执行工具或提交悬空 tool call。 */
 internal object AgentToolBatchRecovery {
     fun completeInterrupted(messages: List<AgentModelClient.ConversationMessage>): List<AgentModelClient.ConversationMessage> {
         val open = linkedSetOf<String>()
@@ -12,7 +12,7 @@ internal object AgentToolBatchRecovery {
             open.forEach { id ->
                 recovered += AgentModelClient.ConversationMessage(role = "tool", toolCallId = id,
                     content = JSONObject().put("ok", false).put("code", "TOOL_INTERRUPTED")
-                        .put("message", "працюватиІнструментпартіяДругосортнийвжесерединаперерва，ще ніВиберітьповинніСлідмелодіявикористовуватиззакінченовсевузолфрукти；Виконатидобреформустанще нізнати，будь ласкапершеядернийРеальність，немаєхочутьоскількирухатисяВажкапоставити。").toString())
+                        .put("message", "工具批次已中断，未取得该调用的完整结果；执行状态未知，请先核实，不要自动重放。").toString())
             }
             open.clear()
         }

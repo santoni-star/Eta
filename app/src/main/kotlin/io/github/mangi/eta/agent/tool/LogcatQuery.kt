@@ -7,7 +7,7 @@ import java.time.format.DateTimeParseException
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Журнал — це обмежена вибірка в кільцевому буфері, і діапазон повернення не можна розуміти як всю історію пристрою.*/
+/** 日志是环形缓冲区中的有界样本，返回范围不能被理解成设备全部历史。 */
 internal class LogcatQuery(
     private val executeRoot: (String) -> BoundedRootCommandExecutor.Result,
 ) {
@@ -22,14 +22,14 @@ internal class LogcatQuery(
         val sinceText = args.optString("since")
         if (maxLines !in 1..500 || scanLines !in 1..10_000 || (pid != null && pid <= 0) ||
             (tag.isNotEmpty() && !TAG.matches(tag)) || level !in LEVELS || buffer !in BUFFERS || query.length > 200 || sinceText.length > 64
-        ) return DeviceToolContract.failure("INVALID_ARGUMENT", "деньчестолюбствономеркількість、PID、tag、level або buffer женьшеньномернемаєефект")
+        ) return DeviceToolContract.failure("INVALID_ARGUMENT", "日志数量、PID、tag、level 或 buffer 参数无效")
         if (args.has("user_id")) {
-            return DeviceToolContract.failure("USER_SCOPE_UNSUPPORTED", "Краваткасистемаденьчестолюбствовідповідно доналаштуватиПриготуйтеВиберітьвстановити，немаєвідділенняутримувативикористовувати user_id розділеніЗалиште；будь ласкавідповідно до PID або tag екранвибрати")
+            return DeviceToolContract.failure("USER_SCOPE_UNSUPPORTED", "系统日志按设备采集，不支持用 user_id 隔离；请按 PID 或 tag 筛选")
         }
         val since = if (sinceText.isEmpty()) null else try {
             Instant.parse(sinceText)
         } catch (_: DateTimeParseException) {
-            return DeviceToolContract.failure("INVALID_ARGUMENT", "since повиненОбов'язковотакпринестигодинарайонз ISO 8601 годинаміж，прикладяк 2026-10-05T08:00:00Z")
+            return DeviceToolContract.failure("INVALID_ARGUMENT", "since 必须是带时区的 ISO 8601 时间，例如 2026-10-05T08:00:00Z")
         }
         val filter = if (tag.isEmpty()) "*:$level" else "$tag:$level"
         val command = buildString {
@@ -42,7 +42,7 @@ internal class LogcatQuery(
         val result = executeRoot(command)
         if (!result.ok) return DeviceToolContract.failure(
             result.errorCode.ifBlank { if (result.timedOut) "ROOT_COMMAND_TIMEOUT" else "LOGCAT_QUERY_FAILED" },
-            "деньчестолюбствоВиберітьвстановитивтратитипоразка；налаштуватиПриготуйтеможездатнийнемаєвідділенняутримуватицеекранвибратиженьшеньномер，абоколивпередВиконатидобретілочастканемаєправильночитатиВиберіть",
+            "日志采集失败；设备可能不支持此筛选参数，或当前执行身份无权读取",
         ).put("exit_code", result.exitCode)
         val rawLines = result.stdout.lineSequence().filter { it.isNotBlank() && !it.startsWith("---------") }.toList()
         val parsed = rawLines.mapNotNull(::parseLine)
@@ -85,7 +85,7 @@ internal class LogcatQuery(
             .put("scan_end", parsed.lastOrNull()?.instant?.toString() ?: JSONObject.NULL)
             .put("returned_start", selected.firstOrNull()?.instant?.toString() ?: JSONObject.NULL)
             .put("returned_end", selected.lastOrNull()?.instant?.toString() ?: JSONObject.NULL)
-            .put("range_note", "ТількиперевіритиЗапитуйтеденьчестолюбствокільцеформуповільнийпоспіхрайонзматимежаЗразоккнига；немаєматчматчнемаєпоколінняповерхніНавітьранокзапам'ятатизаписнемаєжитиіснують。has_more тількиповерхніПоказатиЗразоккнигаВсерединідосіматиматчматчще ніповерненняповернення。")
+            .put("range_note", "只查询日志环形缓冲区的有界样本；无匹配不代表更早记录不存在。has_more 仅表示样本内仍有匹配未返回。")
     }
 
     private fun parseLine(raw: String): Line? {

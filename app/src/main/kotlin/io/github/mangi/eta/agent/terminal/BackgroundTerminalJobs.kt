@@ -9,7 +9,7 @@ import kotlin.concurrent.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Програма підтримує фонові команди; Агент запускає лише надсилання та запити, а кінцева відповідь не звільняє завдання.*/
+/** App 持有后台命令；Agent run 只提交和查询，结束回复不会释放任务。 */
 internal class BackgroundTerminalJobs(
     private val supervisor: DetachedTaskSupervisor,
     private val logger: AgentLogger,
@@ -37,8 +37,8 @@ internal class BackgroundTerminalJobs(
         description: String,
         timeoutMs: Long,
     ): String {
-        if (closed) return failure("BACKGROUND_CLOSED", "назадвежажиттязробитипроживанняхоствжезакритизакрити")
-        if (!lease()) return failure("BACKGROUND_START_NOT_ALLOWED", "Краваткасистемаще нідозволяютьтравняпочатокрухатисяназадвежаВиконатидобре，будь ласкаповерненняповернення Eta назадВажкаспробувати")
+        if (closed) return failure("BACKGROUND_CLOSED", "后台命令宿主已关闭")
+        if (!lease()) return failure("BACKGROUND_START_NOT_ALLOWED", "系统未允许启动后台执行，请返回 Eta 后重试")
         return when (val result = launcher.start(command, cwd, identity, environment,
             commandTask = true, description = description, timeoutMs = timeoutMs.coerceAtLeast(0))) {
             is DaemonStartResult.Failed -> {
@@ -61,7 +61,7 @@ internal class BackgroundTerminalJobs(
     fun read(id: String, maxBytes: Int = 16_000): String {
         refresh()
         val task = supervisor.findTask(id)?.takeIf { it.commandTask }
-            ?: return failure("JOB_NOT_FOUND", "ще ніспробуйте знайтиприбутиназадвежажиттязробити，будь ласкавикористовувати terminal_job з list перевіритиподивітьсяпризначитиобслуговування")
+            ?: return failure("JOB_NOT_FOUND", "未找到后台命令，请用 terminal_job 的 list 查看任务")
         val logs = supervisor.readLogs(id, maxBytes)
         val result = taskJson(task).put("action", "read")
         if (!logs.ok) return result.put("ok", false).put("code", logs.code).put("message", logs.message).toString()
@@ -70,29 +70,29 @@ internal class BackgroundTerminalJobs(
 
     fun stop(id: String): String {
         val task = supervisor.findTask(id)?.takeIf { it.commandTask }
-            ?: return failure("JOB_NOT_FOUND", "ще ніспробуйте знайтиприбутиназадвежажиттязробити")
-        if (!supervisor.stopCommand(task.id)) return failure("JOB_STOP_FAILED", "немаєЗаконСТІЙкінецьназадвежажиттязробити，будь ласкаперевіритиперевіритиколивпередтілочастканавчатиправильно")
+            ?: return failure("JOB_NOT_FOUND", "未找到后台命令")
+        if (!supervisor.stopCommand(task.id)) return failure("JOB_STOP_FAILED", "无法停止后台命令，请检查当前身份授权")
         refresh()
         return taskJson(supervisor.findTask(id) ?: task).put("action", "stop").toString()
     }
 
     fun waitFor(id: String, timeoutMs: Long, isCancelled: () -> Boolean): String {
         resume()
-        if (supervisor.findTask(id)?.commandTask != true) return failure("JOB_NOT_FOUND", "ще ніспробуйте знайтиприбутиназадвежажиттязробити")
+        if (supervisor.findTask(id)?.commandTask != true) return failure("JOB_NOT_FOUND", "未找到后台命令")
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs.coerceIn(0, 60_000))
         waitLock.withLock {
             while (supervisor.findTask(id)?.completedAt == null) {
-                if (isCancelled()) return failure("CANCELLED", "вжеВиберітьвидалитичекатилікувати；назадвежажиттязробитидосізберегтиТримайте，можеодинпоодинціСТІЙкінець")
+                if (isCancelled()) return failure("CANCELLED", "已取消等待；后台命令仍保留，可单独停止")
                 val remaining = deadline - System.nanoTime()
                 if (remaining <= 0) break
                 changed.awaitNanos(minOf(remaining, TimeUnit.MILLISECONDS.toNanos(200)))
             }
         }
-        val task = supervisor.findTask(id) ?: return failure("JOB_NOT_FOUND", "назадвежажиттязробитивжеяснопричина")
+        val task = supervisor.findTask(id) ?: return failure("JOB_NOT_FOUND", "后台命令已清理")
         return taskJson(task).put("action", "wait").put("wait_timed_out", task.completedAt == null).toString()
     }
 
-    /** Відновити спостереження з того самого запису завдання після повторного відкриття програми без повторного виконання команди.*/
+    /** 重新打开 App 后从同一份任务记录恢复观察，不重新执行命令。 */
     @Synchronized
     fun resume() {
         if (closed) return

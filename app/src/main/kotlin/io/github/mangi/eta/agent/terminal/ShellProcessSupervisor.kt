@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-/** Відповідає за прийняття запуску, ідентифікацію власника, завершення дерева процесу та переробку процесу Shell.*/
+/** 负责 Shell 进程的启动接纳、所有权识别、进程树终止与回收。 */
 internal class ShellProcessSupervisor(
     private val allowTreeFallback: Boolean = !isAndroidRuntime(),
     private val setsidCommand: String = "setsid",
@@ -36,8 +36,8 @@ internal class ShellProcessSupervisor(
         private set
 
     /**
-     * ProcessBuilder.start() має виконуватися поза блокуванням; після завершення запуску приймання або відхилення завершується в короткому критичному розділі.
-     * Кожна оболонка спочатку входить у незалежний сеанс і записує справжній PID оболонки у тимчасовий файл, який використовується лише цим процесом.
+     * ProcessBuilder.start() 必须在锁外执行；启动完成后再以短临界区完成接纳或拒绝。
+     * 每个 Shell 优先进入独立 session，并把真实 Shell PID 写入仅本进程使用的临时文件。
      */
     fun startShellProcess(
         identity: String,
@@ -51,9 +51,9 @@ internal class ShellProcessSupervisor(
         ptyRows: Int = DEFAULT_PTY_ROWS,
     ): Process? {
         if (isClosing) return null
-        require(identity == "root" || identity == "user") { "identity тількивідділенняутримувати root/user" }
+        require(identity == "root" || identity == "user") { "identity 仅支持 root/user" }
         require(!environment.isLinux || identity == "root" || LinuxEnvironmentPaths.backendOf(linuxRootfsPath) == LinuxExecutionBackend.PROOT) {
-            "Linux працюватиІнструменткільцетериторіїтількивідділенняутримувати root identity"
+            "Linux 工具环境仅支持 root identity"
         }
         if (environment.isLinux && identity == "root" && LinuxEnvironmentPaths.backendOf(linuxRootfsPath) == LinuxExecutionBackend.PROOT) return null
         if (identity == "root" && !rootAvailable()) return null
@@ -169,7 +169,7 @@ internal class ShellProcessSupervisor(
         metadata?.ownershipFile?.delete()
     }
 
-    /** Після виходу лідера скасовується лише право власності; заборонено надсилати сигнали до PID/PGID, які можуть бути повторно використані.*/
+    /** leader 已退出后只废止所有权；禁止再向可能复用的 PID/PGID 发信号。 */
     fun retireExitedProcess(process: Process) {
         unregisterProcess(process)
     }
@@ -197,7 +197,7 @@ internal class ShellProcessSupervisor(
             )
             else -> buildLinuxPayload(
                 rootfsPath = requireNotNull(linuxRootfsPath) {
-                    "Linux працюватиІнструменткільцетериторії rootfs ще німатчвстановити"
+                    "Linux 工具环境 rootfs 未配置"
                 },
                 command = managedCommand,
                 sharedMounts = linuxSharedMounts,
@@ -208,8 +208,8 @@ internal class ShellProcessSupervisor(
         val path = shellQuote(ownershipFile.absolutePath)
         val exportOwner = "export $ETA_PROCESS_OWNER_ENV=${shellQuote(ownershipToken)}"
         if (pty) {
-            // Сеанси PTY створюються рідними компонентами для створення незалежних сеансів і повторного циклу всієї групи процесів під час виходу. Root має той самий вхід зі звичайними ідентифікаторами.
-            val executable = ptyExecutable() ?: throw IOException("PTY Групаштукнемаєможевикористовувати")
+            // PTY 会话由原生组件建立独立 session 并在退出时回收整个进程组，Root 与普通身份共用同一入口。
+            val executable = ptyExecutable() ?: throw IOException("PTY 组件不可用")
             val script = "printf '%s group\\n' \"${'$'}${'$'}\" > $path; export TERM=$PTY_TERM_TYPE; $payload"
             return "$exportOwner; exec ${shellQuote(executable.absolutePath)} $ptyRows $ptyCols -- sh -c ${shellQuote(script)}"
         }
@@ -245,12 +245,12 @@ internal class ShellProcessSupervisor(
     }
 
     /**
-     * Кореневий сеанс спочатку входить в автономний аш Magisk/KernelSU/APatch BusyBox і доповнює аплети за межами Android PATH.
+     * Root 会话优先进入 Magisk/KernelSU/APatch BusyBox standalone ash，补齐 Android PATH 外的 applet。
      *
-     * Інтерактивний виняток PTY: попел BusyBox 1.35.0–1.36.x призведе до переривання опитування будь-яким сигналом, поки підказка очікує введення.
-     * Редагування рядка повертається та запускає нову підказку в новому рядку (виправлена ​​помилка 15256, виправлена ​​у 1.37.0, не повернута у 1.36.1). Консоль оснащена програмною клавіатурою, горизонтальним і вертикальним екранами
-     * Синхронізуйте розмір вікна, щоразу, коли SIGWINCH створюватиме додатковий рядок порожніх підказок. Використовуйте system sh замість цього (відповідно до оболонки su за замовчуванням) під час звернення до цих версій,
-     * І додайте посилання аплету BusyBox у кінець PATH, системні команди все ще мають пріоритет.
+     * 交互式 PTY 例外：BusyBox 1.35.0–1.36.x 的 ash 在提示符等待输入时，任何信号打断 poll 都会让
+     * 行编辑返回并另起一行新提示符（上游 bug 15256，1.37.0 修复，1.36.1 未回移）。控制台随软键盘和横竖屏
+     * 同步窗口尺寸，每次 SIGWINCH 都会多出一行空提示符。命中这些版本时改用系统 sh（与 su 默认 shell 一致），
+     * 并把 BusyBox applet 链接追加到 PATH 末尾，系统命令仍然优先。
      */
     internal fun buildAndroidPayload(identity: String, command: String?, interactivePty: Boolean = false): String {
         val shellArgument = command?.let { "-c ${shellQuote(it)}" }.orEmpty()
@@ -277,10 +277,10 @@ internal class ShellProcessSupervisor(
     }
 
     /**
-     * Інструментальне середовище Linux завжди запускається в незалежному просторі імен монтування, щоб запобігти витоку зв’язаних монтувань у світ Android.
-     * chroot не є пісочницею безпеки; він відповідає лише за надання повної користувацької області Linux, а системні операції Android все одно мають використовувати середовище Android.
-     * [sharedMounts] прив’язуються до workspace/mounts/<name> rootfs один за одним відповідно до поточної конфігурації під час створення простору імен,
-     * Простір імен переробляється відразу після завершення сеансу, і на стороні Android не залишається глобальних монтувань, які потрібно видалити.
+     * Linux 工具环境始终在独立 mount namespace 中启动，避免 bind mount 泄漏到 Android 全局。
+     * chroot 不是安全沙箱；它只负责提供完整 Linux userland，Android 系统操作仍应走 android 环境。
+     * [sharedMounts] 在 namespace 建立时按当前配置逐个 bind 到 rootfs 的 workspace/mounts/<name>，
+     * 会话结束即随 namespace 回收，Android 侧不留需要卸载的全局挂载。
      */
     internal fun buildLinuxPayload(
         rootfsPath: String,
@@ -294,7 +294,7 @@ internal class ShellProcessSupervisor(
         val rootfs = shellQuote(rootfsPath)
         val mode = if (command == null) "session" else "command"
         val payload = shellQuote(command.orEmpty())
-        // SharedFolderMounts перевіряє, що ім’я містить лише [A-Za-z0-9._-], і його можна безпечно ввести в подвійні лапки.
+        // name 经 SharedFolderMounts 校验只含 [A-Za-z0-9._-]，可安全拼进双引号路径。
         val mountsBlock = sharedMounts.joinToString("\n") { mount ->
             "eta_mount_optional ${shellQuote(mount.sourcePath)} " +
                 "\"\$eta_rootfs${SharedFolderMounts.LINUX_MOUNTS_ROOT}/${mount.name}\" bind"
@@ -363,8 +363,8 @@ internal class ShellProcessSupervisor(
             "$innerScriptHead\n$mountsBlock\n$innerScriptTail"
         }
         val discovery = AndroidBusyBox.discoveryScript()
-        // /bin/sh Alpine є абсолютним символічним посиланням на /bin/busybox. На стороні Android -x натисне кореневий каталог хоста.
-        // Цільове посилання неправильно оцінюється як відсутнє через аналіз; вважається, що символічне посилання існує, а реальна можливість виконання визначається розбором ядра після chroot.
+        // Alpine 的 /bin/sh 是指向 /bin/busybox 的绝对符号链接，Android 侧 -x 会按宿主根目录
+        // 解析链接目标而误判缺失；符号链接视为存在，真实可执行性由 chroot 后的内核解析兜底。
         return "$discovery; " +
             "[ -n \"${'$'}eta_busybox\" ] || { echo 'ETA_LINUX_BUSYBOX_MISSING' >&2; exit 127; }; " +
             "eta_rootfs=$rootfs; " +
@@ -506,7 +506,7 @@ internal class ShellProcessSupervisor(
 
 internal data class ShellProcessOwnership(val pid: Long, val token: String, val isolatedGroup: Boolean)
 
-/** Написати тег власності блоку середовища керованого процесу; використовуйте його перед перевіркою та зупиніть, щоб запобігти повторному використанню PID та випадковому знищенню.*/
+/** 写入托管进程环境块的归属标记；巡检与停止前用它防止 PID 复用误杀。 */
 internal const val ETA_PROCESS_OWNER_ENV = "ETA_PROCESS_OWNER"
 
 internal fun shellQuote(value: String): String =
@@ -520,15 +520,15 @@ internal data class OneShotShellResult(
     val stderrTruncated: Boolean = false,
 )
 
-/** Передумовою консольного PTY є те, що рідні компоненти пакета були витягнуті як виконувані файли інсталятором; процес можна викликати безпосередньо на вході без запуску процесу.*/
+/** 控制台 PTY 的前提是随包原生组件已被安装器提取为可执行文件；不启动进程，可在入口直接调用。 */
 internal fun ptySupported(): Boolean = TerminalRuntime.nativeExecutable(PTY_EXECUTABLE) != null
 
 internal const val PTY_EXECUTABLE = "libeta_pty.so"
 internal const val SHELL_STDIN_FAILED_EXIT_CODE = -4
 
 /**
- * Примітив одноразової команди Shell: зі збором тайм-ауту та обмеженим збором результатів. Виклик відповідає за побудову команди та інтерпретацію виведених даних;
- * Коли відбувається тайм-аут або вимкнення супервізора, [ShellProcessSupervisor] переробляє все дерево процесів.
+ * 一次性 Shell 命令原语：带超时回收与有界输出收集。调用方负责命令构造与输出解释；
+ * 超时或 supervisor 关闭时整棵进程树由 [ShellProcessSupervisor] 回收。
  */
 internal fun runOneShotShell(
     processSupervisor: ShellProcessSupervisor,
@@ -551,7 +551,7 @@ internal fun runOneShotShell(
     ) ?: return OneShotShellResult(
         if (processSupervisor.isClosing) -3 else -1,
         ByteArray(0),
-        if (processSupervisor.isClosing) "ТримайтеробитивжеВиберітьвидалити".toByteArray() else "немаєЗаконпочатокрухатисяВведітьПроцедура".toByteArray(),
+        if (processSupervisor.isClosing) "操作已取消".toByteArray() else "无法启动进程".toByteArray(),
     )
 
     try {
@@ -570,7 +570,7 @@ internal fun runOneShotShell(
                     if (stdin != null) out.write(stdin)
                 }
             } catch (_: IOException) {
-                // Якщо перевірка не вдалася або була скасована, кінець читання може бути закритий першим; він обробляється викликаючим потоком у поєднанні з кодом виходу, і записуючий потік не може призвести до аномального завершення середовища виконання.
+                // 校验失败或取消可能先关闭读端；由调用线程结合退出码处理，不能让写线程异常终止 Runtime。
                 stdinFailed.set(true)
             }
         }
@@ -582,17 +582,17 @@ internal fun runOneShotShell(
             stderrThread.join(500)
             stdinThread.join(500)
             processSupervisor.reapProcess(process)
-            return OneShotShellResult(-2, output.bytes(), "життязробитиВиконатидобреобганятигодина".toByteArray(), output.isTruncated(), stderr.isTruncated())
+            return OneShotShellResult(-2, output.bytes(), "命令执行超时".toByteArray(), output.isTruncated(), stderr.isTruncated())
         }
 
         outputThread.join(500)
         stderrThread.join(500)
         stdinThread.join(500)
         val exitCode = process.exitValue()
-        // Відмова дочірнього процесу зберігає вихідну семантику; неповний запис не може розглядатися як успішний, якщо заявлено про успіх, але передача вхідних даних не вдається.
+        // 子进程的失败保留原始语义；声称成功但输入传输失败时不能把不完整写入当作成功。
         if (exitCode == 0 && stdin?.isNotEmpty() == true && stdinFailed.get()) {
             return OneShotShellResult(
-                SHELL_STDIN_FAILED_EXIT_CODE, output.bytes(), "життязробитивтратитивведітьпропусквтратитивтратитипоразка".toByteArray(),
+                SHELL_STDIN_FAILED_EXIT_CODE, output.bytes(), "命令输入传输失败".toByteArray(),
                 output.isTruncated(),
             )
         }

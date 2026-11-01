@@ -10,7 +10,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-/** Облікові дані MCP зберігаються лише в приватних налаштуваннях програми з секретним текстом Android Keystore.*/
+/** MCP 凭据只以 Android Keystore 密文保存在 App 私有偏好中。 */
 internal class McpSecretStore(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(
         PREFERENCES_NAME,
@@ -49,12 +49,12 @@ internal class McpSecretStore(context: Context) {
             preferences.edit()
             .putString(tokenKey(serverId), Base64.encodeToString(payload, Base64.NO_WRAP))
             .commit()
-        ) { "MCP завідповідно дозберегтижитивтратитипоразка" }
+        ) { "MCP 凭据保存失败" }
     }
 
     @Synchronized
     fun clear(serverId: String) {
-        check(preferences.edit().remove(tokenKey(serverId)).commit()) { "MCP завідповідно довидалитивидалитивтратитипоразка" }
+        check(preferences.edit().remove(tokenKey(serverId)).commit()) { "MCP 凭据删除失败" }
     }
 
     private fun secretKey(): SecretKey {

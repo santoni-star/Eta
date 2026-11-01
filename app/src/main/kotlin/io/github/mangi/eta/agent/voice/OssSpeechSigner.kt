@@ -59,7 +59,7 @@ internal object OssSpeechSigner {
     private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it.toInt() and 255) }
     private fun objectUrl(config: SpeechOssConfig, key: String) = speechBaseUrl(config.endpoint).toHttpUrl().let { endpoint ->
         if (endpoint.encodedPath != "/" || endpoint.port != 443) {
-            throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "OSS Endpoint Обов'язководлязнакдозволяютьземлідомендоменназва，немаєСумкаМіститьдорогашляхабокінецьрот")
+            throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "OSS Endpoint 须为标准地域域名，不包含路径或端口")
         }
         endpoint.newBuilder().host("${config.bucket}.${endpoint.host}")
             .encodedPath("/${encode(key, true)}").build()

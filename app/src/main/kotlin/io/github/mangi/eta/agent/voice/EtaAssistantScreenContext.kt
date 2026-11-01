@@ -18,7 +18,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Сеанс і плаваюче вікно мають спільний знімок пробудження з тим самим процесом, і пізні результати більше не прийматимуться після закриття або заміни.*/
+/** Session 与浮窗同进程共享一次唤醒的快照，关闭或替换后不再接纳迟到结果。 */
 internal class EtaAssistantScreenContext(
     showFlags: Int,
     private val foregroundApps: List<ComponentName>,
@@ -52,8 +52,8 @@ internal class EtaAssistantScreenContext(
             val text = try {
                 EtaAssistContentReader.read(context, state)
             } catch (exception: Exception) {
-                AndroidAgentLogger.warn("допомогтипричинавідповідьвикористовуватиначальникавнизмистецтварозв'язатианалізувативтратитипоразка: type=${exception.javaClass.simpleName}")
-                "відповідьвикористовуватиВсерединіДозволитичитатиВиберітьвтратитипоразка"
+                AndroidAgentLogger.warn("助理应用上下文解析失败: type=${exception.javaClass.simpleName}")
+                "应用内容读取失败"
             }
             synchronized(this@EtaAssistantScreenContext) {
                 if (closed) return@synchronized
@@ -77,7 +77,7 @@ internal class EtaAssistantScreenContext(
             val capturedImage = try {
                 bitmap?.let { AgentImageCodec.fromScreenContextBitmap(it, source = "assistant_screen_context") }
             } catch (exception: Exception) {
-                AndroidAgentLogger.warn("допомогтипричинавирізатималюноккомпілюватикодвтратитипоразка: type=${exception.javaClass.simpleName}")
+                AndroidAgentLogger.warn("助理截图编码失败: type=${exception.javaClass.simpleName}")
                 null
             }
             synchronized(this@EtaAssistantScreenContext) {
@@ -87,7 +87,7 @@ internal class EtaAssistantScreenContext(
                 completeIfReady()
             }
         }
-        // Навіть якщо завдання скасовується перед виконанням, Bitmap, наданий системним зворотним викликом, звільняється.
+        // 即使任务在执行前取消，也要释放系统回调交付的 Bitmap。
         job.invokeOnCompletion { if (bitmap != null && !bitmap.isRecycled) bitmap.recycle() }
     }
 
@@ -97,13 +97,13 @@ internal class EtaAssistantScreenContext(
         return synchronized(this) {
             if (closed) return@synchronized Snapshot()
             val text = buildString {
-                appendLine("Виберітьвстановитигодинаміж（Unix міліметрдруге）：$capturedAt；цетакдопомогтипричинавикликПрокинутисягодиназживопислокшина，немаєпоколінняповерхніТримайтеробитиназадзРеальністьгодинаформустан。")
+                appendLine("采集时间（Unix 毫秒）：$capturedAt；这是助理唤醒时的画面，不代表操作后的实时状态。")
                 if (foregroundApps.isNotEmpty()) {
-                    appendLine("впередвежавідповідьвикористовувати：" + foregroundApps.take(MAX_ACTIVITIES)
+                    appendLine("前台应用：" + foregroundApps.take(MAX_ACTIVITIES)
                         .joinToString { it.flattenToShortString().take(512) })
                 }
-                appendLine(if (image != null) "книгаДругосортнийвжедодаєтьсяекранекранвирізатималюнок。" else "Краваткасистемаще нінестидляможевикористовувативирізатималюнок。")
-                if (activities.isEmpty()) appendLine("Краваткасистемадосіще нінестидлявідповідьвикористовуватиВсерединіДозволити。")
+                appendLine(if (image != null) "本次已附屏幕截图。" else "系统未提供可用截图。")
+                if (activities.isEmpty()) appendLine("系统尚未提供应用内容。")
                 activities.entries.sortedWith(compareByDescending<Map.Entry<Int, Pair<Boolean, String>>> { it.value.first }
                     .thenBy { it.key }).take(MAX_ACTIVITIES).forEach { appendLine(it.value.second) }
             }
@@ -133,7 +133,7 @@ internal class EtaAssistantScreenContext(
     }
 }
 
-/** Щонайбільше поточне пробудження зберігається. Намір передає лише ідентифікатор, а не зображення чи дерево інтерфейсу.*/
+/** 最多保留当前一次唤醒，Intent 只传 ID，不传图片或界面树。 */
 internal object EtaAssistantScreenContexts {
     private var current: EtaAssistantScreenContext? = null
 

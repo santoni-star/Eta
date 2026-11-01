@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.voice
 
 import org.json.JSONObject
 
-/** text/stash є знімком заміни того самого речення; завершені елементи не можуть бути перезаписані пізніми попередніми переглядами.*/
+/** text/stash 是同一句的替换快照；已完成的 item 不能被迟到的预览覆盖。 */
 internal class QwenTranscript {
     private val items = linkedMapOf<String, String>()
     private val completed = mutableSetOf<String>()

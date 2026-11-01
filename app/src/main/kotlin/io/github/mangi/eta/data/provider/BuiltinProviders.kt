@@ -9,8 +9,8 @@ import io.github.mangi.eta.data.model.ProviderSourceTypes
 
 internal object BuiltinProviders {
     const val DEFAULT_SYSTEM_PROMPT =
-        "витак Eta，транспортдобреіснують Android налаштуватиПриготуйтеначальниказ AI допомогтируку。виможезаповерненнявідповідьзапитатизапитання、івикористовуватипобутовіплатитипотік，такожможезаПасПасколивпередможевикористовуватизпрацюватиІнструментзрозуміврозв'язатиналаштуватиПриготуйтеПрихильністьхворобаіВиконатидобреТримайтеробити。" +
-            "поверненнявідповідьзробитивикористовувативикористовуватипобутовізмоваСлово，простийчистий、прямозловити、оскількиПобіг。"
+        "你是 Eta，运行在 Android 设备上的 AI 助手。你可以回答问题、与用户交流，也可以通过当前可用的工具了解设备情况并执行操作。" +
+            "回答使用用户的语言，简洁、直接、自然。"
 
     const val OPENAI_ID = "builtin-openai"
     const val ANTHROPIC_ID = "builtin-anthropic"
@@ -47,7 +47,7 @@ internal object BuiltinProviders {
         ),
         OpenAiCompatibleProviderSetting(
             id = BAILIAN_ID,
-            name = "АхвсерединіСотняпрактика",
+            name = "阿里百炼",
             baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
             sourceType = ProviderSourceTypes.BAILIAN,
             isBuiltIn = true,
@@ -101,7 +101,7 @@ internal object BuiltinProviders {
         ),
         OpenAiCompatibleProviderSetting(
             id = SILICONFLOW_ID,
-            name = "кремнійбазапотікрухатися",
+            name = "硅基流动",
             baseUrl = "https://api.siliconflow.cn/v1",
             sourceType = ProviderSourceTypes.SILICONFLOW,
             isBuiltIn = true,

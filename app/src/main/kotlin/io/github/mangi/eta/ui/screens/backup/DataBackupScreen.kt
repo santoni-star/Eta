@@ -219,7 +219,7 @@ internal fun DataBackupScreen(
 @Composable
 private fun BackupIcon(icon: ImageVector, loading: Boolean) {
     Box(
-        // Така сама ширина, як EtaPreferenceIcon, а основний текст і початкова точка лінії розділення залишаються вирівняними.
+        // 与 EtaPreferenceIcon 同宽，正文和分割线起点保持对齐。
         modifier = Modifier.size(EtaPreferenceDefaults.IconSize),
         contentAlignment = Alignment.Center,
     ) {

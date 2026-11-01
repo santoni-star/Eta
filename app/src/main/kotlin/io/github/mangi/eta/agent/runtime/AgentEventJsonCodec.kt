@@ -4,7 +4,7 @@ import android.os.Bundle
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Стабільна проекція JSON подій виконання; кодує лише поля безпеки, доступні IPC.*/
+/** Runtime 事件的稳定 JSON 投影；只编码 IPC 已公开的安全字段。 */
 internal object AgentEventJsonCodec {
     fun encode(event: AgentEvent): String {
         require(event !is AgentEvent.SearchSuggestions) { "SEARCH_SUGGESTIONS_NOT_PERSISTABLE" }

@@ -200,7 +200,7 @@ private fun BrowserRefreshButton(
         enabled = enabled,
         modifier = Modifier.semantics { contentDescription = description },
     ) {
-        // У перемиканні стану завантаження не беруть участь лише піктограми, що змінюються, область клацання та ширина поля адреси.
+        // 只交叉淡化图标，点击区域和地址框宽度不参与加载状态切换。
         Crossfade(
             targetState = loading,
             animationSpec = tween(180),
@@ -223,7 +223,7 @@ private fun BrowserSubmitAction(
     canSubmit: Boolean,
     onGo: () -> Unit,
 ) {
-    // Операційний слот підтримує фіксовану ширину, а вхідна анімація діє лише на значок і не змінює розмір макета веб-сторінки.
+    // 操作槽保持固定宽度，输入动画只作用于图标，不改变网页的布局尺寸。
     Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
         AnimatedVisibility(
             visible = focused,

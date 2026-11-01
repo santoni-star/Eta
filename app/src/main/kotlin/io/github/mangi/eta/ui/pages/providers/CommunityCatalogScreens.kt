@@ -75,14 +75,14 @@ internal fun CommunityCatalogScreen(
     LaunchedEffect(Unit) { store.openCatalog() }
 
     MiuixScaffoldPage(
-        title = "відГоловазаписдодатидодати",
+        title = "从目录添加",
         onBack = onBack,
         actions = {
             IconButton(
                 onClick = store::refresh,
                 enabled = !store.loading && !store.refreshing,
             ) {
-                Icon(Icons.Rounded.Refresh, contentDescription = "пензликновийцвільтипуГоловазапис")
+                Icon(Icons.Rounded.Refresh, contentDescription = "刷新模型目录")
             }
         },
     ) {
@@ -93,7 +93,7 @@ internal fun CommunityCatalogScreen(
                 onSearch = {},
                 expanded = false,
                 onExpandedChange = {},
-                label = "пошукОтженестидлябізнес",
+                label = "搜索提供商",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -101,49 +101,49 @@ internal fun CommunityCatalogScreen(
         }
 
         item(key = "catalog_status") {
-            ProviderSection(title = "Головазаписформустан") {
+            ProviderSection(title = "目录状态") {
                 EtaPreference(
-                    title = "models.dev суспільстварайонГоловазапис",
-                    summary = "читатиВиберітьГоловазаписнемаєзасіданняначальникапропуск Eta з API Key",
+                    title = "models.dev 社区目录",
+                    summary = "读取目录不会上传 Eta 的 API Key",
                 )
                 EtaPreferenceDivider(hasLeading = false)
                 EtaPreference(
-                    title = "цвільтипутаксуспільстварайончекативибратисмужкаГолова",
-                    summary = "здатнийнемаємелодіявикористовуватизаОдягобслуговуваннябізнесрахунокНомерправильнообмеженняіРеальністьміжнароднийзловитиротдлядозволяють",
+                    title = "模型是社区候选条目",
+                    summary = "能否调用以服务商账号权限和实际接口为准",
                 )
                 EtaPreferenceDivider(hasLeading = false)
                 EtaPreference(
-                    title = catalog?.sourceLabel() ?: if (store.loading) "простоіснуютьчитатиВиберітькнигаземліГоловазапис" else "Головазапистимчасовонемаєможевикористовувати",
+                    title = catalog?.sourceLabel() ?: if (store.loading) "正在读取本地目录" else "目录暂不可用",
                     summary = catalog?.let(::catalogSummary),
                 )
                 if (store.refreshing) {
                     EtaPreferenceDivider(hasLeading = false)
-                    EtaPreference(title = "простоіснуютьНавітьновийіснуютьДрітГоловазапис")
+                    EtaPreference(title = "正在更新在线目录")
                 }
                 store.refreshError?.let { error ->
                     EtaPreferenceDivider(hasLeading = false)
                     EtaPreference(
-                        title = "існуютьДрітНавітьновийвтратитипоразка",
-                        summary = if (catalog != null) "$error；досіможезробитивикористовуватиколивпередГоловазапис" else error,
+                        title = "在线更新失败",
+                        summary = if (catalog != null) "$error；仍可使用当前目录" else error,
                     )
                 }
                 if (store.loadError && catalog == null) {
                     EtaPreferenceDivider(hasLeading = false)
-                    EtaPreference(title = "книгаземліГоловазаписчитатиВиберітьвтратитипоразка", summary = "будь ласкаВажкаспробуватиабоперевіритиперевіритивідповідьвикористовувативстановитиупаковкаСумка")
+                    EtaPreference(title = "本地目录读取失败", summary = "请重试或检查应用安装包")
                 }
             }
         }
 
         item(key = "results_title") {
-            EtaPreferenceGroupTitle("можекерівництвовведітьнестидлябізнес（${providers.size}）")
+            EtaPreferenceGroupTitle("可导入提供商（${providers.size}）")
         }
         if (catalog == null && store.loading) {
             item(key = "loading") { CatalogLoadingState() }
         } else if (providers.isEmpty()) {
             item(key = "empty") {
                 ListEmptyState(
-                    title = if (catalog == null) "безматиможевикористовуватизГоловазапис" else "безматиспробуйте знайтиприбутиматчматчзнестидлябізнес",
-                    summary = if (catalog == null) "точкаударправильноначальникарігпензликновийназадВажкаспробувати" else "спробуватиспробуватищовінназвасказатиабоземлісайт",
+                    title = if (catalog == null) "没有可用的目录" else "没有找到匹配的提供商",
+                    summary = if (catalog == null) "点击右上角刷新后重试" else "试试其他名称或地址",
                     icon = if (catalog == null) Icons.Rounded.CloudOff else Icons.Rounded.SearchOff,
                 )
             }
@@ -172,7 +172,7 @@ internal fun CommunityCatalogScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "${provider.models.size} індивідуальнийможекерівництвовведітьцвільтипу",
+                        text = "${provider.models.size} 个可导入模型",
                         style = MiuixTheme.textStyles.footnote1,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     )
@@ -211,11 +211,11 @@ internal fun CommunityCatalogProviderScreen(
     }
 
     MiuixScaffoldPage(
-        title = provider?.name ?: "вибративибратицвільтипу",
+        title = provider?.name ?: "选择模型",
         onBack = onBack,
         actions = {
             EtaTextButton(
-                text = "керівництвовведіть（${selectedIds.size}）",
+                text = "导入（${selectedIds.size}）",
                 enabled = provider != null && selectedIds.isNotEmpty() && !importInFlight && !store.importing,
                 onClick = {
                     val chosen = provider ?: return@EtaTextButton
@@ -229,9 +229,9 @@ internal fun CommunityCatalogProviderScreen(
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (_: IllegalArgumentException) {
-                            importError = "цвільтипувибративибративжевтратитиефект，будь ласкаВажкановийвибративибрати"
+                            importError = "模型选择已失效，请重新选择"
                         } catch (_: Throwable) {
-                            importError = "зберегтижитинестидлябізнесвтратитипоразка，будь ласкаВажкаспробувати"
+                            importError = "保存提供商失败，请重试"
                         } finally {
                             importInFlight = false
                         }
@@ -247,8 +247,8 @@ internal fun CommunityCatalogProviderScreen(
                     CatalogLoadingState()
                 } else {
                     ListEmptyState(
-                        title = "Головазаписсерединабезматицеіндивідуальнийнестидлябізнес",
-                        summary = "ГоловазаписможездатнийвжеНавітьновий，будь ласкаповерненняповерненняСписокповерхніВажкановийвибративибрати",
+                        title = "目录中没有这个提供商",
+                        summary = "目录可能已更新，请返回列表重新选择",
                     )
                 }
             }
@@ -256,8 +256,8 @@ internal fun CommunityCatalogProviderScreen(
         }
 
         item(key = "provider") {
-            ProviderSection(title = "нестидлябізнес") {
-                EtaPreference(title = "назвасказати", summary = provider.name)
+            ProviderSection(title = "提供商") {
+                EtaPreference(title = "名称", summary = provider.name)
                 EtaPreferenceDivider(hasLeading = false)
                 EtaPreference(title = null) {
                     Text(
@@ -279,12 +279,12 @@ internal fun CommunityCatalogProviderScreen(
         item(key = "selection_status") {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
                 Text(
-                    text = "вжевибрати ${selectedIds.size} / ${provider.models.size} індивідуальнийцвільтипу",
+                    text = "已选 ${selectedIds.size} / ${provider.models.size} 个模型",
                     style = MiuixTheme.textStyles.body2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
                 Text(
-                    text = "керівництвовведітьназадпотребазаповнитиНапишіть API Key іпочатоквикористовувати；цвільтипубудь ласкапроситиВоляволоссядоставитиприбутиначальникаплощі Base URL",
+                    text = "导入后需填写 API Key 并启用；模型请求将发送到上方 Base URL",
                     style = MiuixTheme.textStyles.footnote1,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
@@ -304,7 +304,7 @@ internal fun CommunityCatalogProviderScreen(
                 onSearch = {},
                 expanded = false,
                 onExpandedChange = {},
-                label = "пошукОтжецвільтипуназвасказатиабо ID",
+                label = "搜索模型名称或 ID",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -316,28 +316,28 @@ internal fun CommunityCatalogProviderScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 EtaTextButton(
-                    text = "Повнийвибратиколивпередвузолфрукти",
+                    text = "全选当前结果",
                     enabled = filteredModels.isNotEmpty() && !store.importing,
                     onClick = {
                         selectedIds = ArrayList((selectedIds + filteredModels.map { it.modelId }).distinct())
                     },
                 )
                 EtaTextButton(
-                    text = "яснонульовийвжевибрати",
+                    text = "清空已选",
                     enabled = selectedIds.isNotEmpty() && !store.importing,
                     onClick = { selectedIds = arrayListOf() },
                 )
             }
         }
         item(key = "models_title") {
-            EtaPreferenceGroupTitle("цвільтипу（${filteredModels.size}）")
+            EtaPreferenceGroupTitle("模型（${filteredModels.size}）")
         }
         if (filteredModels.isEmpty()) {
             item(key = "empty_models") {
-                ListEmptyState(title = "безматиспробуйте знайтиприбутиматчматчзцвільтипу")
+                ListEmptyState(title = "没有找到匹配的模型")
             }
         } else {
-            // Відповідно до власної сторінки моделі постачальника: комбінуйте елементи один за одним і створюйте безперервне групування.
+            // 与提供商自己的模型页一致：逐项组合，画成一个连续分组。
             itemsIndexed(filteredModels, key = { _, model -> "model:${model.modelId}" }, contentType = { _, _ -> "model" }) { index, model ->
                 EtaPreferenceGroupItem(
                     isFirst = index == 0,
@@ -349,7 +349,7 @@ internal fun CommunityCatalogProviderScreen(
                             append(model.modelId)
                             append(" · ")
                             append(formatCompactTokenCount(model.contextWindow))
-                            append(" tokens начальникавнизмистецтва")
+                            append(" tokens 上下文")
                             model.releaseDate?.let { append(" · "); append(it) }
                         },
                         checked = model.modelId in selectedIds,
@@ -379,15 +379,15 @@ private fun CatalogLoadingState() {
 }
 
 private fun CommunityCatalog.sourceLabel(): String = when (source) {
-    CommunityCatalogSource.SNAPSHOT -> "ВсерединівстановитиГоловазаписшвидкийВідповідно до"
-    CommunityCatalogSource.CACHE -> "книгаземліповільнийжитиГоловазапис"
-    CommunityCatalogSource.ONLINE -> "існуютьДрітГоловазапис"
+    CommunityCatalogSource.SNAPSHOT -> "内置目录快照"
+    CommunityCatalogSource.CACHE -> "本地缓存目录"
+    CommunityCatalogSource.ONLINE -> "在线目录"
 }
 
 private fun catalogSummary(catalog: CommunityCatalog): String {
     val updated = catalog.fetchedAt?.let { timestamp ->
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(timestamp))
     }
-    return listOfNotNull("${catalog.providers.size} додомуможекерівництвовведітьнестидлябізнес", updated?.let { "Навітьновийна $it" })
+    return listOfNotNull("${catalog.providers.size} 家可导入提供商", updated?.let { "更新于 $it" })
         .joinToString(" · ")
 }

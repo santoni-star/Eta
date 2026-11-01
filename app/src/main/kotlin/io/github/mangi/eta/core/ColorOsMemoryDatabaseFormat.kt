@@ -2,7 +2,7 @@ package io.github.mangi.eta.core
 
 import java.io.File
 
-/** Зашифровані бази даних повинні читатися хост-з'єднанням і не можуть розглядатися як звичайні файли SQLite з пошкодженими або порожніми таблицями.*/
+/** 加密数据库必须由宿主连接读取，不能当作损坏或空表的普通 SQLite 文件处理。 */
 internal fun isPlaintextColorOsMemoryDatabase(file: File): Boolean = file.inputStream().use { input ->
     val signature = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
     input.readNBytes(signature.size).contentEquals(signature)

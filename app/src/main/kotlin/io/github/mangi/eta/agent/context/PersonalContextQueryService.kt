@@ -14,7 +14,7 @@ internal class PersonalContextQueryService(
         val request = try {
             PersonalContextRequest.parse(arguments)
         } catch (failure: PersonalContextArgumentException) {
-            return failure(failure.code, failure.message ?: "індивідуальнийлюдейначальникавнизмистецтваженьшеньномернемаєефект")
+            return failure(failure.code, failure.message ?: "个人上下文参数无效")
         }
         val source = request.source
         if (source == null) {
@@ -35,7 +35,7 @@ internal class PersonalContextQueryService(
                 return if (result.toString().length <= MAX_RESULT_CHARACTERS) result
                 else failure("PERSONAL_CONTEXT_OUTPUT_LIMIT").put("source", source.id)
             } catch (failure: QueryFailure) {
-                // Після оновлення компонентів системи кеш полів у тому самому запуску також може стати недійсним; його буде повторно досліджено лише один раз, і джерело даних не буде автоматично переключено.
+                // 系统组件更新后，同一个 run 内的字段缓存也可能失效；只重探一次，不静默切换数据源。
                 if (attempt > 0 || failure.code != "DMP_COLUMN_MISSING") {
                     return failure(failure.code).put("source", source.id)
                 }
@@ -229,17 +229,17 @@ internal class PersonalContextQueryService(
         .put("ok", false).put("tool", "personal_context").put("code", code).put("message", message)
 
     private fun errorMessage(code: String): String = when (code) {
-        "ROOT_REQUIRED", "ROOT_UNAVAILABLE" -> "індивідуальнийлюдейначальникавнизмистецтваОтжепривестипотребахочутьможевикористовуватиз Root навчатиправильно"
-        "ROOT_EXECUTOR_CLOSED" -> "індивідуальнийлюдейначальникавнизмистецтваперевіритиЗапитуйтевжеВиберітьвидалити"
-        "DMP_ACCESS_DENIED" -> "Краваткасистемаще нідозволяютьтравнявідвідатизапитатицеіндивідуальнийлюдейначальникавнизмистецтваприходьджерело，будь ласкаперевіритиперевіритиКраваткасистеманомервідповідно донавчатиправильноівідповідьвикористовуватиприхованийтибетськаабододатищільнийформустан"
-        "DMP_RESOURCE_UNAVAILABLE" -> "коливпередКраваткасистемаще нінестидляабоще нідозволяютьПриготуйтедобрецеіндивідуальнийлюдейначальникавнизмистецтваприходьджерело"
-        "DMP_QUERY_TIMEOUT" -> "індивідуальнийлюдейначальникавнизмистецтваперевіритиЗапитуйтеобганятигодина，будь ласкаскорочуватисяМаленькийперевіритиЗапитуйтевентилятороточуютьназадВажкаспробувати"
-        "PERSONAL_CONTEXT_NOT_FOUND" -> "Отжепривестисерединаще ніспробуйте знайтиприбутицезапам'ятатизапис；запам'ятатизаписможездатнийвжезмінавидалитиабоОтжепривестивжеЗміназмінити"
-        "PERSONAL_CONTEXT_SCHEMA_UNSUPPORTED", "DMP_COLUMN_MISSING" -> "цеКраваткасистемаверсіякнигазномервідповідно дохарактерчастинатимчасовонемаєодночаснийДозволити，ще нізмінавидалитиповиненхочутьззберегтизахиститисмужкаштук"
-        "PERSONAL_CONTEXT_FIELD_UNAVAILABLE" -> "цеКраваткасистемаверсіякнигавідсутністьмалокнигаДругосортнийекранвибрати、рядокпослідовністьабообмінвсьогоМісцепотребазхарактерчастина"
-        "PERSONAL_CONTEXT_OUTPUT_LIMIT", "DMP_OUTPUT_LIMIT" -> "індивідуальнийлюдейначальникавнизмистецтвавузолфруктиобганятиПасчитатиВиберітьпопередньоОбчислити，будь ласкаскорочуватисяМаленькийперевіритиЗапитуйтевентилятороточують"
-        "DMP_BINARY_TEXT", "DMP_INVALID_UTF8", "DMP_OUTPUT_INVALID" -> "Краваткасистемаповерненняповерненнязномервідповідно досіткаРежимнемаєЗаконзакінченовсечитатиВиберіть，ще ніВолящоколистатинульовийвузолфрукти"
-        else -> "індивідуальнийлюдейначальникавнизмистецтваномервідповідно доджерелоперевіритиЗапитуйтевтратитипоразка，ще ніВолящоколистатибезматиномервідповідно до"
+        "ROOT_REQUIRED", "ROOT_UNAVAILABLE" -> "个人上下文索引需要可用的 Root 授权"
+        "ROOT_EXECUTOR_CLOSED" -> "个人上下文查询已取消"
+        "DMP_ACCESS_DENIED" -> "系统未允许访问此个人上下文来源，请检查系统数据授权及应用隐藏或加密状态"
+        "DMP_RESOURCE_UNAVAILABLE" -> "当前系统未提供或未准备好此个人上下文来源"
+        "DMP_QUERY_TIMEOUT" -> "个人上下文查询超时，请缩小查询范围后重试"
+        "PERSONAL_CONTEXT_NOT_FOUND" -> "索引中未找到此记录；记录可能已移除或索引已变化"
+        "PERSONAL_CONTEXT_SCHEMA_UNSUPPORTED", "DMP_COLUMN_MISSING" -> "此系统版本的数据字段暂不兼容，未移除必要的保护条件"
+        "PERSONAL_CONTEXT_FIELD_UNAVAILABLE" -> "此系统版本缺少本次筛选、排序或汇总所需的字段"
+        "PERSONAL_CONTEXT_OUTPUT_LIMIT", "DMP_OUTPUT_LIMIT" -> "个人上下文结果超过读取预算，请缩小查询范围"
+        "DMP_BINARY_TEXT", "DMP_INVALID_UTF8", "DMP_OUTPUT_INVALID" -> "系统返回的数据格式无法完整读取，未将其当成空结果"
+        else -> "个人上下文数据源查询失败，未将其当成没有数据"
     }
 
     private class QueryFailure(val code: String) : RuntimeException(code)

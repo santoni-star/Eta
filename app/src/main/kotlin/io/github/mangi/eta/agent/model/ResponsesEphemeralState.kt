@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Передається лише під час одного запуску агента, кодек стабільного сеансу не розпізнає його та активно відкидає.*/
+/** 仅在单次 Agent run 内传递，稳定会话 codec 不认识并会主动丢弃。 */
 internal object ResponsesEphemeralState {
     private const val OUTPUT_ITEMS_KEY = "_eta_responses_output_items"
 

@@ -22,7 +22,7 @@ internal data class ConversationEntity(
     @ColumnInfo(name = "revisions_json", defaultValue = "''") val revisionsJson: String = "",
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
-    /** Локальний Model.id, нещодавно використаний сеансом; null означає дотримання моделі за замовчуванням.*/
+    /** 会话最近使用的本地 Model.id；null 表示跟随默认模型。 */
     @ColumnInfo(name = "model_id") val modelId: String? = null,
 )
 
@@ -39,7 +39,7 @@ internal data class ConversationMetadata(
     @ColumnInfo(name = "model_id") val modelId: String? = null,
 )
 
-/** На бічній панелі сеансу читається лише попередній перегляд фіксованої довжини, а не контекст, картка ролей і текст версії.*/
+/** 会话侧栏只读取定长预览，不读取上下文、角色卡与修订正文。 */
 internal data class ConversationIndexRow(
     val id: String,
     val title: String,

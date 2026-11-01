@@ -42,49 +42,49 @@ internal object PhoneOperation {
 
     fun text(args: JSONObject, key: String, required: Boolean = false, max: Int = 2000): String? {
         if (!args.has(key)) {
-            if (required) error("INVALID_ARGUMENT", "відсутністьмало $key")
+            if (required) error("INVALID_ARGUMENT", "缺少 $key")
             return null
         }
-        val value = args.opt(key) as? String ?: error("INVALID_ARGUMENT", "$key повиненОбов'язковотакмистецтвакнига")
+        val value = args.opt(key) as? String ?: error("INVALID_ARGUMENT", "$key 必须是文本")
         if (value.codePointCount(0, value.length) > max || '\u0000' in value || required && value.isBlank())
-            error("INVALID_ARGUMENT", "$key длянульовийабообганятипозадовговитрачативентилятороточують")
+            error("INVALID_ARGUMENT", "$key 为空或超出长度范围")
         return value
     }
 
     fun integer(args: JSONObject, key: String, min: Long, max: Long, default: Long? = null): Long {
-        if (!args.has(key)) return default ?: error("INVALID_ARGUMENT", "відсутністьмало $key")
+        if (!args.has(key)) return default ?: error("INVALID_ARGUMENT", "缺少 $key")
         val raw = args.opt(key)
-        if (raw !is Number) error("INVALID_ARGUMENT", "$key повиненОбов'язковотаквсеномер")
+        if (raw !is Number) error("INVALID_ARGUMENT", "$key 必须是整数")
         val value =
             try {
                 java.math.BigDecimal(raw.toString()).longValueExact()
             } catch (_: ArithmeticException) {
-                error("INVALID_ARGUMENT", "$key повиненОбов'язковотаквсеномер")
+                error("INVALID_ARGUMENT", "$key 必须是整数")
             } catch (_: NumberFormatException) {
-                error("INVALID_ARGUMENT", "$key повиненОбов'язковотаквсеномер")
+                error("INVALID_ARGUMENT", "$key 必须是整数")
             }
-        if (value !in min..max) error("INVALID_ARGUMENT", "$key обганятипозадозволяютьтравнявентилятороточують")
+        if (value !in min..max) error("INVALID_ARGUMENT", "$key 超出允许范围")
         return value
     }
 
     fun id(args: JSONObject, key: String): Long {
         val value = text(args, key, true, 19)!!
-        if (!Regex("[0-9]{1,19}").matches(value)) error("INVALID_ARGUMENT", "$key повиненОбов'язковотакОригіналпочатокзапам'ятатизапис ID")
+        if (!Regex("[0-9]{1,19}").matches(value)) error("INVALID_ARGUMENT", "$key 必须是原始记录 ID")
         return value.toLongOrNull()?.takeIf { it > 0 }
-            ?: error("INVALID_ARGUMENT", "$key повиненОбов'язковотакматиефектОригіналпочатокзапам'ятатизапис ID")
+            ?: error("INVALID_ARGUMENT", "$key 必须是有效原始记录 ID")
     }
 
     fun boolean(args: JSONObject, key: String, default: Boolean? = null): Boolean =
-        if (!args.has(key)) default ?: error("INVALID_ARGUMENT", "відсутністьмало $key")
-        else args.opt(key) as? Boolean ?: error("INVALID_ARGUMENT", "$key повиненОбов'язковотактканинавизначення")
+        if (!args.has(key)) default ?: error("INVALID_ARGUMENT", "缺少 $key")
+        else args.opt(key) as? Boolean ?: error("INVALID_ARGUMENT", "$key 必须是布尔值")
 
     fun time(args: JSONObject, key: String): Long =
         try {
             OffsetDateTime.parse(text(args, key, true, 64)).toInstant().toEpochMilli()
         } catch (_: java.time.DateTimeException) {
-            error("INVALID_ARGUMENT", "$key повиненОбов'язковотакпринестигодинарайончастковийзміназ ISO 8601 годинаміж")
+            error("INVALID_ARGUMENT", "$key 必须是带时区偏移的 ISO 8601 时间")
         } catch (_: ArithmeticException) {
-            error("INVALID_ARGUMENT", "$key обганятипозагодинаміжвентилятороточують")
+            error("INVALID_ARGUMENT", "$key 超出时间范围")
         }
 
     fun timezone(args: JSONObject): String =
@@ -92,7 +92,7 @@ internal object PhoneOperation {
             try {
                 ZoneId.of(it)
             } catch (_: java.time.DateTimeException) {
-                error("INVALID_ARGUMENT", "timezone немаєефект")
+                error("INVALID_ARGUMENT", "timezone 无效")
             }
         } ?: ZoneId.systemDefault().id
 
@@ -106,7 +106,7 @@ internal object PhoneOperation {
             .also {
                 if (!verified)
                     it.put("code", "OPERATION_UNCONFIRMED")
-                        .put("message", "будь ласкапроситивженестиплатитиалевузолфруктище ніправильнорозпізнати，будь ласкапершеперевіритиЗапитуйтеформустан，немаєхочутьВажкаскладністворитивстановити")
+                        .put("message", "请求已提交但结果未确认，请先查询状态，不要重复创建")
             }
 
     fun failure(code: String, message: String) =

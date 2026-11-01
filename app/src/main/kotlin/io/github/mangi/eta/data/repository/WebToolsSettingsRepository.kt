@@ -62,11 +62,11 @@ internal object WebToolsSettingsRepository {
                 .putString(KEY_CREDENTIALS, Base64.getEncoder().encodeToString(encrypted))
                 .commit(),
         ) {
-            "чистийСторінкапрацюватиІнструментзавідповідно дозберегтижитивтратитипоразка"
+            "网页工具凭据保存失败"
         }
     }
 
-    /** Знайдіть ключ API DeepSeek і базову URL-адресу, налаштовану в постачальнику моделі для повторного використання без конфігурації веб-інструментами.*/
+    /** 查找模型提供商中已配置的 DeepSeek API Key 与 Base URL，供网页工具零配置复用。 */
     suspend fun deepSeekProviderCredentials(): Pair<String, String>? = withContext(Dispatchers.IO) {
         runCatching {
             val builtin = ProviderRepository.providerById(BuiltinProviders.DEEPSEEK_ID)
@@ -125,4 +125,4 @@ internal object WebToolsSettingsRepository {
     }
 }
 
-internal class WebToolsCredentialsUnavailable : Exception("чистийСторінкапрацюватиІнструментзавідповідно донемаєЗаконрозв'язатищільний，будь ласкаВажкановийзаповнитиНапишітьізберегтижити")
+internal class WebToolsCredentialsUnavailable : Exception("网页工具凭据无法解密，请重新填写并保存")

@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Побудуйте повний крок відтворення відповідно до індексу кроку. Подія завершення визначає лише кінцевий стан і не може замінити накопичення в потоці.*/
+/** 按 step index 构建完整回放步骤，完成事件只决定终态，不能代替流内累积。 */
 internal class GeminiInteractionsStream(
     private val onEvent: (ProviderEvent) -> Unit,
     private val pendingSuggestions: JSONArray = JSONArray(),
@@ -40,12 +40,12 @@ internal class GeminiInteractionsStream(
 
     fun read(stream: InputStream, controller: AgentRunController): JSONObject {
         readProviderSse(stream, controller, ::accept)
-        return assistant ?: throw AgentModelFailure.incompleteStream("Gemini кільцевідповідьнестивпередвузолпучок，ще ніотриматиприбутизакінченовсекінецьстан。")
+        return assistant ?: throw AgentModelFailure.incompleteStream("Gemini 响应提前结束，未收到完整终态。")
     }
 
     private fun accept(eventName: String, data: String): Boolean {
         if (data.trim() == "[DONE]") {
-            throw AgentModelFailure.incompleteStream("Gemini кільцевідповідьвідсутністьмалозакінченостатирічштук。")
+            throw AgentModelFailure.incompleteStream("Gemini 响应缺少完成事件。")
         }
         receivedChars += data.length
         if (data.length > MAX_EVENT_CHARS || receivedChars > MAX_STREAM_CHARS) malformed("GEMINI_STREAM_LIMIT")
@@ -73,9 +73,9 @@ internal class GeminiInteractionsStream(
                 return false
             }
             "error" -> throw AgentModelFailure.stream(
-                event.optJSONObject("error") ?: JSONObject(), "Gemini потікРежимкільцевідповідьвтратитипоразка。",
+                event.optJSONObject("error") ?: JSONObject(), "Gemini 流式响应失败。",
             )
-            // Нові події можна ігнорувати; невідомі виходи на відомих кроках повинні явно виходити з ладу.
+            // 新增事件可以忽略；已知步骤里的未知输出必须明确失败。
         }
         return true
     }
@@ -149,7 +149,7 @@ internal class GeminiInteractionsStream(
             }
             "thought_signature" -> {
                 requireType(state, "thought")
-                // Підпис є повністю непрозорим значенням. Пізніші підписи замінюють попередні значення, і їх неможливо з’єднати або декодувати, а потім закодувати.
+                // 签名是完整的不透明值，后来的签名替换之前值，不能拼接或解码再编码。
                 state.step.put("signature", string(delta, "signature", allowEmpty = true))
             }
             "arguments_delta" -> {
@@ -215,27 +215,27 @@ internal class GeminiInteractionsStream(
         interaction.optJSONObject("usage")?.let(::mergeUsage)
         if (status == "failed" || status == "cancelled") {
             val errors = interaction.optJSONArray("errors")
-            throw AgentModelFailure.stream(errors?.optJSONObject(0) ?: JSONObject(), "Gemini будь ласкапроситище ністатидосягненнязакінченостати。")
+            throw AgentModelFailure.stream(errors?.optJSONObject(0) ?: JSONObject(), "Gemini 请求未成功完成。")
         }
         if (status !in setOf("completed", "requires_action", "incomplete", "budget_exceeded")) malformed()
-        // Кумулятивне використання може передувати основному тексту; остаточний стан вивільняється рівномірно, щоб гарантувати, що рівень відображення має відповідний текстовий блок.
+        // 累计用量可能先于正文到达；终态统一发布，确保展示层已有对应的正文块。
         if (!usage.isEmpty) onEvent(ProviderEvent.Usage(usage))
         if (status == "incomplete" || status == "budget_exceeded") {
-            // Явний кінцевий стан бюджету не можна оцінити як успішний, а також не можна повторно спробувати або виконати згенерований виклик інструменту через збій мережі.
+            // 明确的预算终态不能作为成功回答，也不能按网络中断重试或执行已生成的工具调用。
             emitSuggestions(JSONObject())
             throw AgentModelFailure("MODEL_OUTPUT_LIMIT", false,
-                "Gemini втратитипозаще нізакінченовсенародивсястати，можездатнийвжедосяжністьприбутивтратитипозаабоВиконатидобрепопередньоОбчислити；будь ласкамелодіявсевтратитипозаначальникаобмеженняабодумаюТестфайлибітназадВажкаспробувати。")
+                "Gemini 输出未完整生成，可能已达到输出或执行预算；请调整输出上限或思考档位后重试。")
         }
         if (steps.values.any { !it.stopped }) {
-            throw AgentModelFailure.incompleteStream("Gemini втратитипозакроккрокще нізакінченовсевузолпучок。")
+            throw AgentModelFailure.incompleteStream("Gemini 输出步骤未完整结束。")
         }
         val calls = steps.values.filter { it.type == "function_call" }
         if (status == "requires_action" && calls.isEmpty()) malformed()
         if (calls.isNotEmpty() && status != "requires_action") {
-            throw AgentModelFailure.incompleteStream("Gemini працюватиІнструментмелодіявикористовувативідсутністьмаломожеВиконатидобреззакінченовсекінецьстан。")
+            throw AgentModelFailure.incompleteStream("Gemini 工具调用缺少可执行的完整终态。")
         }
         if (searchCalls != searchResults) {
-            throw AgentModelFailure.incompleteStream("Gemini пошукОтжекроккрокще нізакінченовсевузолпучок。")
+            throw AgentModelFailure.incompleteStream("Gemini 搜索步骤未完整结束。")
         }
         val reason = when (status) {
             "requires_action" -> "tool_calls"
@@ -367,9 +367,9 @@ internal class GeminiInteractionsStream(
 
     private fun malformed(code: String = "GEMINI_STREAM_INVALID"): Nothing =
         throw AgentModelFailure(code, false, when (code) {
-            "GEMINI_UNSUPPORTED_OUTPUT" -> "Gemini поверненняповерненнязрозумівколивпереднемаєвідділенняутримуватизвтратитипозавидтипу。"
-            "GEMINI_SEARCH_SUGGESTIONS_LIMIT" -> "Gemini пошукОтжевстановитиобговоритиобганятиПасвиставкаПоказатиДозволитикількістьобмеженнясистема。"
-            else -> "Gemini потікРежимкільцевідповідьсіткаРежимнемаєефектабообганятиПасДозволитикількістьобмеженнясистема。"
+            "GEMINI_UNSUPPORTED_OUTPUT" -> "Gemini 返回了当前不支持的输出类型。"
+            "GEMINI_SEARCH_SUGGESTIONS_LIMIT" -> "Gemini 搜索建议超过展示容量限制。"
+            else -> "Gemini 流式响应格式无效或超过容量限制。"
         })
 
     private companion object {

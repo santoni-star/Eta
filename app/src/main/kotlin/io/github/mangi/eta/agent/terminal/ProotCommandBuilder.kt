@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.terminal
 
 import java.io.File
 
-/** Кореневий каталог гостьової системи — це лише зіставлення UID, а хост-процес завжди зберігає UID програми.*/
+/** guest 的 root 只是 UID 映射，宿主进程始终保留 App UID。 */
 internal object ProotCommandBuilder {
     fun available(): Boolean = TerminalRuntime.nativeExecutable("libproot_exec.so") != null &&
         TerminalRuntime.nativeExecutable("libproot_loader.so") != null
@@ -22,7 +22,7 @@ internal object ProotCommandBuilder {
         val loader = File(native, "libproot_loader.so").absolutePath
         val args = mutableListOf(proot, "--root-id", "--link2symlink", "--kill-on-exit", "--sysvipc", "-r", rootfsPath, "-w", "/workspace")
         fun bind(source: String, destination: String = source) {
-            require(':' !in source && ':' !in destination) { "поширенийНасолоджуйтесьдорогашляхнемаєздатнийСумкаМіститьризикНомер" }
+            require(':' !in source && ':' !in destination) { "共享路径不能包含冒号" }
             args += listOf("-b", "$source:$destination")
         }
         listOf("/dev", "/proc", "/sys").filter { File(it).isDirectory }.forEach { bind(it) }

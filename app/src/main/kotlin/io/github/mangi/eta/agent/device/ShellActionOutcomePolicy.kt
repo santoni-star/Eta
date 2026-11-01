@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.device
 
-/** Час очікування кореневого процесу не може підтвердити, що вхідна дія, надіслана системі, не була виконана.*/
+/** Root 进程超时不能证明已经发给系统的输入动作没有执行。 */
 internal object ShellActionOutcomePolicy {
     enum class Outcome {
         SUCCEEDED,

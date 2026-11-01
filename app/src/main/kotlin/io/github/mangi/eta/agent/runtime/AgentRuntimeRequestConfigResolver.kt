@@ -23,9 +23,9 @@ internal object AgentRuntimeRequestConfigResolver {
         request.handoff?.source == AgentRuntimeWire.ETA_VOICE_HANDOFF_SOURCE
 
     /**
-     * Замініть лише конфігурацію порталу моделлю та обліковими даними на стороні виконання; перемикач інструментів зберігає значення запиту порталу,
-     * Тоді AgentRuntimePolicy все ще перетинається з локальними дозволами. Сама конфігурація моделі не містить перемикачів інструментів,
-     * Пряма загальна заміна зробить термінал, чутливі засоби читання та чутливі інструменти роботи, які за замовчуванням закриті, завжди будуть недоступні на голосовому порталі.
+     * 只用 Runtime 侧的模型与凭据替换入口配置；工具开关保留入口请求的值，
+     * 随后仍由 AgentRuntimePolicy 与本地权限取交集。模型配置本身不携带工具开关，
+     * 直接整体替换会让默认关闭的终端、敏感读取与敏感操作工具在语音入口始终不可用。
      */
     fun applyRuntimeConfig(
         request: AgentRuntimeWire.RunRequest,
@@ -38,7 +38,7 @@ internal object AgentRuntimeRequestConfigResolver {
             require(
                 runtimeConfig.providerId == entry.providerId &&
                     runtimeConfig.authMode == entry.authMode && runtimeConfig.model == entry.model
-            ) { "рахунокНомердошказаписматчвстановитивжеЗмінаНавіть，будь ласкаВажкановийвибративибратиОдягобслуговуваннябізнесіцвільтипу" }
+            ) { "账号登录配置已变更，请重新选择服务商和模型" }
         }
         val effort = if (preserveReasoningChoice) {
             runtimeConfig.reasoningCapabilities?.normalize(entry.effectiveReasoningEffort)

@@ -5,8 +5,8 @@ import android.util.LruCache
 internal val staticMarkdownDocumentCache = StaticMarkdownDocumentCache()
 
 /**
- * Зважування кешу використовує кількість символів у вихідному коді UTF-16 і підраховує мінімальну вагу для коротких документів, щоб обмежити кількість записів.
- * Це не точний бюджет купи байтів: розширення синтаксичних дерев і об’єктів форматованого тексту залежить від структури вмісту.
+ * 缓存权重使用 UTF-16 源码字符数，并为短文档计入最低权重来限制条目数。
+ * 这不是精确堆字节预算：语法树和富文本对象的放大率随内容结构变化。
  */
 internal class StaticMarkdownDocumentCache(
     sourceCharBudget: Int = 512 * 1024,
@@ -36,7 +36,7 @@ internal class StaticMarkdownDocumentCache(
             .also { admit(content, it) }
 
     private fun admit(content: String, document: MarkdownDocument) {
-        // Гігантська відповідь все ще відображається повністю, але весь пакет невеликих документів не видавлюється; потокова передача та статичний аналіз мають спільну межу доступу.
+        // 巨型回复仍完整显示，但不挤出整批小文档；流式交接和静态解析共用准入边界。
         if (content.length > maxDocumentSourceChars) return
         cache.put(content to document.inlineStyle, document)
     }

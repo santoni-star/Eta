@@ -55,7 +55,7 @@ internal sealed interface DebianInstallResult {
     data class Failed(val stage: DebianInstallStage, val code: String? = null, val message: String? = null) : DebianInstallResult
 }
 
-/** Завантажте виправлену версію Debian glibc rootfs; Ядро, монтування та сеанси Android все ще повторно використовуються Eta.*/
+/** 下载固定版本的 Debian glibc rootfs；Android 内核、挂载和会话仍由 Eta 复用。 */
 internal class DebianEnvironmentInstaller(
     private val context: Context,
     httpClient: OkHttpClient = VerifiedArtifactDownloader.defaultHttpClient(),
@@ -128,9 +128,9 @@ internal class DebianEnvironmentInstaller(
         } catch (failure: RootlessInstallFailure) {
             return@withContext DebianInstallResult.Failed(DebianInstallStage.EXTRACTING, failure.code, failure.message)
         } catch (_: java.io.IOException) {
-            return@withContext DebianInstallResult.Failed(DebianInstallStage.EXTRACTING, "INSTALL_IO_FAILED", "встановитиупаковкамистецтваштукнемаєЗакончитатиНапишіть，будь ласкаперевіритиперевіритиВсерединівідділжитизберігатинульовийміжіВажкаспробувати")
+            return@withContext DebianInstallResult.Failed(DebianInstallStage.EXTRACTING, "INSTALL_IO_FAILED", "安装文件无法读写，请检查内部存储空间并重试")
         } catch (_: IllegalArgumentException) {
-            return@withContext DebianInstallResult.Failed(DebianInstallStage.EXTRACTING, "INVALID_ARCHIVE", "кільцетериторіїповерненняфайлинемаєефектабоСумкаМіститьнемаєвстановитиПовнийдорогашлях，будь ласкаВажкановийвнизнавантаженняназадВажкаспробувати")
+            return@withContext DebianInstallResult.Failed(DebianInstallStage.EXTRACTING, "INVALID_ARCHIVE", "环境归档无效或包含不安全路径，请重新下载后重试")
         } finally {
             archive.delete()
         }
@@ -322,7 +322,7 @@ internal class DebianEnvironmentInstaller(
             "xz-utils", "zip", "zstd", "fd-find",
         )
 
-        /** Посилання на реальну машину зберігає лише один домашній образ і офіційне джерело, щоб уникнути повільної послідовної обробки зображень і тривалої інсталяції.*/
+        /** 真机链路只保留一个国内镜像和官方源，避免慢镜像串行拖长安装。 */
         internal val APT_MIRRORS = listOf(
             DebianAptMirror(
                 id = "tuna",
@@ -336,7 +336,7 @@ internal class DebianEnvironmentInstaller(
             ),
         )
 
-        /** Спробуйте зображення одне за одним і запишіть успішні назад до sources.list і повторно використовуйте їх у наступних операціях apt.*/
+        /** 逐个尝试镜像并把成功者写回 sources.list，后续 apt 操作复用它。 */
         internal fun aptMirrorScript(): String = "#!/bin/sh\n${aptMirrorScriptBody()}"
 
         private fun aptMirrorScriptLines(): String =
@@ -370,7 +370,7 @@ internal class DebianEnvironmentInstaller(
                 }
                 eta_apt_repair() {
                   eta_apt_healthy && return 0
-                  # матчвстановитиможездатнийковдравідсутністьвтратитивідповідно допокладатисяблокувативилка，платитиДайте APT будуватискладніназадповиненОбов'язковоЗновуДругосортнийматчвстановитиітестсертифікат。
+                  # 配置可能被缺失依赖阻塞，交给 APT 修复后必须再次配置并验证。
                   if dpkg --configure -a && eta_apt_healthy; then return 0; fi
                   eta_apt --fix-broken --no-remove install -y --no-install-recommends || return 1
                   dpkg --configure -a && eta_apt_healthy

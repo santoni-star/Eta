@@ -21,8 +21,8 @@ internal suspend fun recognizeSpeechStream(
     onEndpoint: () -> Unit,
     endpointSilenceMs: Int,
 ): String = withTimeout(90_000) {
-    // Сервер видасть остаточний результат після того, як тиша досягне часу перерви речення; час перерви речення, коли воно автоматично закінчується, є сприйнятим користувачем «скільки довго потрібно зробити паузу, щоб закінчити говорити».
-    // Якщо він не закінчиться автоматично, буде використано стандартну сегментацію речень служби, яка вплине лише на сегмент попереднього перегляду та не призведе до передчасного завершення запису.
+    // 服务端在静音达到断句时长后给出确定结果；自动结束时断句时长就是用户可感知的“停顿多久算说完”。
+    // 不自动结束时沿用服务默认断句，只影响预览分段，不会提前结束录音。
     val automaticEndpoint = endpointSilenceMs > 0
     val sentenceSilenceMs = if (automaticEndpoint) endpointSilenceMs else DEFAULT_SENTENCE_SILENCE_MS
     if (settings.asr == AsrProvider.DOUBAO) {
@@ -76,10 +76,10 @@ private suspend fun recognizeQwen(
                     }
                     "session.finished" -> return@coroutineScope transcript.result()
                     "error", "conversation.item.input_audio_transcription.failed" ->
-                        throw SpeechFailure(SpeechErrorCode.SERVER, "тисячізапитатизнанняне требавтратитипоразка，будь ласкаперевіритиперевіритицвільтипуправильнообмеженняіматчвстановити")
+                        throw SpeechFailure(SpeechErrorCode.SERVER, "千问识别失败，请检查模型权限和配置")
                 }
             }
-            throw SpeechFailure(SpeechErrorCode.PROTOCOL, "тисячізапитатизнанняне требанавітьзловитинестивпередвузолпучок")
+            throw SpeechFailure(SpeechErrorCode.PROTOCOL, "千问识别连接提前结束")
         } finally { sender?.cancel() }
     }
 }
@@ -125,7 +125,7 @@ private suspend fun recognizeDoubao(
                 }
                 if (message.final) return@coroutineScope text.trim()
             }
-            throw SpeechFailure(SpeechErrorCode.PROTOCOL, "квасоляСумказнанняне требанавітьзловитинестивпередвузолпучок")
+            throw SpeechFailure(SpeechErrorCode.PROTOCOL, "豆包识别连接提前结束")
         } finally { sender.cancel() }
     }
 }

@@ -24,12 +24,12 @@ import java.io.File
 import kotlinx.serialization.json.Json
 
 /**
- * Протокол міжпроцесного зв'язку AgentRuntime.
+ * AgentRuntime 跨进程通信协议。
  *
- * Процес входу спілкується з [AgentRuntimeService] власного процесу модуля через bind + Messenger:
- * Надішліть запит на виконання та отримуйте потік подій і остаточні результати.
+ * 入口进程通过 bind + Messenger 与模块自身进程的 [AgentRuntimeService] 通信：
+ * 发送一次运行请求，接收事件流和最终结果。
  *
- * AIDL не введено: використовуйте [Bundle] для структурованих полів і [ParcelFileDescriptor] для тексту зображення, щоб уникнути використання буфера транзакцій Binder.
+ * 不引入 AIDL：结构化字段使用 [Bundle]，图片正文使用 [ParcelFileDescriptor]，避免占用 Binder 事务缓冲区。
  */
 internal object AgentRuntimeWire {
     const val MSG_READ_CONTEXT_RESULT = 15
@@ -41,53 +41,53 @@ internal object AgentRuntimeWire {
     const val ETA_VOICE_HANDOFF_SOURCE = "eta_voice"
 
     internal class PayloadTooLargeException(sizeBytes: Int) : IllegalArgumentException(
-        "Agent Runtime будь ласкапроситиЮаньномервідповідно доПасвеликий（$sizeBytes bytes）；будь ласкаскорочуватисякороткийвтратитивведітьабозасіданняговоритикалендарісторіїназадВажкаспробувати"
+        "Agent Runtime 请求元数据过大（$sizeBytes bytes）；请缩短输入或会话历史后重试"
     )
 
-    /** прив’язка для отримання дії Intent серверного Messenger.*/
+    /** bind 获取服务端 Messenger 的 Intent action。 */
     const val ACTION_BIND = "io.github.mangi.eta.agent.runtime.BIND"
 
     // Messenger.what
-    /** клієнт -> служба: запустіть запуск агента, [Message.replyTo] переносить клієнтський Messenger.*/
+    /** client -> service：开始一次 Agent 运行，[Message.replyTo] 携带 client Messenger。 */
     const val MSG_START_RUN = 1
 
-    /** служба -> клієнт: натисніть [AgentEvent].*/
+    /** service -> client：推送一个 [AgentEvent]。 */
     const val MSG_EVENT = 2
 
-    /** послуга -> клієнт: кінцевий результат.*/
+    /** service -> client：最终结果。 */
     const val MSG_RESULT = 3
 
-    /** клієнт -> послуга: скасувати поточний запуск.*/
+    /** client -> service：取消当前运行。 */
     const val MSG_CANCEL = 4
 
-    /** клієнт -> служба: підтвердьте, що кінцевий результат успішно відображено вхідним рівнем.*/
+    /** client -> service：确认一个最终结果已经被入口层成功展示。 */
     const val MSG_ACK_RESULT = 5
 
-    /** клієнт -> послуга: отримати остаточні результати, які не були підтверджені та відображені вхідним шаром.*/
+    /** client -> service：拉取尚未被入口层确认展示的最终结果。 */
     const val MSG_DRAIN_RESULTS = 6
 
-    /** послуга -> клієнт: повертає набір остаточних результатів, які ще не підтверджено для відображення.*/
+    /** service -> client：返回一组尚未确认展示的最终结果。 */
     const val MSG_DRAIN_RESULTS_RESPONSE = 7
 
-    /** служба -> клієнт: потрібне зображення було використано, і процес входу може закрити дескриптор файлу та видалити тимчасовий файл.*/
+    /** service -> client：请求图片已经摄取，入口进程可以关闭文件描述符并删除临时文件。 */
     const val MSG_REQUEST_INGESTED = 8
 
-    /** клієнт -> служба: запит на запуск, який все ще виконується, або надсилає остаточний стан.*/
+    /** client -> service：查询当前仍在执行或提交终态的 run。 */
     const val MSG_QUERY_ACTIVE_RUN = 9
 
-    /** service -> client: повертає поточний активний runId; порожній рядок означає відсутність.*/
+    /** service -> client：返回当前 active runId；空字符串表示没有。 */
     const val MSG_QUERY_ACTIVE_RUN_RESPONSE = 10
 
-    /** клієнт -> послуга: повторна підписка на відтворення подій безпеки, події в реальному часі та остаточні результати вказаного запуску.*/
+    /** client -> service：重新订阅指定 run 的安全事件重放、实时事件和最终结果。 */
     const val MSG_ATTACH_RUN = 11
 
-    /** послуга -> клієнт: повертає інформацію про успішну повторну підписку на вказаний запуск.*/
+    /** service -> client：返回是否成功重新订阅指定 run。 */
     const val MSG_ATTACH_RUN_RESPONSE = 12
 
-    /** клієнт -> служба: перераховує операції, які були прийняті, але ще не випустили кінцевий стан.*/
+    /** client -> service：枚举已接纳、尚未发布终态的运行。 */
     const val MSG_QUERY_ACTIVE_RUNS = 16
 
-    /** служба -> клієнт: повертає право власності на сеанс і поточний етап кожного запуску.*/
+    /** service -> client：返回各运行的会话归属与当前阶段。 */
     const val MSG_QUERY_ACTIVE_RUNS_RESPONSE = 17
 
     private const val MODULE_PACKAGE = "io.github.mangi.eta"
@@ -160,7 +160,7 @@ internal object AgentRuntimeWire {
     private const val MAX_RESULT_REASONING_CHARS = 32_000
     private const val MAX_DRAIN_CONTENT_CHARS = 16_000
     private const val MAX_DRAIN_REASONING_CHARS = 4_000
-    private const val TRUNCATED_SUFFIX = "\n\n[поперекВведітьПроцедуравузолфруктиПасдовго，вжевирізатиперерва]"
+    private const val TRUNCATED_SUFFIX = "\n\n[跨进程结果过长，已截断]"
     private const val MAX_START_REQUEST_PARCEL_BYTES = 768 * 1024
 
     data class RunRequest(
@@ -175,7 +175,7 @@ internal object AgentRuntimeWire {
         val rewriteTargetMessageId: String? = null,
         val assistantScreenContext: String = "",
     ) {
-        // Старий запис успадковує передачу сеансу; запис без постійного сеансу використовує перший запуск як початкову точку сеансу.
+        // 旧入口沿用会话 handoff；无持久会话的入口以首个 run 为会话起点。
         val effectiveModelSessionId: String
             get() = modelSessionId.ifBlank {
                 handoff?.takeIf { it.source == AGENT_UI_HANDOFF_SOURCE }
@@ -205,7 +205,7 @@ internal object AgentRuntimeWire {
     )
 
     /**
-     * Представлення одного зображення на рівні IPC. Віддалені URL-адреси можна розміщувати безпосередньо в пакеті, локальні або вбудовані зображення передаються лише файловими дескрипторами, доступними лише для читання.
+     * 单张图片在 IPC 层的表示。远程 URL 可直接放入 Bundle，本地或内联图片只传只读文件描述符。
      */
     data class WireImage(
         val remoteUrl: String? = null,
@@ -218,7 +218,7 @@ internal object AgentRuntimeWire {
         val preserveOriginal: Boolean = false,
     )
 
-    /** Одержувач утримує дескриптор файлу до завершення матеріалізації зображення у фоновому режимі; його не можна використовувати знову після закриття.*/
+    /** 接收端在后台完成图片物化前持有文件描述符；关闭后不可再次使用。 */
     class IncomingRunRequest internal constructor(
         val request: RunRequest,
         val images: List<WireImage>,
@@ -276,10 +276,10 @@ internal object AgentRuntimeWire {
     }
 
     fun toBundle(request: RunRequest, images: List<WireImage>, payloadDirectory: File? = null): Bundle {
-        require(images.size == request.images.size) { "малюнокшматокпропусквтратитипунктібудь ласкапроситималюнокшматокномеркількістьнемаєодиндо" }
+        require(images.size == request.images.size) { "图片传输项与请求图片数量不一致" }
         val imageBundles = images.map { image ->
             require((image.remoteUrl == null) xor (image.fileDescriptor == null)) {
-                "малюнокшматокпропусквтратитипунктповиненОбов'язковоіТількиздатнийСумкаМіститьдалекоПроцедура URL абомистецтваштукслідописатисимвол"
+                "图片传输项必须且只能包含远程 URL 或文件描述符"
             }
             Bundle().apply {
                 image.remoteUrl?.let { putString(KEY_IMAGE_URL, it) }
@@ -295,7 +295,7 @@ internal object AgentRuntimeWire {
         return requestBundle(request, imageBundles, payloadDirectory)
     }
 
-    /** Сумісність зі старими клієнтами та тестування протоколів; нові запити не повинні передавати тіло вбудованого зображення Binder.*/
+    /** 兼容旧客户端与协议测试；新请求不得通过 Binder 内联图片正文。 */
     fun toLegacyBundle(request: RunRequest): Bundle = requestBundle(
         request = request,
         imageBundles = request.images.map { image ->
@@ -313,7 +313,7 @@ internal object AgentRuntimeWire {
 
     private fun requestBundle(request: RunRequest, imageBundles: List<Bundle>, payloadDirectory: File? = null): Bundle = Bundle().apply {
         require(request.assistantScreenContext.length <= AssistantScreenContextProjection.MAX_CHARS) {
-            "допомогтипричинаекранекранначальникавнизмистецтваобганятиПасДозволитикількістьпопередньоОбчислити"
+            "助理屏幕上下文超过容量预算"
         }
         AgentWireText.put(this, "history_json", AgentConversationCodec.encodeTranscriptForStorage(request.history), payloadDirectory)
         putString(KEY_RUN_ID, request.runId)
@@ -383,9 +383,9 @@ internal object AgentRuntimeWire {
             bundle.getParcelableArrayList(KEY_IMAGES, Bundle::class.java).orEmpty().forEach { image ->
                 val descriptor = image.getParcelable(KEY_IMAGE_FD, ParcelFileDescriptor::class.java)
                 val reference = image.getString(KEY_IMAGE_URL)
-                    ?: image.getString(KEY_DATA_URL) // одночаснийДозволитиЛіфткласвпереддосіВсерединіпосилання data URL звведітьротВведітьПроцедура。
+                    ?: image.getString(KEY_DATA_URL) // 兼容升级前仍内联 data URL 的入口进程。
                 require((reference == null) xor (descriptor == null)) {
-                    "малюнокшматокпропусквтратитипунктповиненОбов'язковоіТількиздатнийСумкаМіститьпривестивикористовуватиабомистецтваштукслідописатисимвол"
+                    "图片传输项必须且只能包含引用或文件描述符"
                 }
                 images += WireImage(
                     remoteUrl = reference,
@@ -409,7 +409,7 @@ internal object AgentRuntimeWire {
         }
     }
 
-    /** Запити, які відхилено або не вдалося проаналізувати, не потраплять у [IncomingRunRequest], а дескриптори в ньому потрібно вивільнити явно.*/
+    /** 拒绝或解析失败的请求不会进入 [IncomingRunRequest]，需显式释放其中的描述符。 */
     fun closeImageDescriptors(bundle: Bundle?) {
         bundle?.let(AgentWireText::close)
         runCatching {
@@ -419,11 +419,11 @@ internal object AgentRuntimeWire {
         }
     }
 
-    /** Використовується лише для читання старого протоколу без дескрипторів файлів.*/
+    /** 只用于无文件描述符的旧协议读取。 */
     fun runRequestFromBundle(bundle: Bundle): RunRequest =
         incomingRunRequestFromBundle(bundle).use { incoming ->
             require(incoming.images.none { it.fileDescriptor != null }) {
-                "СумкаМіститьмистецтваштукслідописатисимволзбудь ласкапроситиповиненОбов'язковопершеіснують Runtime назадвежарічзмінити"
+                "包含文件描述符的请求必须先在 Runtime 后台物化"
             }
             incoming.materializeText().copy(
                 images = incoming.images.map { image ->
@@ -448,7 +448,7 @@ internal object AgentRuntimeWire {
             runId = bundle.getString(KEY_RUN_ID).orEmpty(),
             prompt = if (readText) AgentWireText.read(bundle, KEY_PROMPT).orEmpty() else bundle.getString(KEY_PROMPT).orEmpty(),
             assistantScreenContext = bundle.getString(KEY_ASSISTANT_SCREEN_CONTEXT).orEmpty().also {
-                require(it.length <= AssistantScreenContextProjection.MAX_CHARS) { "допомогтипричинаекранекранначальникавнизмистецтваобганятиПасДозволитикількістьпопередньоОбчислити" }
+                require(it.length <= AssistantScreenContextProjection.MAX_CHARS) { "助理屏幕上下文超过容量预算" }
             },
             operation = bundle.getString("operation")?.also { require(it in setOf(OP_CHAT, OP_COMPACT, OP_REWRITE_REPLY)) } ?: OP_CHAT,
             rewriteTargetMessageId = bundle.getString("rewrite_target_message_id")?.also {
@@ -686,7 +686,7 @@ internal object AgentRuntimeWire {
         }
     }
 
-    /** Упакуйте [AgentEvent] у [Bundle], який можна передавати між процесами.*/
+    /** 将 [AgentEvent] 打包为可跨进程传递的 [Bundle]。 */
     fun eventToBundle(event: AgentEvent): Bundle = Bundle().apply {
         when (event) {
             is AgentEvent.GuiControlChanged -> {
@@ -859,7 +859,7 @@ internal object AgentRuntimeWire {
         }
     }
 
-    /** Повернути [Bundle] до [AgentEvent], повертаючи null, якщо не розпізнається.*/
+    /** 将 [Bundle] 还原为 [AgentEvent]，无法识别时返回 null。 */
     fun eventFromBundle(bundle: Bundle): AgentEvent? = when (bundle.getString(KEY_TYPE)) {
         "gui_control_changed" -> GuiControlStatus.fromWireValue(bundle.getString("status").orEmpty())
             ?.let { AgentEvent.GuiControlChanged(it) }
@@ -970,7 +970,7 @@ internal object AgentRuntimeWire {
             resultSummary = bundle.getString("result_summary").orEmpty(),
             imageCount = bundle.getInt("image_count"),
             imageBytes = bundle.getInt("image_bytes"),
-            // Стара версія Runtime не надсилає успіх, а за умовчанням дорівнює нулю. Це оцінюється за резервним варіантом споживача.
+            // 旧版本 Runtime 不发送 success，缺省为 null 由消费端回退判断
             success = if (bundle.containsKey("success")) bundle.getBoolean("success") else null,
             command = bundle.getString("command"),
         )

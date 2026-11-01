@@ -108,7 +108,7 @@ private val ThinkingIconSize = 21.dp
 private val InputContainerShape = RoundedCornerShape(20.dp)
 
 /**
- * Пристрій введення агента завжди підтримує однакову просторову структуру. Процеси фокусування, введення та виконання лише змінюють стан і не переміщують вхід операції.
+ * Agent 输入器始终保持同一空间结构，聚焦、输入和执行过程只改变状态，不搬动操作入口。
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -175,8 +175,8 @@ internal fun AgentChatInputBar(
         .coerceAtLeast(ListPopupDefaults.MinPopupHeight)
 
     LaunchedEffect(isEditingMessage, inputSyncVersion) {
-        // Стан редагування та вилучення повідомлень із черги керуються зовнішнім бізнес-статусом; звичайний вхід зберігається лише локально, щоб уникнути переривання кожного символу етапу чату.
-        // Потік новин, прокручування та Markdown об’єднані в реорганізацію.
+        // 编辑态与排队消息撤回由外部业务状态驱动；普通输入只保留在本地，避免每个字符把聊天舞台
+        // 的消息流、滚动和 Markdown 一起带入重组。
         val versionChanged = inputSyncVersion != syncedVersion
         if (isEditingMessage || wasEditingMessage || versionChanged) {
             textFieldState.setTextAndPlaceCursorAtEnd(input)
@@ -247,7 +247,7 @@ internal fun AgentChatInputBar(
                 },
                 style = MiuixTheme.textStyles.footnote1,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                // Така сама початкова точка, як і текст у полі введення (контейнер 10dp + текст 8dp).
+                // 与输入框内正文同一起点（容器 10dp + 文本 8dp）。
                 modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 8.dp),
             )
         }
@@ -288,13 +288,13 @@ internal fun AgentChatInputBar(
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     contentAlignment = Alignment.TopStart,
                 ) {
-                    // Текст-заповнювач і введений текст мають однакову висоту рядків, і базова лінія не стрибає, коли вводиться перше слово.
+                    // 占位文字与输入正文共用同一行高，首字输入时基线不跳动。
                     val inputTextStyle = MiuixTheme.textStyles.body1.copy(lineHeight = 22.sp)
                     val character = LocalRoleplayChat.current
                     if (textFieldState.text.isBlank()) {
                         Text(
                             text = when {
-                                // Текст-заповнювач для діалогу персонажа слідує за персонажем, щоб уникнути переривання «Залиште це Еті» занурення.
+                                // 角色对话的占位文字跟随角色，避免“交给 Eta”打断沉浸感。
                                 character != null && isStreaming ->
                                     stringResource(R.string.chat_character_typing, character.characterName)
                                 character != null -> stringResource(R.string.chat_character_input_hint, character.characterName)
@@ -457,7 +457,7 @@ internal fun AgentChatInputBar(
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            // Зберігайте область клацання рівномірною та зберігайте лише видиме коло того самого розміру, що й сусідня піктограма дії.
+                            // 保留统一的点击区域，仅让可见圆形与相邻操作图标保持同一尺寸。
                             Box(
                                 modifier = Modifier
                                     .size(SendButtonVisualSize)
@@ -506,7 +506,7 @@ internal fun AgentChatInputBar(
 
 }
 
-/** Вибір інтенсивності мислення залишається одним значком, а поточний статус відображається лише кольором значка.*/
+/** 思考强度选择保持为单一图标，当前状态仅通过图标颜色表达。 */
 @Composable
 private fun ThinkingEffortChip(
     effort: ReasoningEffort,
@@ -576,7 +576,7 @@ private fun ThinkingEffortChip(
 }
 
 /**
- * Слідуйте за Чіпом горизонтально та уникайте всієї панелі введення вертикально; Розташування спадного списку за замовчуванням уникатиме лише самого Chip.
+ * 横向跟随 Chip，竖向则避开整个输入面板；默认下拉定位只会避开 Chip 自身。
  */
 @Composable
 private fun PendingImageStrip(
@@ -606,7 +606,7 @@ private fun PendingImageStrip(
                         contentScale = ContentScale.Crop,
                     )
                 }
-                // Видимі крапки залишаються маленькими, а область дотику збільшена до 32 dp у верхньому правому куті, щоб уникнути випадкового торкання мініатюри.
+                // 可见圆点保持小巧，触控区放大到右上角 32dp，避免误触缩略图。
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)

@@ -36,14 +36,14 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 internal data class SessionDialogRow(
     val id: String,
     val environment: TerminalEnvironment,
-    /** Термінал блоку передає cwd; консоль передає порожній рядок.*/
+    /** 块式终端传 cwd；控制台传空串。 */
     val subtitle: String,
     val active: Boolean,
     val running: Boolean,
     val alive: Boolean,
 )
 
-/** Панель списку сеансів терміналу; спільний між блоковим терміналом і консоллю. Клацніть рядок, щоб переключити сеанси, а перезапуск і завершення роботи надаються в рядку.*/
+/** 终端会话列表面板；块式终端与控制台共用。点按行切换会话，行内提供重启与关闭。 */
 @Composable
 internal fun SessionListDialog(
     rows: List<SessionDialogRow>,

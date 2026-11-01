@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.runtime
 
-/**Пошукові пропозиції – це короткочасні дані про покази, а всі протоколи та портали показів мають однаковий бюджет UTF-8.*/
+/** 搜索建议是短期展示数据，所有协议与展示入口共用同一 UTF-8 预算。 */
 internal object SearchSuggestionsPayload {
     const val MAX_HTML_BYTES = 64 * 1024
     const val MAX_ROUND_BYTES = 128 * 1024

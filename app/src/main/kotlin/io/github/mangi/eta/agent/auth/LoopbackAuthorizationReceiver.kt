@@ -26,15 +26,15 @@ internal class LoopbackAuthorizationReceiver(port: Int = CodexOAuth.CALLBACK_POR
                         val target = readRequest(socket)
                         val result = validateCallback(target, state)
                         try {
-                            respond(socket, "200 OK", "навчатиправильновжеповерненняповернення，будь ласкаповерненняприбути Eta закінченостатидошказапис。")
+                            respond(socket, "200 OK", "授权已返回，请回到 Eta 完成登录。")
                         } catch (_: java.io.IOException) {
-                            // Браузер може закрити вкладку відразу після зворотного виклику, а перевірений код авторизації все одно буде передано Eta для обміну кодом.
+                            // 浏览器可能在回调后立即关闭标签页，已验证的授权码仍交给 Eta 换码。
                             controller.throwIfCancelled()
                         }
                         return result
                     } catch (error: ProviderAuthException) {
                         try {
-                            respond(socket, "400 Bad Request", "навчатиправильноще нізакінченостати，будь ласкаповерненняприбути Eta Важкаспробувати。")
+                            respond(socket, "400 Bad Request", "授权未完成，请回到 Eta 重试。")
                         } catch (_: java.io.IOException) {
                             controller.throwIfCancelled()
                         }
@@ -46,10 +46,10 @@ internal class LoopbackAuthorizationReceiver(port: Int = CodexOAuth.CALLBACK_POR
                     }
                 }
             }
-            throw ProviderAuthException("oauth_login_expired", "дошказаписвжеобганятигодина，будь ласкаВажкаспробувати")
+            throw ProviderAuthException("oauth_login_expired", "登录已超时，请重试")
         } catch (_: java.io.IOException) {
             controller.throwIfCancelled()
-            throw ProviderAuthException("oauth_callback_unavailable", "немаєЗаконзловитиотриматидошказаписповерненнямелодія，будь ласкаВажкаспробувати")
+            throw ProviderAuthException("oauth_callback_unavailable", "无法接收登录回调，请重试")
         } finally {
             binding.close()
             close()
@@ -57,7 +57,7 @@ internal class LoopbackAuthorizationReceiver(port: Int = CodexOAuth.CALLBACK_POR
     }
 
     internal fun validateCallback(target: String, state: String): String {
-        fun invalid(): Nothing = throw ProviderAuthException("oauth_callback_invalid", "дошказаписповерненнямелодіянемаєефект")
+        fun invalid(): Nothing = throw ProviderAuthException("oauth_callback_invalid", "登录回调无效")
         if (!target.startsWith("/auth/callback?")) invalid()
         val url = (redirectUri.substringBefore("/auth/callback") + target).toHttpUrlOrNull() ?: invalid()
         if (url.encodedPath != "/auth/callback" || url.fragment != null) invalid()
@@ -69,7 +69,7 @@ internal class LoopbackAuthorizationReceiver(port: Int = CodexOAuth.CALLBACK_POR
         val receivedState = value("state") ?: invalid()
         if (!MessageDigest.isEqual(state.toByteArray(Charsets.UTF_8), receivedState.toByteArray(Charsets.UTF_8))) invalid()
         value("iss")?.let { if (it != OAuthProvider.OPENAI.issuer) invalid() }
-        value("error")?.let { throw ProviderAuthException("oauth_access_denied", "дошказаписще ніотриматинавчатиправильно") }
+        value("error")?.let { throw ProviderAuthException("oauth_access_denied", "登录未获授权") }
         val code = value("code")?.takeIf { it.isNotBlank() && it.length <= 8_192 } ?: invalid()
         return code
     }
@@ -96,7 +96,7 @@ internal class LoopbackAuthorizationReceiver(port: Int = CodexOAuth.CALLBACK_POR
                 break
             }
         }
-        throw ProviderAuthException("oauth_callback_invalid", "дошказаписповерненнямелодіянемаєефект")
+        throw ProviderAuthException("oauth_callback_invalid", "登录回调无效")
     }
 
     private fun respond(socket: Socket, status: String, message: String) {

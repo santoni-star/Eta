@@ -41,10 +41,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Блокування виконавця для одного запуску Runtime.
+ * 单次 Runtime run 的阻塞执行器。
  *
- * Він зберігає лише модель, інструмент і кінцевий стан, і не зберігає стан Service, Messenger, Compose або WindowManager.
- * Усі зовнішні побічні ефекти повертаються до хоста через вузькі зворотні виклики.
+ * 它只拥有模型、工具和终态提交，不持有 Service、Messenger、Compose 或 WindowManager 状态。
+ * 所有外部副作用都通过窄回调交回宿主。
  */
 internal class AgentRuntimeRunExecutor(
     context: Context,
@@ -84,7 +84,7 @@ internal class AgentRuntimeRunExecutor(
         var checkpointRecorder: AgentRunCheckpointRecorder? = null
         val timing = AgentRunTiming(AndroidAgentLogger)
 
-        // Очищення помилки вимагає отримання ідентифікатора сеансу поза спробою.
+        // 失败清理需要在 try 外拿到会话 id。
         var memoryConversationId: String? = null
         val result = try {
             val contextWindow = request.config.knownContextWindow
@@ -119,12 +119,12 @@ internal class AgentRuntimeRunExecutor(
                 runBlocking { RoleplayRunContext.resolve(appContext, id, contextWindow, memoryEnabled) }
             }
             if (request.operation == AgentRuntimeWire.OP_REWRITE_REPLY) {
-                require(roleplayContext != null) { "ТількиматирігколірзасіданняговоритиможезазмінитиНапишітьрігколірповерненняскладні" }
+                require(roleplayContext != null) { "只有角色会话可以改写角色回复" }
                 val target = request.rewriteTargetMessageId?.takeIf { it.isNotBlank() && it.length <= 256 }
-                    ?: throw IllegalArgumentException("відсутністьмаломатиефектзрігколірповерненняскладніГоловазнак")
+                    ?: throw IllegalArgumentException("缺少有效的角色回复目标")
                 require(runBlocking {
                     EtaDatabase.get(appContext).conversationDao().hasAssistantMessage(conversationId, target)
-                }) { "рігколірповерненняскладніГоловазнакнемаєжитиіснуютьабонемаєріднаколивпередзасіданняговорити" }
+                }) { "角色回复目标不存在或不属于当前会话" }
             }
             val characterMemoryTools = roleplayContext?.let { roleplay ->
                 CharacterMemoryTools(appContext, roleplay.characterId) {
@@ -148,7 +148,7 @@ internal class AgentRuntimeRunExecutor(
                 AgentMemoryContext.DISABLED
             }
             if (request.config.terminalTools) {
-                // Виявлення запуску належить додатку; модель спочатку очікує на свої результати, щоб уникнути розгляду авторизації під час виявлення як звичайного пристрою.
+                // 启动探测由 App 拥有；模型首轮等待其结果，避免把检测中的授权当成普通设备。
                 runBlocking {
                     while (io.github.mangi.eta.agent.device.RootAccess.state.value.isChecking) {
                         runController.throwIfCancelled()
@@ -227,7 +227,7 @@ internal class AgentRuntimeRunExecutor(
                             entrySurfaceGuard?.dismissOnce() == false ->
                                 ToolExecutionDecision.Reject(
                                     code = "ENTRY_SURFACE_NOT_READY",
-                                    message = "введітьротвікноротзакритизакритище нізакінченостати；книгаДругосортнийпрацюватиІнструментще ніВиконатидобре，будь ласкане робитиіснуютьколивпередпризначитиобслуговуваннясерединаВажкаскладнімелодіявикористовувати",
+                                    message = "入口窗口关闭未完成；本次工具未执行，请勿在当前任务中重复调用",
                                 )
                             else -> ToolExecutionDecision.Allow
                         }
@@ -296,7 +296,7 @@ internal class AgentRuntimeRunExecutor(
                             JSONObject()
                                 .put("ok", false)
                                 .put("code", "SUBAGENT_DISABLED")
-                                .put("message", "Subagent правильнообмеженнявжезакритизакрити")
+                                .put("message", "Subagent 权限已关闭")
                                 .toString(),
                         )
                     } else if (call.name == AgentSubagentToolCatalog.PROFILE_TOOL_NAME) {
@@ -326,7 +326,7 @@ internal class AgentRuntimeRunExecutor(
                 rewriteReply = request.operation == AgentRuntimeWire.OP_REWRITE_REPLY,
                 compactOnly = request.operation == AgentRuntimeWire.OP_COMPACT,
                 onContextSnapshot = { snapshot ->
-                    // Стиснення запише підсумок історичної пам’яті, а останню пам’ять потрібно буде повторно додати в наступному раунді.
+                    // 压缩会把历史里的记忆写入摘要掉，下一轮需要重新注入最新记忆。
                     ConversationMemoryPins.forget(conversationId)
                     val committed = snapshot.copy(operationId = request.runId)
                     AgentRunCheckpointStore.saveContext(appContext, request.runId, committed)
@@ -369,12 +369,12 @@ internal class AgentRuntimeRunExecutor(
                 rewriteTargetMessageId = request.rewriteTargetMessageId,
             )
         } catch (throwable: Throwable) {
-            // Коли це не вдається, невідомо, чи історія завершена, і фіксований знімок пам’яті припинено; коли пам'ять залишається незмінною, повторно введений вміст є тим самим байтом за байтом.
+            // 失败时历史是否完整落盘不确定，放弃固定的记忆快照；记忆未变时重新注入的内容逐字节相同。
             ConversationMemoryPins.forget(memoryConversationId)
             cancelled = runController.isCancelled || throwable is AgentRunCancelledException
             val modelFailure = throwable as? AgentModelExecutionException
             val message = if (cancelled) {
-                "вжеСТІЙкінець"
+                "已停止"
             } else {
                 throwable.message ?: throwable.javaClass.simpleName
             }

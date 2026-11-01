@@ -5,13 +5,13 @@ import io.github.mangi.eta.agent.model.AgentModelClient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-/** Надавати вбудований попередній перегляд лише для застарілих клієнтів, які не розпізнають повне поле корисного навантаження; заборонено для зберігання або нових запитів моделі.*/
+/** 仅为不认识完整载荷字段的旧客户端提供内联预览；禁止用于存储或新模型请求。 */
 internal object AgentLegacyConversationProjection {
     const val DIRECT_CHARS = 96_000
     const val DRAIN_CHARS = 16_000
     private val json = Json { encodeDefaults = false }
     private const val COMPACTION_NOTICE =
-        "[Eta начальникавнизмистецтванестиПоказати：цевпередвідділточка assistant/tool запам'ятатизапистому щопоперекВведітьПроцедураабоутримуватидовгийзмінитиДозволитикількістьначальникаобмеженнявжепресаскорочуватися，будь ласкане робитиПідробкаЗвичайновідсутністьвтратитикроккрокще ніВиконатидобре。]"
+        "[Eta 上下文提示：此前部分 assistant/tool 记录因跨进程或持久化容量上限已压缩，请勿假定缺失步骤未执行。]"
 
     fun encode(
         messages: List<AgentModelClient.ConversationMessage>,

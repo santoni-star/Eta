@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.device
 
 import kotlin.math.abs
 
-/** Перетворення зміщення вузла екрану в зміщення позиції прокрутки; напрямок руху вмісту протилежний напрямку положення прокручування.*/
+/** 把屏幕节点位移转换成滚动位置位移；内容移动方向与滚动位置方向相反。 */
 internal object RootScrollMotionContract {
     fun inferScrollDelta(
         contentAxisDeltas: List<Int>,

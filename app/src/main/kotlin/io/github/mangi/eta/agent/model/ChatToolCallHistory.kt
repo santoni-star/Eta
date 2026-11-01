@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Виправлення ідентифікатора в репліці запиту чату не записує постійну історію, приймаються лише повні й однозначні обміни інструментами.*/
+/** Chat 请求副本中的 ID 修复不回写持久历史，只接受完整且无歧义的工具交换。 */
 internal object ChatToolCallHistory {
     fun referencedIds(messages: JSONArray): Set<String> = buildSet {
         for (index in 0 until messages.length()) {
@@ -38,7 +38,7 @@ internal object ChatToolCallHistory {
                     pair.result.put("tool_call_id", replacement)
                 }
             }
-            // Неоднозначні партії залишаються недоторканими, і їх існуючі ідентифікатори не можна повторно використовувати для наступних ремонтних партій.
+            // 歧义批次保持原样，其已有 ID 仍不能与后续可修复批次重用。
             for (callIndex in 0 until calls.length()) {
                 calls.optJSONObject(callIndex)?.nonBlankString("id")?.let(seenCallIds::add)
             }

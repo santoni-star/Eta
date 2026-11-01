@@ -91,7 +91,7 @@ internal class DisplaySoundControls(
         val percent = PhoneOperation.integer(args, "percent", 0, 100).toInt()
         val before =
             brightness()
-                ?: return DeviceToolContract.failure("BRIGHTNESS_UNAVAILABLE", "цеКраваткасистеманемаєвідділенняутримуватиможеЗалежить відзСотняточкаПорівняйтеЯскравийвитрачатизловитирот")
+                ?: return DeviceToolContract.failure("BRIGHTNESS_UNAVAILABLE", "此系统不支持可靠的百分比亮度接口")
         val result = execute("cmd display set-brightness $percent --unit percentage")
         val after = brightness()
         val verified = result.ok && after != null && abs(after - percent) <= 1.0
@@ -132,7 +132,7 @@ internal class DisplaySoundControls(
         val mode = PhoneOperation.text(args, "mode", true, 20)
         val expected =
             mapOf("off" to 0, "priority" to 1, "silent" to 2, "alarms" to 3)[mode]
-                ?: PhoneOperation.error("INVALID_ARGUMENT", "не робититурбуватицвільРежимнемаєефект")
+                ?: PhoneOperation.error("INVALID_ARGUMENT", "勿扰模式无效")
         val command =
             mapOf(
                     "off" to "all",

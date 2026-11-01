@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.model
 
-/** Інструменти, які позначають необроблені параметри або результати як заборонені до постійного сеансу.*/
+/** 标记原始参数或结果不得进入持久会话的工具。 */
 internal object AgentSensitiveToolPolicy {
     fun isSensitive(toolName: String): Boolean =
         toolName.startsWith("mcp_") || toolName in sensitiveTools || toolName in io.github.mangi.eta.agent.context.PersonalSearchTools.names || toolName in AgentPhoneToolCatalog.names

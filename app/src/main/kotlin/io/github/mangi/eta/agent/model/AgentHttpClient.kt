@@ -4,9 +4,9 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 /**
- * Модуль глобального клієнта OkHttp.
+ * 模块全局 OkHttp 客户端。
  *
- * Потоки моделі спільно використовують пул з’єднань зі звичайними запитами HTTP, але політики очікування читання та повторних спроб встановлюються незалежно.
+ * 模型流与普通 HTTP 请求共享连接池，但独立设置读取等待与重试策略。
  */
 internal object AgentHttpClient {
 

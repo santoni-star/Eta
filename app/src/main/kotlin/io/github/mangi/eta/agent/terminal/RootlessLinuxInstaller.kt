@@ -12,7 +12,7 @@ import kotlin.coroutines.coroutineContext
 
 internal class RootlessInstallFailure(val code: String, override val message: String) : IOException(message)
 
-/** Право власності на rootfs завжди є UID програми; розпакування не створює вузлів пристроїв і не переходить за посиланнями в архіві для запису файлів.*/
+/** rootfs 的归属始终是 App UID；解包不创建设备节点，也不跟随归档中的链接写文件。 */
 internal object RootlessLinuxInstaller {
     private const val MAX_EXPANDED_BYTES = 3L * 1024 * 1024 * 1024
     private const val MAX_ENTRIES = 200_000
@@ -29,10 +29,10 @@ internal object RootlessLinuxInstaller {
                 while (true) {
                     coroutineContext.ensureActive()
                     val entry = tar.nextEntry ?: break
-                    require(++entries <= MAX_ENTRIES) { "поверненняфайлисмужкаГоловаПасбагато" }
+                    require(++entries <= MAX_ENTRIES) { "归档条目过多" }
                     val path = normalizedArchivePath(entry.name, stripComponents) ?: continue
                     val target = safePath(root, path)
-                    require(entry.size >= 0 && entry.size <= MAX_EXPANDED_BYTES - bytes) { "поверненняфайливиставкаВІДЧИНЕНОвеликийМаленькийобганятиобмеження" }
+                    require(entry.size >= 0 && entry.size <= MAX_EXPANDED_BYTES - bytes) { "归档展开大小超限" }
                     bytes += entry.size
                     when {
                         entry.isDirectory -> require(target.mkdirs() || target.isDirectory)
@@ -42,7 +42,7 @@ internal object RootlessLinuxInstaller {
                             require(!Files.isSymbolicLink(target.toPath()))
                             val available = root.usableSpace
                             if (available > 0 && entry.size + 16L * 1024 * 1024 > available) {
-                                throw RootlessInstallFailure("INSUFFICIENT_STORAGE", "житизберігатинульовийміжнемаєстопа，будь ласкаяснопричинаВсерединівідділжитизберігатиназадВажкаспробувати")
+                                throw RootlessInstallFailure("INSUFFICIENT_STORAGE", "存储空间不足，请清理内部存储后重试")
                             }
                             target.outputStream().use { output ->
                                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -50,7 +50,7 @@ internal object RootlessLinuxInstaller {
                                 while (remaining > 0) {
                                     coroutineContext.ensureActive()
                                     val count = tar.read(buffer, 0, minOf(buffer.size.toLong(), remaining).toInt())
-                                    if (count < 0) throw IOException("поверненняфайлиВсерединіДозволитинемаєзакінченовсе")
+                                    if (count < 0) throw IOException("归档内容不完整")
                                     output.write(buffer, 0, count)
                                     remaining -= count
                                 }
@@ -59,12 +59,12 @@ internal object RootlessLinuxInstaller {
                             if (entry.mode and 0b001001001 != 0) require(target.setExecutable(true, false))
                         }
                         entry.isCharacterDevice || entry.isBlockDevice || entry.isFIFO -> Unit
-                        else -> throw IOException("немаєвідділенняутримуватизповерненняфайлисмужкаГолова")
+                        else -> throw IOException("不支持的归档条目")
                     }
                 }
             }
         }
-        // Посилання розміщується останнім; наступні записи в архіві не можуть використовувати посилання для перезапису файлів поза середовищем.
+        // 链接最后落盘；归档后续条目无法借链接覆盖环境外的文件。
         val pendingHardlinks = links.filter { it.third }.toMutableList()
         while (pendingHardlinks.isNotEmpty()) {
             var resolved = false
@@ -75,45 +75,45 @@ internal object RootlessLinuxInstaller {
                 val source = safePath(root, requireNotNull(normalizedArchivePath(linkName, stripComponents)))
                 if (!source.isFile || Files.isSymbolicLink(source.toPath())) continue
                 require(target.parentFile!!.mkdirs() || target.parentFile!!.isDirectory)
-                require(!Files.exists(target.toPath(), LinkOption.NOFOLLOW_LINKS)) { "Важкаскладніповерненняфайлидорогашлях" }
+                require(!Files.exists(target.toPath(), LinkOption.NOFOLLOW_LINKS)) { "重复归档路径" }
                 Files.createLink(target.toPath(), source.toPath())
                 iterator.remove()
                 resolved = true
             }
-            require(resolved) { "поверненняфайливажколанцюгзловитиГоловазнакнемаєжитиіснуютьабоформустатислідуватикільце" }
+            require(resolved) { "归档硬链接目标不存在或形成循环" }
         }
         links.filterNot { it.third }.forEach { (target, linkName) ->
             coroutineContext.ensureActive()
             require('\u0000' !in linkName && linkName.isNotEmpty())
             val source = if (linkName.startsWith('/')) File(root, linkName.removePrefix("/")) else File(target.parentFile, linkName)
             val normalized = source.toPath().normalize()
-            require(normalized.startsWith(root.toPath())) { "поверненняфайлиланцюгзловитихрестикмежа" }
+            require(normalized.startsWith(root.toPath())) { "归档链接越界" }
             require(target.parentFile!!.mkdirs() || target.parentFile!!.isDirectory)
-            require(!Files.exists(target.toPath(), LinkOption.NOFOLLOW_LINKS)) { "Важкаскладніповерненняфайлидорогашлях" }
+            require(!Files.exists(target.toPath(), LinkOption.NOFOLLOW_LINKS)) { "重复归档路径" }
             Files.createSymbolicLink(target.toPath(), target.parentFile!!.toPath().relativize(normalized))
         }
     }
 
     private fun normalizedArchivePath(raw: String, strip: Int): String? {
-        require(!raw.startsWith('/') && '\u0000' !in raw) { "поверненняфайлидорогашляхнемаєефект" }
+        require(!raw.startsWith('/') && '\u0000' !in raw) { "归档路径无效" }
         val segments = raw.split('/').filter { it.isNotEmpty() && it != "." }
-        require(segments.none { it == ".." }) { "поверненняфайлидорогашляххрестикмежа" }
+        require(segments.none { it == ".." }) { "归档路径越界" }
         return segments.drop(strip).joinToString("/").takeIf { it.isNotEmpty() }
     }
 
     private fun safePath(root: File, relative: String): File {
         val path = File(root, relative).canonicalFile
-        require(path.toPath().startsWith(root.toPath()) && path != root) { "поверненняфайлидорогашляххрестикмежа" }
+        require(path.toPath().startsWith(root.toPath()) && path != root) { "归档路径越界" }
         return path
     }
 
     suspend fun installBase(artifact: VerifiedArtifact, archive: File, rootfs: File, distribution: LinuxDistribution): Boolean {
         val staging = File(rootfs.parentFile, "rootfs.installing")
         try {
-            if (!staging.parentFile!!.mkdirs() && !staging.parentFile!!.isDirectory) throw RootlessInstallFailure("INSTALL_DIRECTORY_UNAVAILABLE", "немаєЗаконстворитивстановитикільцетериторіїГоловазапис，будь ласкаперевіритиперевіритиВсерединівідділжитизберігати")
+            if (!staging.parentFile!!.mkdirs() && !staging.parentFile!!.isDirectory) throw RootlessInstallFailure("INSTALL_DIRECTORY_UNAVAILABLE", "无法创建环境目录，请检查内部存储")
             val available = staging.parentFile!!.usableSpace
-            if (available in 1 until 512L * 1024 * 1024) throw RootlessInstallFailure("INSUFFICIENT_STORAGE", "встановитиупаковка Linux домалопотребахочуть 512 MB можевикористовуватиВсерединівідділжитизберігати，будь ласкаяснопричинаназадВажкаспробувати")
-            if (staging.exists() && !staging.deleteRecursively()) throw RootlessInstallFailure("STAGING_CLEANUP_FAILED", "немаєЗаконяснопричинаще нізакінченостативстановитиупаковка，будь ласкаВажкапочаток Eta назадВажкаспробувати")
+            if (available in 1 until 512L * 1024 * 1024) throw RootlessInstallFailure("INSUFFICIENT_STORAGE", "安装 Linux 至少需要 512 MB 可用内部存储，请清理后重试")
+            if (staging.exists() && !staging.deleteRecursively()) throw RootlessInstallFailure("STAGING_CLEANUP_FAILED", "无法清理未完成安装，请重启 Eta 后重试")
             extract(archive, staging, xz = distribution == LinuxDistribution.DEBIAN, stripComponents = if (distribution == LinuxDistribution.DEBIAN) 1 else 0)
             listOf("proc", "sys", "dev", "dev/shm", "workspace", "storage/emulated/0", "tmp", "usr/local/bin", "root").forEach { File(staging, it).mkdirs() }
             File(staging, "etc/resolv.conf").apply {
@@ -136,10 +136,10 @@ internal object RootlessLinuxInstaller {
             }
             File(staging, "usr/local/bin/${helper.first}").apply { writeText(helper.second + "\n"); setExecutable(true, false) }
             val result = InstallerShellRunner.run("/bin/sh -c ':'", 20, distribution.terminalEnvironment, staging.absolutePath)
-            if (result.exitCode != 0) throw RootlessInstallFailure("PROOT_START_FAILED", "відмовився Root Linux немаєЗаконпочатокрухатися（відступпозакод ${result.exitCode}），будь ласкаправильнорозпізнатизробитивикористовуватизавідділенняутримуватиз 64 бітналаштуватиПриготуйтеіВажкаспробувати")
+            if (result.exitCode != 0) throw RootlessInstallFailure("PROOT_START_FAILED", "免 Root Linux 无法启动（退出码 ${result.exitCode}），请确认使用受支持的 64 位设备并重试")
             File(staging, LinuxEnvironmentPaths.READY_MARKER).writeText("version=${artifact.version}\nsha256=${artifact.sha256}\nbackend=proot\n")
-            if (rootfs.exists()) throw RootlessInstallFailure("ENVIRONMENT_ALREADY_EXISTS", "вжезберегтиТримайтеОригіналкільцетериторіїГоловазапис，немаєЗаконкришкабудувати；будь ласкапершекерівництвопозаМісцепотребамистецтваштукЗновувпричинаще нізакінченостатизкільцетериторії")
-            if (!staging.renameTo(rootfs)) throw RootlessInstallFailure("ENVIRONMENT_ACTIVATION_FAILED", "немаєЗаконпочатоквикористовуватиновийкільцетериторії，будь ласкаперевіритиперевіритиВсерединівідділжитизберігатинульовийміжназадВажкаспробувати")
+            if (rootfs.exists()) throw RootlessInstallFailure("ENVIRONMENT_ALREADY_EXISTS", "已保留原环境目录，无法覆盖；请先导出所需文件再处理未完成的环境")
+            if (!staging.renameTo(rootfs)) throw RootlessInstallFailure("ENVIRONMENT_ACTIVATION_FAILED", "无法启用新环境，请检查内部存储空间后重试")
             return true
         } finally {
             if (staging.exists()) staging.deleteRecursively()

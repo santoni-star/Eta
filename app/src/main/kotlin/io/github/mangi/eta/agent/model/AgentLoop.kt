@@ -13,11 +13,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Чистий цикл оркестровки для одного запуску агента.
+ * 单次 Agent run 的纯编排循环。
  *
- * Відповідь помічника та його повна партія інструментів становлять хід;
- * Рульове керування вводиться лише після завершення повороту, і його неможливо імітувати, скасувавши мережу або закривши ресурси інструменту. Цикл не встановлює обмеження локального раунду,
- * Природним закінченням, скасуванням або помилковим припиненням моделі.
+ * 一次 assistant 响应及其完整工具批次构成一个 turn；
+ * steering 只在 turn 结束后注入，不能用取消网络或关闭工具资源来模拟。循环不设置本地轮次上限，
+ * 由模型自然结束、取消或错误终止。
  */
 internal class AgentLoop(
     private val config: AgentModelClient.ModelConfig,
@@ -95,7 +95,7 @@ internal class AgentLoop(
             runController.throwIfCancelled()
             if (purpose.allowsTools) appendPendingSteeringMessage()
 
-            // Підписаний ланцюжок інструментів успадковує префікс запиту, коли здійснюється виклик, і каталог оновлюється після завершення ланцюжка інструментів.
+            // 带签名的工具链沿用发出调用时的请求前缀，工具链完成后再刷新目录。
             val roundTools = if (SignedToolContext.hasPendingResponse(messages)) {
                 precedingTools ?: tools
             } else if (purpose.allowsTools) {
@@ -128,7 +128,7 @@ internal class AgentLoop(
                         if (!purpose.allowsTools && (providerEvent is ProviderEvent.HostedToolStarted ||
                                 providerEvent is ProviderEvent.SearchSuggestions ||
                                 providerEvent is ProviderEvent.BlockStart && providerEvent.kind == AssistantBlockKind.TOOL_CALL)) {
-                            throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "змінитиНапишітьповерненняскладнігодинацвільтипубудь ласкапроситизрозумівпрацюватиІнструмент，вжеСТІЙкінець；Оригіналповерненняскладніще нізмінитиЗміна。")
+                            throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "改写回复时模型请求了工具，已停止；原回复未改变。")
                         }
                         if (providerEvent is ProviderEvent.Usage) {
                             roundInputTokens = providerEvent.contextInputTokens ?: roundInputTokens
@@ -146,7 +146,7 @@ internal class AgentLoop(
                     if (purpose == ProviderRequestPurpose.CHAT) validateChatResponse(response.response)
                 }
             } finally {
-                // Повторні спроби в тому ж раунді все ще вимагають початкового спостереження; скріншоти видаляються після всього раунду.
+                // 同一回合的重试仍需原始观察；整个回合结束后才移除截图。
                 discardPendingToolImageMessage()
             }
             context.observeInputTokens(roundInputTokens)
@@ -157,10 +157,10 @@ internal class AgentLoop(
             val assistantMessage = providerResponse.assistantMessage
             val toolCalls = AgentConversationCodec.parseToolCalls(assistantMessage)
             if (!purpose.allowsTools && toolCalls.isNotEmpty()) {
-                throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "змінитиНапишітьповерненняскладнігодинацвільтипубудь ласкапроситизрозумівпрацюватиІнструмент，вжеСТІЙкінець；Оригіналповерненняскладніще нізмінитиЗміна。")
+                throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "改写回复时模型请求了工具，已停止；原回复未改变。")
             }
             if (purpose == ProviderRequestPurpose.REPLY_REWRITE && providerResponse.stopReason != AssistantStopReason.END_TURN) {
-                throw AgentModelFailure("REPLY_REWRITE_INCOMPLETE", false, "цвільтипуще ніповерненняповерненнязакінченовсеззмінитиНапишітьповерненняскладні；Оригіналповерненняскладніще нізмінитиЗміна。")
+                throw AgentModelFailure("REPLY_REWRITE_INCOMPLETE", false, "模型未返回完整的改写回复；原回复未改变。")
             }
             val assistantReasoning = assistantMessage.optString("reasoning_content")
             if (
@@ -199,7 +199,7 @@ internal class AgentLoop(
 
             publishTranscript()
 
-            // Перевірте рульове управління ще раз, коли помічник закінчиться природним чином. Таким чином додаткове повідомлення не втратить щойно завершену відповідь.
+            // assistant 已自然结束时再检查 steering。这样补充消息不会丢掉刚完成的回答。
             if (purpose.allowsTools && appendPendingSteeringOrSeal()) {
                 round += 1
                 continue
@@ -208,7 +208,7 @@ internal class AgentLoop(
             val content = assistantMessage.optString("content").trim()
             if (content.isBlank() || content == "null") {
                 val finishReason = assistantMessage.optString("finish_reason")
-                error("цвільтипузловитиротнемає $round колесоповерненняповерненнядлянульовий${finishReason.takeIf { it.isNotBlank() }?.let { "：$it" }.orEmpty()}")
+                error("模型接口第 $round 轮返回为空${finishReason.takeIf { it.isNotBlank() }?.let { "：$it" }.orEmpty()}")
             }
 
             publishTranscript()
@@ -223,9 +223,9 @@ internal class AgentLoop(
     }
 
     /**
-     * Відхилення або фільтрування скорочують відповідь у середині потоку, і половина тексту, блоки думок і виклики інструментів не можуть увійти в контекст:
-     * Продовження запиту з урізаним блоком підпису буде розцінено висхідним потоком як зміна блоку мислення та призведе до 400 для кожного наступного раунду того самого сеансу.
-     * Таким чином, історія не записується, інструмент не виконується, а поточний запуск завершується безпосередньо, і користувач переписує запит або змінює модель.
+     * 拒答或过滤会在流中途截断回复，半截正文、思考块和工具调用都不能进入上下文：
+     * 带着被截断的签名块继续请求会被上游判定为改动了 thinking 块，同一会话随后每轮都会 400。
+     * 因此不写入 history、不执行工具，直接结束本次运行，由用户改写请求或换模型。
      */
     private fun rejectContentFilter(response: ProviderResponse) {
         if (response.stopReason != AssistantStopReason.CONTENT_FILTER) return
@@ -237,9 +237,9 @@ internal class AgentLoop(
             "MODEL_CONTENT_FILTER",
             false,
             buildString {
-                append("цвільтипуОдягобслуговуваннябізнесбарвирізатизрозумівкнигаДругосортнийповерненняскладні，ще нізакінченостатизВсерединіДозволитивжезалишитипокинутий。")
-                explanation?.let { append("Одягобслуговуваннябізнеспояснитияскравий：").append(it) }
-                append("будь ласкабудуватизмінитиабовидалитивидалитидотикволоссябарвирізатизбудь ласкапроситиназадВажкаспробувати，абоЗмінавикористовуватищовінцвільтипу。")
+                append("模型服务商拦截了本次回复，未完成的内容已丢弃。")
+                explanation?.let { append("服务商说明：").append(it) }
+                append("请修改或删除触发拦截的请求后重试，或换用其他模型。")
             },
         )
     }
@@ -251,8 +251,8 @@ internal class AgentLoop(
         if (content.isNotBlank() && content != "null") return
         throw when (response.stopReason) {
             AssistantStopReason.OUTPUT_LIMIT ->
-                AgentModelFailure("MODEL_OUTPUT_LIMIT", false, "цвільтипувтратитипозаЛобвитрачативжеспоживативихлопалеще нінародивсястатипростомистецтва，будь ласкаперевіритиперевіритивтратитипозаначальникаобмеженняабопадінняНизькийдумаюТестпотужнийвитрачати。")
-            else -> AgentModelFailure("MODEL_EMPTY_RESPONSE", false, "цвільтипуще ніповерненняповерненняпростомистецтваабопрацюватиІнструментмелодіявикористовувати，будь ласкаперевіритиперевіритиОдягобслуговуваннябізнесформустан。")
+                AgentModelFailure("MODEL_OUTPUT_LIMIT", false, "模型输出额度已耗尽但未生成正文，请检查输出上限或降低思考强度。")
+            else -> AgentModelFailure("MODEL_EMPTY_RESPONSE", false, "模型未返回正文或工具调用，请检查服务商状态。")
         }
     }
 
@@ -271,7 +271,7 @@ internal class AgentLoop(
     }
 
     private fun steeringPrompt(supplement: String): String =
-        "використовуватипобутовіремонтзарядзвертатися дозробити：$supplement\n\nбудь ласкабазанаколивпередпризначитиобслуговуванняначальникавнизмистецтваслідуватиПродовженняВиконатидобре，немаєхочутьвідголоваВажкаскладнівжечереззакінченостатиабовжечерезтестсертифікатПасзТримайтеробити。"
+        "用户补充指令：$supplement\n\n请基于当前任务上下文继续执行，不要从头重复已经完成或已经验证过的操作。"
 
     private fun steeringMessage(supplement: String): JSONObject =
         AgentConversationCodec.userTextMessage(steeringPrompt(supplement))
@@ -287,11 +287,11 @@ internal class AgentLoop(
                 when (stopReason) {
                     AssistantStopReason.OUTPUT_LIMIT -> rejectedToolOutcome(
                         round, call, "TRUNCATED_TOOL_CALL",
-                        "цвільтипувтратитипозадосяжністьприбутидовговитрачатиначальникаобмеження，працюватиІнструментженьшеньномерможездатнийнемаєзакінченовсе；книгаДругосортниймелодіявикористовуватище ніВиконатидобре，будь ласкаВажкановийнестиплатитизакінченовсеженьшеньномер。",
+                        "模型输出达到长度上限，工具参数可能不完整；本次调用未执行，请重新提交完整参数。",
                     )
                     else -> rejectedToolOutcome(
                         round, call, "UNEXPECTED_TOOL_CALL",
-                        "цвільтипуіснують ${stopReason.name} кінецькінецьформустанвнизповерненняповерненнязрозумівпрацюватиІнструментмелодіявикористовувати；книгапартіямелодіявикористовуватище ніВиконатидобре，будь ласкаВажкановийрегулюваннярядок。",
+                        "模型在 ${stopReason.name} 终止状态下返回了工具调用；本批调用未执行，请重新规划。",
                     )
                 }
             }
@@ -354,7 +354,7 @@ internal class AgentLoop(
                                     content = JSONObject()
                                         .put("ok", false)
                                         .put("code", "SUBAGENT_CANCELLED")
-                                        .put("message", "вжеСТІЙкінець")
+                                        .put("message", "已停止")
                                         .toString(),
                                 )
                             } else {
@@ -394,7 +394,7 @@ internal class AgentLoop(
                 round = round,
                 toolCall = toolCall,
                 code = "TOOL_NOT_AVAILABLE",
-                message = "працюватиІнструментще нііснуютькнигаколесоздатнийсилаГоловазаписсерединанестидля，будь ласказробитивикористовуватиколивпередможевикористовуватипрацюватиІнструмент",
+                message = "工具未在本轮能力目录中提供，请使用当前可用工具",
             )
         }
         val roundCall = if (toolCall.round == round) toolCall else toolCall.copy(round = round)
@@ -479,13 +479,13 @@ internal class AgentLoop(
         round: Int,
         outcomes: List<ToolOutcome>,
     ) {
-        // Кожен готовий результат розміщується негайно; зображення все ще розміщуються після повної партії інструментів.
+        // 每个已完成结果立即落盘；图片观察仍统一放在完整工具批次之后。
         val imageOutcomes = outcomes.filter { outcome -> outcome.result.images.isNotEmpty() }
         if (imageOutcomes.isEmpty()) {
             return
         }
 
-        // Скріншоти інструментів – це миттєві спостереження, а не ресурси сеансу. Видалити відразу після наступного використання думки.
+        // 工具截图是瞬时观察，不是会话资产。下一次思考消费后立即删除。
         discardPendingToolImageMessage()
         val images = imageOutcomes.flatMap { outcome -> outcome.result.images }
         val toolNames = imageOutcomes

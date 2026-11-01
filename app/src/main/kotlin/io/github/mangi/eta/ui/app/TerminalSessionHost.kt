@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-/** Термінальні сесії належать до запущених завдань; Реконструкція активності або вихід лише відключає інтерфейс і не припиняє процес, запущений користувачем.*/
+/** 终端会话属于运行任务；Activity 重建或退出只断开界面，不终止用户启动的进程。 */
 internal class TerminalSessionHost private constructor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     val terminal = UserTerminalStore(context.applicationContext, scope)
@@ -23,7 +23,7 @@ internal class TerminalSessionHost private constructor(context: Context) {
     }
 }
 
-/** Спочатку отримайте кваліфікацію виконання на передньому плані, а потім прив’яжіть сеанс після встановлення процесу, охоплюючи стан змагання між двома, коли користувач натискає кнопку зупинки.*/
+/** 先取得前台执行资格，进程建立后再绑定 session，覆盖两者之间用户按停止的竞态。 */
 internal class TerminalSessionLease private constructor(
     private val id: String,
     private val onStop: (String) -> Unit,

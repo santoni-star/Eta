@@ -20,8 +20,8 @@ internal class AgentRunMessageProjector(
     private val thinkingStartedAt = mutableMapOf<String, Long>()
 
     /**
-     * Проекція подій до повідомлень, спільна додатком і плаваючим шаром системного помічника. Події без видимих ​​змін повертають той самий список без змін,
-     * Абонент пропускає збереження та оновлення позначки часу відповідно; положення вставки та збереження додаткового введення визначаються абонентом і тут не обробляються.
+     * App 与系统助手浮层共用的事件到消息投影。无可见变化的事件原样返回同一列表，
+     * 调用方据此跳过保存与时间戳更新；补充输入的插入位置与持久化由调用方决定，这里不处理。
      */
     fun applyEvent(
         runId: String,
@@ -97,8 +97,8 @@ internal class AgentRunMessageProjector(
     }
 
     /**
-     * Лише поповнюйте використання маркера, не торкайтеся isStreaming: подія використання відразу слідує за кінцем текстового блоку,
-     * Повернення до потокового перегляду призведе до повторного перемикання візуалізації між потоковим/статичним переглядом і повторного відтворення всього розділу.
+     * 只补充 token 用量，不触碰 isStreaming：用量事件紧跟文本块结束，
+     * 改回流式会让渲染在流式/静态视图间反复切换并整段重渲染。
      */
     private fun attachUsage(
         runId: String,
@@ -116,7 +116,7 @@ internal class AgentRunMessageProjector(
         }
     }
 
-    /** Відтворення перебудовується з порожньої доріжки цього запуску; лише додаткові входи з подіями повтору змінюються, входи, унікальні для старої передачі обслуговування, повинні бути збережені.*/
+    /** 回放从该 run 的空轨迹重建；仅重排有回放事件的补充输入，旧 handoff 独有的输入必须保留。 */
     fun resetForReplay(
         runId: String,
         messages: List<AgentChatMessageUi>,
@@ -298,7 +298,7 @@ internal class AgentRunMessageProjector(
             }
         }
 
-    /** Кінцевий стан не залежить від завершення всіх кінцевих подій кожного блоку; коли результат інструменту відсутній, його можна лише позначити як невідомий, і неможливо зробити висновок про успішне виконання.*/
+    /** 终态不依赖各块结束事件全部到齐；缺少工具结果时只能标为未知，不能推断执行成功。 */
     fun finalizeRun(runId: String, messages: List<AgentChatMessageUi>): List<AgentChatMessageUi> =
         finalizeText(runId, finalizeThinking(runId, messages)).map { message ->
             if (
@@ -364,8 +364,8 @@ internal class AgentRunMessageProjector(
         round: Int,
         messages: List<AgentChatMessageUi>,
     ): List<AgentChatMessageUi> {
-        // Виріжте кінцеві пробіли під час завершення: вивід моделі часто закінчується символом нового рядка, а рендеринг Markdown
-        // Вузол розриву рядка стає фіксованим інтервалом, утворюючи незрозумілий порожній рядок між основним текстом і наступними картками інструментів.
+        // 定稿时裁掉尾部空白：模型输出常以换行收尾，Markdown 渲染会把每个尾部
+        // 换行节点变成一段固定间距，在正文与后续工具卡片之间形成莫名的空行。
         return messages.map { message ->
             if (message is AgentMessageUi && isAssistantMessageForRound(message.id, runId, round)) {
                 message.copy(
@@ -405,8 +405,8 @@ internal class AgentRunMessageProjector(
         event: AgentEvent.ToolStarted,
         messages: List<AgentChatMessageUi>,
     ): List<AgentChatMessageUi> {
-        // Виконання інструменту відбувається після повного повернення відповідного блоку допоміжних інструментів; ви можете зберегти його, додавши безпосередньо зараз
-        // Послідовність інструкцій перед використанням інструменту в режимі реального часу, дій інструменту та результатів наступного циклу.
+        // 工具执行发生在对应 assistant 工具块完整返回之后；此时直接追加即可保留
+        // 工具前说明、工具活动与下一轮结果的真实时间顺序。
         val message = ToolActivityMessageUi(
             id = toolActivityMessageId(runId, event.round, event.toolCallId),
             toolName = event.name,
@@ -424,7 +424,7 @@ internal class AgentRunMessageProjector(
         messages: List<AgentChatMessageUi>,
     ): List<AgentChatMessageUi> {
         val targetId = toolActivityMessageId(runId, event.round, event.toolCallId)
-        // Сфера успіху має пріоритет; старі версії подій Runtime/archive за замовчуванням повертаються до оцінки підсумкового тексту.
+        // success 字段优先；旧版本 Runtime/归档事件缺省时回退到摘要文本判断
         val status = when (event.success) {
             true -> ToolActivityStatusUi.Success
             false -> ToolActivityStatusUi.Failed
@@ -628,8 +628,8 @@ internal class AgentRunMessageProjector(
 
     companion object {
         /**
-         * Результат ручного стиснення має ту саму позначку на часовій шкалі, що й подія стиснення: позначка події вже містить дані до та після стиснення.
-         * Інформація про токени зберігається такою, якою вона є в разі успіху; він переписується або перезаписується лише тоді, коли він все ще виконується, не вдається або подія відсутня.
+         * 手动压缩 run 的结果与压缩事件共用同一条时间线标记：事件标记已携带压缩前后的
+         * token 信息，成功时原样保留；仍在进行中、失败或事件缺失时才改写或补写。
          */
         fun mergeCompactionResultNotice(
             runId: String,
@@ -659,7 +659,7 @@ internal class AgentRunMessageProjector(
             }
         }
 
-        /** Кінцевий стан може завершити відповідь лише після останньої повторної спроби та не може охопити половину результату, який було позначено як невдалий.*/
+        /** 终态只能补全最后一次重试之后的回答，不能覆盖已标记失败的半截输出。 */
         fun resultTargetIndex(
             runId: String,
             messages: List<AgentChatMessageUi>,
@@ -682,8 +682,8 @@ internal class AgentRunMessageProjector(
         }
 
         /**
-         * Доповніть останню відповідь кінцевим станом: напишіть текст, коли повідомлення має значення null, інакше замініть його системним запитом.
-         * Якщо в одному раунді є кілька текстових блоків, потоковий вміст завершено, а остаточний текст додається лише тоді, коли поточний блок порожній.
+         * 用终态补全最后一条回答：notice 为 null 时写入正文，否则替换为系统提示。
+         * 同一轮已有多个文本块时，流式内容已完整，终态正文只在当前块为空时补写。
          */
         fun applyResult(
             runId: String,

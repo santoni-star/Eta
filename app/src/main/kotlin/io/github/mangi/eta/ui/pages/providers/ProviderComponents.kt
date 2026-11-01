@@ -31,7 +31,7 @@ import io.github.mangi.eta.ui.components.providerBrandLogoRes as sharedProviderB
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** Стандартна комбінація назви групи + картки однаково використовується на сторінках, пов’язаних із постачальником.*/
+/** 分组标题 + 卡片的标准组合，Provider 相关页面统一使用。 */
 @Composable
 internal fun ProviderSection(
     title: String?,
@@ -53,7 +53,7 @@ internal fun ProviderSection(
     }
 }
 
-/** Оригінальний кольоровий значок виробника; ресурс уже містить фонову та безпечну область, придатну для кругового кадрування.*/
+/** 厂商品牌原色图标；资源已经包含适合圆形裁剪的背景与安全区。 */
 @Composable
 internal fun ProviderBrandIcon(
     sourceType: String,
@@ -86,7 +86,7 @@ internal fun providerBrandLogoRes(provider: ProviderSetting): Int? =
 internal fun providerBrandLogoRes(sourceType: String): Int? =
     sharedProviderBrandLogoRes(sourceType)
 
-/** Відомі постачальники використовують фірмові значки, невідомі джерела продовжують використовувати загальні значки за типом протоколу.*/
+/** 已知厂商使用品牌图标，未知来源继续按协议类型使用通用图标。 */
 @Composable
 internal fun ProviderIcon(
     provider: ProviderSetting,
@@ -114,7 +114,7 @@ internal fun ProviderIcon(
 
 internal enum class TagChipTone { Normal, Emphasized }
 
-/** Маленькі теги капсули, які використовуються для тегів здібностей і тегів статусу.*/
+/** 小胶囊标签，用于能力标签与状态标记。 */
 @Composable
 internal fun TagChip(
     text: String,

@@ -15,8 +15,8 @@ import io.github.mangi.eta.core.safeLogType
 import io.github.mangi.eta.ui.MainActivity
 
 /**
- * Служба відтворення на передньому плані читання чату: існує лише під час фактичного періоду розмови, що дозволяє програмі повернутися у фоновий режим або читати вголос після блокування екрана, не зависаючи системою.
- * Саме відтворення все ще утримується контролером сторінки чату; "stop" у сповіщенні повертається до контролера через [onStopRequested].
+ * 聊天朗读的前台播放服务：只在实际出声期间存在，让 App 退到后台或锁屏后朗读不被系统冻结。
+ * 播放本身仍由聊天页的控制器持有；通知上的“停止”经 [onStopRequested] 交回控制器。
  */
 internal class ReadAloudPlaybackService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
@@ -30,7 +30,7 @@ internal class ReadAloudPlaybackService : Service() {
         try {
             startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         } catch (failure: RuntimeException) {
-            // Якщо кваліфікацію реєстрації відхилено, читання все одно триватиме на передньому плані, але може бути призупинено системою, якщо воно відійде у фоновий режим.
+            // 前台资格被拒时朗读仍在前台继续，只是退到后台可能被系统暂停。
             AndroidAgentLogger.warn("Read-aloud foreground failed: type=${failure.safeLogType()}")
             stopSelf()
         }
@@ -67,10 +67,10 @@ internal class ReadAloudPlaybackService : Service() {
         private const val CHANNEL = "eta_read_aloud"
         private const val NOTIFICATION_ID = 4204
 
-        /** Зупинка введення поточного показання; одночасно є лише одне читання, і розпочате пізніше замінить попереднє.*/
+        /** 当前朗读的停止入口；同一时间只有一个朗读，后开始的会替换前一个。 */
         @Volatile private var onStopRequested: (() -> Unit)? = null
 
-        /** Викликається в момент, коли користувач клацає, щоб прочитати вголос. У цей час програма все ще працює на передньому плані, і службу переднього плану можна запустити.*/
+        /** 在用户点击朗读后的出声时刻调用，此时 App 仍在前台，可以启动前台服务。 */
         fun start(context: Context, onStop: () -> Unit) {
             onStopRequested = onStop
             try {

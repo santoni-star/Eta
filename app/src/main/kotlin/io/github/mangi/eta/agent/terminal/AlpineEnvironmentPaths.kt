@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.terminal
 import android.content.Context
 import java.io.File
 
-/** Шлях середовища інструменту Linux, яким керує Eta; внутрішні назви історичних пакетів не беруть участь у зовнішньому відображенні.*/
+/** Eta 管理的 Linux 工具环境路径；内部历史包名不参与对外展示。 */
 internal object AlpineEnvironmentPaths {
     const val READY_MARKER = LinuxEnvironmentPaths.READY_MARKER
     const val COMMON_TOOLS_MARKER = ".eta-common-tools-ready"
@@ -15,7 +15,7 @@ internal object AlpineEnvironmentPaths {
     const val TOOLSET_REVISION = 1
     const val APK_ANALYSIS_REVISION = 1
     const val PYTHON_TOOLS_REVISION = 1
-    // Редакція 2: специфікації Debian доповнено libatomic1. Якщо середовище готове, вам потрібно перевстановити його, щоб завершити встановлення залежностей.
+    // revision 2：Debian 规格补装 libatomic1，已就绪环境需重走安装补齐依赖。
     const val NODE_TOOLS_REVISION = 2
     const val SSH_TOOLS_REVISION = 1
     const val KIMI_TOOLS_REVISION = 1

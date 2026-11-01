@@ -15,7 +15,6 @@ import io.github.mangi.eta.core.safeLogType
 import io.github.mangi.eta.data.datastore.SettingsDataStore
 import io.github.mangi.eta.data.repository.AgentMemoryRepository
 import io.github.mangi.eta.data.repository.AppearanceSettingsRepository
-import io.github.mangi.eta.agent.model.AgentTraceFormatter
 import io.github.mangi.eta.data.repository.LanguageSettingsRepository
 import io.github.mangi.eta.data.repository.McpServerRepository
 import io.github.mangi.eta.data.repository.LinuxEnvironmentSettingsRepository
@@ -31,12 +30,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
- * Застосування процесу інтерфейсу користувача модуля.
+ * 模块 UI 进程的 Application。
  *
- * Зареєструйте слухач [XposedServiceHelper] під час запуску процесу, і фреймворк перешле підшивку через XposedProvider.
- * Потім користувальницький інтерфейс може отримати [XposedService] і записати його в RemotePreferences, а також синхронізувати між процесами для кожного процесу-перехоплювача.
+ * 在进程启动时注册 [XposedServiceHelper] 监听器，框架会通过 XposedProvider 推送 binder，
+ * 随后 UI 即可拿到 [XposedService] 写入 RemotePreferences，跨进程同步到各 hook 进程。
  *
- * Інтерфейс користувача записує RemotePreferences через [XposedService].
+ * UI 侧通过 [XposedService] 写入 RemotePreferences。
  */
 class EtaApp : Application(), XposedServiceHelper.OnServiceListener {
 
@@ -54,7 +53,6 @@ class EtaApp : Application(), XposedServiceHelper.OnServiceListener {
                     "Default app language unavailable: type=${error.safeLogType()}"
                 )
             }
-        AgentTraceFormatter.context = this
         Prefs.initLocal(this)
         if (!AppProcessPolicy.shouldInitializeFullRuntime(Application.getProcessName(), packageName)) {
             return
@@ -112,8 +110,8 @@ class EtaApp : Application(), XposedServiceHelper.OnServiceListener {
     }
 
     override fun onServiceDied(service: XposedService) {
-        // Очистити та відправити нуль лише тоді, коли служба, яка наразі підтримується, припиняється;
-        // У сценарії з кількома фреймворками мертвий екземпляр може бути старим екземпляром, який було замінено, не впливаючи на інтерфейс користувача.
+        // 只有当前持有的 service 死亡时才清空并派发 null；
+        // 多 framework 场景下死掉的可能是已被替换的旧实例，无需影响 UI。
         if (serviceInstance === service) {
             serviceInstance = null
             dispatch(null)

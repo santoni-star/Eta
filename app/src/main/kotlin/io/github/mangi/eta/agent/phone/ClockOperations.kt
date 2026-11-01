@@ -5,7 +5,7 @@ import android.os.Bundle
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Бізнес-інтерфейс годинника зберігає побічні ефекти планування, і його не можна замінити безпосередньою зміною бібліотеки.*/
+/** 时钟业务接口保留调度副作用，不能用直接改库代替。 */
 internal class ClockOperations(
     private val resolver: PhoneProviderAccess,
     userId: Int,
@@ -35,18 +35,18 @@ internal class ClockOperations(
             "update_alarm_time",
             "set_alarm_enabled",
             "delete_alarm" -> change(tool, args)
-            else -> PhoneOperation.failure("UNKNOWN_TOOL", "ще нізнатигодинадзвоникТримайтеробити")
+            else -> PhoneOperation.failure("UNKNOWN_TOOL", "未知时钟操作")
         }
 
     private fun call(method: String, extras: Bundle = Bundle()): Bundle {
         if (method != "get_alarm_list") onMutation()
         val result =
             resolver.call(uri, method, null, extras)
-                ?: PhoneOperation.error("CLOCK_UNAVAILABLE", "годинадзвоникще ніповерненняповерненняТримайтеробитивузолфрукти")
+                ?: PhoneOperation.error("CLOCK_UNAVAILABLE", "时钟未返回操作结果")
         if (!result.containsKey("result"))
-            PhoneOperation.error("CLOCK_RESULT_UNCONFIRMED", "годинадзвоникбезматиповерненняповерненняяскравийправильноформустан，будь ласкапершеперевіритиЗапитуйтевузолфрукти")
+            PhoneOperation.error("CLOCK_RESULT_UNCONFIRMED", "时钟没有返回明确状态，请先查询结果")
         if (result.getInt("result", -1) != 1)
-            PhoneOperation.error("CLOCK_OPERATION_REJECTED", "годинадзвониквідхилитиАбсолютноТримайтеробити，можездатнийще ніспробуйте знайтиприбутиГоловазнак、формустаннемаєматчматчабодосяжністьприбутиДозволитикількістьобмеженнясистема")
+            PhoneOperation.error("CLOCK_OPERATION_REJECTED", "时钟拒绝操作，可能未找到目标、状态不匹配或达到容量限制")
         return result
     }
 
@@ -54,12 +54,12 @@ internal class ClockOperations(
         if (!bundle.containsKey("alarm_id_list")) return emptyList()
         val ids =
             bundle.getLongArray("alarm_id_list")
-                ?: PhoneOperation.error("CLOCK_PROTOCOL_UNSUPPORTED", "годинадзвоникповерненняповерненняз ID видтипунемаєодночаснийДозволити")
+                ?: PhoneOperation.error("CLOCK_PROTOCOL_UNSUPPORTED", "时钟返回的 ID 类型不兼容")
         val hours = bundle.getIntArray("alarm_hour_list")
         val minutes = bundle.getIntArray("alarm_min_list")
         val enabled = bundle.getBooleanArray("alarm_state_list")
         if (hours?.size != ids.size || minutes?.size != ids.size || enabled?.size != ids.size)
-            PhoneOperation.error("CLOCK_PROTOCOL_UNSUPPORTED", "годинадзвоникповерненняповерненняззапам'ятатизаписхарактерчастинанемаєзакінченовсе")
+            PhoneOperation.error("CLOCK_PROTOCOL_UNSUPPORTED", "时钟返回的记录字段不完整")
         val labels = bundle.getStringArray("alarm_label_list")
         val repeats = bundle.getIntArray("alarm_repeat_set_list")
         val uuids = bundle.getStringArray("alarm_uuid_list")
@@ -81,14 +81,14 @@ internal class ClockOperations(
         val days =
             args.optJSONArray("repeat_days")
                 ?: if (args.has("repeat_days"))
-                    PhoneOperation.error("INVALID_ARGUMENT", "repeat_days повиненОбов'язковотакномерГрупа")
+                    PhoneOperation.error("INVALID_ARGUMENT", "repeat_days 必须是数组")
                 else JSONArray()
-        if (days.length() > 7) PhoneOperation.error("INVALID_ARGUMENT", "ВажкаскладнізіркаОчікуйтеномеркількістьнемаєефект")
+        if (days.length() > 7) PhoneOperation.error("INVALID_ARGUMENT", "重复星期数量无效")
         val bits =
             (0 until days.length())
                 .map {
                     dayBits[days.optString(it)]
-                        ?: PhoneOperation.error("INVALID_ARGUMENT", "ВажкаскладнізіркаОчікуйтенемаєефект")
+                        ?: PhoneOperation.error("INVALID_ARGUMENT", "重复星期无效")
                 }
                 .fold(0) { a, b -> a or b }
         val bundle =
@@ -120,7 +120,7 @@ internal class ClockOperations(
         val id = PhoneOperation.id(args, "alarm_id")
         val before =
             alarms().firstOrNull { it.optString("alarm_id") == id.toString() }
-                ?: PhoneOperation.error("ALARM_NOT_FOUND", "ще ніспробуйте знайтиприбутизвертатися доЗвичайношумнодзвоник")
+                ?: PhoneOperation.error("ALARM_NOT_FOUND", "未找到指定闹钟")
         val bundle = Bundle().apply { putLong("alarm_id", id) }
         val expected = JSONObject(before.toString())
         when (tool) {
@@ -130,7 +130,7 @@ internal class ClockOperations(
                 bundle.putInt("alarm_hour", hour)
                 bundle.putInt("alarm_minute", minute)
                 call("update_alarm", bundle)
-                // Рідний інтерфейс зміни часу увімкне будильник; відновіть початковий увімкнений стан, а потім перевірте ще раз, щоб уникнути випадкового ввімкнення старого будильника.
+                // 原生改时接口会启用闹钟；恢复原启用状态后再核对，避免意外启用旧闹钟。
                 if (!before.getBoolean("enabled"))
                     call(
                         "close_alarm",

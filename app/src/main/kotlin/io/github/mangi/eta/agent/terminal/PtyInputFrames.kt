@@ -1,9 +1,9 @@
 package io.github.mangi.eta.agent.terminal
 
 /**
- * Формат фрейму stdin для власних компонентів PTY: тип 1 байт + довжина старшого порядку байтів 2 байти + корисне навантаження.
- * stdin — це єдиний канал, який може обслуговувати як кореневий, так і звичайний процеси ідентифікації. Таким чином, термінальні байти та розмір вікна мають спільний доступ.
- * Розрізняється за типом кадру, щоб уникнути керуючих послідовностей, які можуть бути підроблені користувачем у потоці байтів терміналу.
+ * 原生 PTY 组件的 stdin 帧格式：1 字节类型 + 2 字节大端长度 + 载荷。
+ * stdin 是唯一能同时送达 Root 与普通身份进程的通道，终端字节与窗口尺寸因此共用它，
+ * 由帧类型区分，避免在终端字节流里夹带可被用户输入伪造的控制序列。
  */
 internal object PtyInputFrames {
     private const val TYPE_DATA = 0
@@ -11,7 +11,7 @@ internal object PtyInputFrames {
     private const val HEADER_SIZE = 3
     const val MAX_PAYLOAD = 4096
 
-    /** Термінальні вхідні байти; коли перевищено верхню межу одного кадру, він розбивається на безперервні кадри даних.*/
+    /** 终端输入字节；超出单帧上限时拆成连续数据帧。 */
     fun data(bytes: ByteArray): ByteArray {
         if (bytes.isEmpty()) return bytes
         val frameCount = (bytes.size + MAX_PAYLOAD - 1) / MAX_PAYLOAD
@@ -28,9 +28,9 @@ internal object PtyInputFrames {
         return out
     }
 
-    /** Розмір вікна; нативна сторона відхиляє значення понад 1..1000.*/
+    /** 窗口尺寸；原生侧拒绝超出 1..1000 的值。 */
     fun resize(rows: Int, cols: Int): ByteArray {
-        require(rows in 1..1000 && cols in 1..1000) { "кінецькінецьлінійкадюймобганятипозавентилятороточують" }
+        require(rows in 1..1000 && cols in 1..1000) { "终端尺寸超出范围" }
         val out = ByteArray(HEADER_SIZE + 4)
         val offset = writeHeader(out, 0, TYPE_RESIZE, 4)
         out[offset] = (rows ushr 8).toByte()

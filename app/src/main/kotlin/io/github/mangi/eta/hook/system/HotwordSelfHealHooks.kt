@@ -45,12 +45,12 @@ internal object HotwordSelfHealHooks {
                 hooks.skipped(
                     id = "system.hotword-screen-off",
                     description = "PhoneWindowManager.screenTurnedOff",
-                    detail = "ще ніспробуйте знайтиприбути PhoneWindowManager，СтрибокПас screenTurnedOff Hook"
+                    detail = "未找到 PhoneWindowManager，跳过 screenTurnedOff Hook"
                 )
                 hooks.skipped(
                     id = "system.hotword-screen-on",
                     description = "PhoneWindowManager.screenTurnedOn",
-                    detail = "ще ніспробуйте знайтиприбути PhoneWindowManager，СтрибокПас screenTurnedOn Hook"
+                    detail = "未找到 PhoneWindowManager，跳过 screenTurnedOn Hook"
                 )
                 return@install
             }
@@ -69,7 +69,7 @@ internal object HotwordSelfHealHooks {
                 ) { chain ->
                     val displayId = chain.getArg(0) as? Int ?: -1
                     val result = chain.proceed()
-                    // Вимкнення перемикача не відновить виявлення гарячих слів.
+                    // 开关关闭则不恢复热词检测。
                     if (displayId == 0 && Prefs.isEnabled(Prefs.Keys.HOTWORD_SELF_HEAL)) {
                         scheduleHotwordResume(chain.getThisObject(), logger)
                     }
@@ -79,7 +79,7 @@ internal object HotwordSelfHealHooks {
                 hooks.missing(
                     id = "system.hotword-screen-off",
                     description = "PhoneWindowManager.screenTurnedOff",
-                    detail = "ще ніспробуйте знайтиприбути PhoneWindowManager.screenTurnedOff(int, boolean)"
+                    detail = "未找到 PhoneWindowManager.screenTurnedOff(int, boolean)"
                 )
             }
 
@@ -105,7 +105,7 @@ internal object HotwordSelfHealHooks {
                 hooks.missing(
                     id = "system.hotword-screen-on",
                     description = "PhoneWindowManager.screenTurnedOn",
-                    detail = "ще ніспробуйте знайтиприбути PhoneWindowManager.screenTurnedOn(int)"
+                    detail = "未找到 PhoneWindowManager.screenTurnedOn(int)"
                 )
             }
         }
@@ -133,7 +133,7 @@ internal object HotwordSelfHealHooks {
             if (resumeGeneration.get() != generation) {
                 return@Runnable
             }
-            // Негайне завершення роботи: перемикач міг бути вимкнений користувачем, коли відкладене завдання було поставлено в чергу.
+            // 即时关闭：开关在延迟任务排队期间可能已被用户关闭。
             if (!Prefs.isEnabled(Prefs.Keys.HOTWORD_SELF_HEAL)) {
                 cancelPendingResume(resetCooldown = true)
                 return@Runnable
@@ -150,7 +150,7 @@ internal object HotwordSelfHealHooks {
             )
             if (resumed) {
                 cancelPendingResume(resetCooldown = false)
-                logger.debug { "ScreenOffHotwordSelfHeal: вжевідновитискладні Google м'якийштукгарячийсловоперевірититест" }
+                logger.debug { "ScreenOffHotwordSelfHeal: 已恢复 Google 软件热词检测" }
                 return@Runnable
             }
 

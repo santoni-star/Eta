@@ -49,7 +49,7 @@ internal data class MainActivityLaunchRequests(
         private const val STATE_KEY = "eta_pending_launch_requests"
 
         fun restore(savedInstanceState: Bundle?, intent: Intent?): MainActivityLaunchRequests {
-            // Система може зберегти початковий намір запуску; Порожні стани справ також мають бути збережені, щоб запобігти повторному відтворенню використаних стрибків після перебудови.
+            // 系统可能保留最初的启动 Intent；空的待办状态也必须保存，防止重建后重放已消费的跳转。
             val saved = savedInstanceState?.getBundle(STATE_KEY)
                 ?: return MainActivityLaunchRequests().accept(intent)
             val source = saved.getString("archive_source")

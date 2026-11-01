@@ -95,10 +95,10 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Інтерфейс конфігурації модуля.
+ * 模块配置界面。
  *
- * Значення перемикачів за замовчуванням однаково визначені [Prefs.Keys.BOOLEAN_DEFAULTS]. Власне використання Eta Runtime написання комутаторів
- * Локальна конфігурація програми; лише перемикачі, які використовує Hook, надсилаються до LSPosed через RemotePreferences.
+ * 开关默认值由 [Prefs.Keys.BOOLEAN_DEFAULTS] 统一定义。Eta Runtime 自己消费的开关写入
+ * App 本地配置；仅 Hook 消费的开关通过 RemotePreferences 提交到 LSPosed。
  */
 @Composable
 internal fun SettingsScreen(
@@ -123,7 +123,7 @@ private fun SettingsPageContent(
     var showSystemizerDialog by remember { mutableStateOf(false) }
     var installingSystemizer by remember { mutableStateOf(false) }
 
-    // Статус дозволу вікна призупинення: оновлюється під час повернення з налаштувань системи (ON_RESUME) після авторизації.
+    // 悬浮窗权限状态：授权后从系统设置返回时（ON_RESUME）刷新。
     var overlayGranted by remember {
         mutableStateOf(android.provider.Settings.canDrawOverlays(context))
     }
@@ -143,7 +143,7 @@ private fun SettingsPageContent(
         }
     }
 
-    // Про групу: інформація про версію та перевірка оновлень. Результуюче діалогове вікно відображається за межами списку, і стан потребує власника на рівні сторінки.
+    // 关于组：版本信息与更新检查。结果对话框在列表外渲染，状态需要页面级 owner。
     val appPackageInfo = remember {
         context.packageManager.getPackageInfo(context.packageName, 0)
     }
@@ -192,7 +192,7 @@ private fun SettingsPageContent(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Відображення стану вибраного постачальника/моделі
+    // Provider / Model 选中状态展示
     val providers by ProviderRepository.providersFlow().collectAsState(initial = emptyList())
     val selectedProviderId by RuntimeConfigRepository.selectedProviderIdFlow()
         .collectAsState(initial = null)
@@ -208,8 +208,8 @@ private fun SettingsPageContent(
         "${provider.name} / ${selectedModel?.displayName ?: stringResource(R.string.settings_model_not_selected)}"
     } ?: stringResource(R.string.settings_not_configured)
 
-    // prefs прив’язано до XposedService: перемикайтеся на RemotePreferences, коли служба надходить (міжпроцесне надсилання до
-    // база даних LSPosed); залишається нульовим, якщо не готовий, і інтерфейс користувача забороняє модифікацію.
+    // prefs 绑定到 XposedService：service 到达时切换到 RemotePreferences（跨进程提交到
+    // LSPosed 数据库）；未就绪时保持 null，UI 禁止修改。
     var prefs by remember { mutableStateOf(Prefs.remotePreferencesForUi(EtaApp.serviceInstance)) }
     val agentPrefs = remember { Prefs.localAgentPreferences() }
     var powerAssistantTarget by remember(prefs) {
@@ -253,7 +253,7 @@ private fun SettingsPageContent(
         title = stringResource(R.string.ui_set_up_7debf9),
         onBack = onBack,
     ) {
-            // ── LLM Provider ───────────────────────────────────────────────
+            // ── LLM 提供商 ──────────────────────────────────────────────
             item(key = "section_agent") {
                 EtaPreferenceGroupTitle(stringResource(R.string.settings_llm_providers))
                 EtaPreferenceGroup {
@@ -281,7 +281,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ── Контекст і розширення ───────────────────────────────────────────
+            // ── 上下文与扩展 ────────────────────────────────────────────
             item(key = "section_context_extensions") {
                 EtaPreferenceGroupTitle(stringResource(R.string.settings_context_extensions))
                 EtaPreferenceGroup {
@@ -344,7 +344,7 @@ private fun SettingsPageContent(
 
                     EtaPreferenceDivider()
                     EtaArrowPreference(
-                        title = "рігколір",
+                        title = "角色",
                         startAction = {
                             EtaPreferenceIcon(
                                 icon = Icons.Rounded.SportsBar,
@@ -356,7 +356,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ──Інструменти───────────────────────────────────────────────────
+            // ── 工具 ───────────────────────────────────────────────────
             item(key = "section_tools") {
                 EtaPreferenceGroupTitle(stringResource(R.string.ui_tool_a72ef1))
                 EtaPreferenceGroup {
@@ -452,7 +452,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ── Системний помічник бере на себе ────────────────────────────────────────────
+            // ── 系统助手接管 ──────────────────────────────────────────────
             item(key = "section_assistant_takeover") {
                 EtaPreferenceGroupTitle(stringResource(R.string.ui_system_assistant_takes_over_f46043))
                 EtaPreferenceGroup {
@@ -516,7 +516,7 @@ private fun SettingsPageContent(
             }
 
             if (prefs != null || hasConnectedFramework) {
-                // ──Введення сумісності Manufacturer Assistant──────────────────────────────────────────
+                // ── 厂商助手兼容入口 ──────────────────────────────────────────
                 item(key = "section_oem_assistant_compatibility") {
                     EtaPreferenceGroupTitle(stringResource(R.string.ui_xiaobu_xiaoai_compatible_entrance_ae918a))
                     EtaPreferenceGroup {
@@ -608,7 +608,7 @@ private fun SettingsPageContent(
             }
 
             if (prefs != null || hasConnectedFramework) {
-                // ── Пошук в одному колі ─────────────────────────────────────────────
+                // ── 一圈即搜 ────────────────────────────────────────────────
                 item(key = "section_circle_to_search") {
                     EtaPreferenceGroupTitle(stringResource(R.string.ui_search_in_one_turn_179584))
                     EtaPreferenceGroup {
@@ -634,7 +634,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ──Загальні положення ────────────────────────────────────────────────────
+            // ── 通用 ────────────────────────────────────────────────────
             item(key = "section_general") {
                 EtaPreferenceGroupTitle(stringResource(R.string.settings_general))
                 EtaPreferenceGroup {
@@ -672,7 +672,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ── Дозволи ───────────────────────────────────────────────────
+            // ── 权限 ────────────────────────────────────────────────────
             item(key = "section_permissions") {
                 EtaPreferenceGroupTitle(stringResource(R.string.ui_permissions_560165))
                 EtaPreferenceGroup {
@@ -788,7 +788,7 @@ private fun SettingsPageContent(
                 }
             }
 
-            // ──Про ───────────────────────────────────────────────────
+            // ── 关于 ────────────────────────────────────────────────────
             item(key = "section_about") {
                 EtaPreferenceGroupTitle(stringResource(R.string.ui_about_bed172))
                 EtaPreferenceGroup {
@@ -902,7 +902,7 @@ private fun SettingsPageContent(
         }
 }
 
-// ── Діалогове вікно систематичного підтвердження ──────────────────────────────────────────────────────
+// ── 系统化确认对话框 ─────────────────────────────────────────────────────────
 
 @Composable
 private fun SystemizerConfirmDialog(
@@ -931,13 +931,13 @@ private fun SystemizerConfirmDialog(
     }
 }
 
-// ── Логічний перемикач із піктограмою ──────────────────────────────────────────────────────
+// ── 带图标的布尔开关 ─────────────────────────────────────────────────────────
 
 /**
- * Один логічний перемикач: статус перечитується, коли змінюються [prefs]/[key], і записується синхронно під час перемикання.
+ * 单个布尔开关：状态随 [prefs]/[key] 变化重读，切换时同步写入。
  *
- * Джерело конфігурації передається абонентом відповідно до межі можливостей. Перемикач гачка може все ще бути вимкненим через те, що LSPosed не підключено; Агент
- * Перемикач середовища виконання завжди використовує локальну конфігурацію програми.
+ * 配置来源由调用方按能力边界传入。Hook 开关仍可能因 LSPosed 未连接而禁用；Agent
+ * Runtime 开关始终使用 App 本地配置。
  */
 @Composable
 private fun SwitchPref(
@@ -970,8 +970,8 @@ private fun SwitchPref(
         summary = summary,
         checked = checked,
         onCheckedChange = { value ->
-            // Синхронна подача; відкочувати стан інтерфейсу користувача, коли RemotePreferences.commit() не вдається (не вдається подати підшивку),
-            // Це дозволяє уникнути інтерфейсу користувача, який показує, що перемикання було зроблено, але процес підключення фактично не отримав його.
+            // 同步提交；RemotePreferences.commit() 失败（binder 提交失败）时回滚 UI 状态，
+            // 避免 UI 显示已切换而 hook 进程实际未收到。
             val targetPrefs = prefs ?: return@EtaSwitchPreference
             if (putBooleanSync(targetPrefs, key, value)) {
                 checked = value
@@ -995,9 +995,9 @@ private fun SwitchPref(
 }
 
 /**
- * Записувати логічні значення синхронно. [commit] RemotePreferences спочатку оновлює карту цього процесу, а потім очікує на синхронне надсилання підшивки.
- * Помилка (binder RemoteException) повертає false, але карту цього процесу було перезаписано - процес підключення не може зараз отримати нове значення.
- * Повертає, чи подання було успішним для абонента, щоб вирішити, чи оновлювати інтерфейс користувача.
+ * 同步写入布尔值。RemotePreferences 的 [commit] 先更新本进程 map 再同步等待 binder 提交，
+ * 失败（binder RemoteException）返回 false 但本进程 map 已被改写——此时 hook 进程收不到新值。
+ * 返回是否提交成功，供调用方决定是否更新 UI。
  */
 private fun putBooleanSync(
     prefs: SharedPreferences,

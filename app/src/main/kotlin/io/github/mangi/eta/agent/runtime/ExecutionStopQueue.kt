@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.runtime
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/** Знищення служби закриває лише нові подання; зворотний виклик зупинки, який було прийнято, має бути виконано та не може бути скасовано разом із службовою співпрограмою.*/
+/** 服务销毁只封闭新提交；已经接纳的停止回调必须执行完，不能随服务协程一起取消。 */
 internal class ExecutionStopQueue(
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "eta-execution-stop").apply { isDaemon = true }

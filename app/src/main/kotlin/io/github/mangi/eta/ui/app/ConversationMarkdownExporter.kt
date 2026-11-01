@@ -15,8 +15,8 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Експорт сеансу: проектуйте потік повідомлень у пам’яті в самостійний документ Markdown.
- * Увесь копірайтинг впроваджується абонентом, зберігаючи його локалізованим і тестованим на чистому JVM.
+ * 会话导出：把内存消息流投影为自持的 Markdown 文档。
+ * 文案全部由调用方注入，保持可本地化、可纯 JVM 测试。
  */
 internal object ConversationMarkdownExporter {
 
@@ -38,7 +38,7 @@ internal object ConversationMarkdownExporter {
         val noticeModelRetry: String,
         val noticeRuntimeFailed: String,
         val noticeInterrupted: String,
-        val noticeContextCompaction: String = "начальникавнизмистецтвапресаскорочуватися",
+        val noticeContextCompaction: String = "上下文压缩",
     ) {
         fun toolStatus(status: ToolActivityStatusUi): String = when (status) {
             ToolActivityStatusUi.Running -> toolStatusRunning
@@ -98,7 +98,7 @@ internal object ConversationMarkdownExporter {
                 append("\n\n- ").append(reference.absolutePath)
             }
             if (images.isNotEmpty()) {
-                // Зображення в повідомленні є URL-адресою даних розміром Мб. В експорті зберігається лише опис кількості.
+                // 图片在消息里是 data URL，体积达 MB 级，导出只保留数量说明。
                 append("\n\n_").append(labels.imagesFormat.format(images.size)).append('_')
             }
         }

@@ -94,7 +94,7 @@ internal object ProviderReasoning {
             return
         }
         require(effort != ReasoningEffort.MINIMAL) {
-            "Anthropic немаєвідділенняутримувати Minimal thinking effort"
+            "Anthropic 不支持 Minimal thinking effort"
         }
         request.put(
             "thinking",
@@ -127,7 +127,7 @@ internal object ProviderReasoning {
             model.startsWith("kimi-k2.6") || model.startsWith("kimi-k2.5") ->
                 applyToggleOnlyProvider(
                     request = request,
-                    providerName = "Сотняпрактика Kimi",
+                    providerName = "百炼 Kimi",
                     effort = effort,
                     keepAll = model.startsWith("kimi-k2.6"),
                 )
@@ -146,7 +146,7 @@ internal object ProviderReasoning {
             return
         }
         val requestedBudget = when (effort) {
-            ReasoningEffort.MINIMAL -> unsupportedEffort("Сотняпрактика Qwen", effort)
+            ReasoningEffort.MINIMAL -> unsupportedEffort("百炼 Qwen", effort)
             ReasoningEffort.LOW -> 4_096
             ReasoningEffort.MEDIUM -> 16_384
             ReasoningEffort.HIGH -> 32_768
@@ -223,7 +223,7 @@ internal object ProviderReasoning {
         when {
             model.startsWith("kimi-k3") -> {
                 require(effort in setOf(ReasoningEffort.LOW, ReasoningEffort.HIGH, ReasoningEffort.MAX)) {
-                    "Kimi K3 немаєвідділенняутримувати ${effort.displayName} thinking effort"
+                    "Kimi K3 不支持 ${effort.displayName} thinking effort"
                 }
                 applyNamedReasoningEffort(request, effort)
             }
@@ -261,7 +261,7 @@ internal object ProviderReasoning {
             setOf(ReasoningEffort.LOW, ReasoningEffort.HIGH)
         }
         require(effort in supported) {
-            "StepFun немаєвідділенняутримувати ${effort.displayName} thinking effort"
+            "StepFun 不支持 ${effort.displayName} thinking effort"
         }
         applyNamedReasoningEffort(request, effort)
     }
@@ -288,16 +288,16 @@ internal object ProviderReasoning {
     }
 
     private fun unsupportedEffort(providerName: String, effort: ReasoningEffort): Nothing =
-        throw IllegalArgumentException("$providerName немаєвідділенняутримувати ${effort.displayName} thinking effort")
+        throw IllegalArgumentException("$providerName 不支持 ${effort.displayName} thinking effort")
 
     private fun validatedEffort(config: AgentModelClient.ModelConfig): ReasoningEffort {
         val effort = config.effectiveReasoningEffort
         val capabilities = config.reasoningCapabilities ?: return effort
         require(effort in capabilities.selectableEfforts) {
-            "коливпередцвільтипунемаєвідділенняутримувати ${effort.displayName} thinking effort"
+            "当前模型不支持 ${effort.displayName} thinking effort"
         }
         require(!capabilities.mandatory || effort != ReasoningEffort.OFF) {
-            "коливпередцвільтипупотужнийсистемапочатоквикористовуватидумаюТест，немаєздатнийвибративибрати Off"
+            "当前模型强制启用思考，不能选择 Off"
         }
         return effort
     }

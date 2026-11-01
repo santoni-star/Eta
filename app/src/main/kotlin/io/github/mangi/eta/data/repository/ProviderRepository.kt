@@ -35,7 +35,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 internal object ProviderRepository {
-    /** Конфігурація та модель спільно блокують модифікацію, щоб запобігти видаленню старого підключеного каталогу після перемикання режиму автентифікації.*/
+    /** 配置与模型共用修改锁，避免旧连接的目录在认证方式切换后落库。 */
     internal val mutationMutex = Mutex()
 
     @Volatile
@@ -81,17 +81,17 @@ internal object ProviderRepository {
 
     suspend fun updateProvider(provider: ProviderSetting) {
         mutationMutex.withLock {
-            val previous = requireNotNull(providerById(provider.id)) { "Provider немаєжитиіснують" }
+            val previous = requireNotNull(providerById(provider.id)) { "Provider 不存在" }
             if (previous.authMode != provider.authMode) {
                 forgetCredentials(provider.id)
             }
-            require(dao().updateProvider(provider.toEntity()) == 1) { "Provider немаєжитиіснують" }
+            require(dao().updateProvider(provider.toEntity()) == 1) { "Provider 不存在" }
         }
         repairSelection()
     }
 
     internal suspend fun replaceModels(providerId: String, models: List<Model>) {
-        val provider = requireNotNull(providerById(providerId)) { "Provider немаєжитиіснують" }
+        val provider = requireNotNull(providerById(providerId)) { "Provider 不存在" }
         dao().replaceModels(
             providerId = providerId,
             models = provider.withModels(models).toModelEntities(),
@@ -117,7 +117,7 @@ internal object ProviderRepository {
             val nextOrder = (allProviders().maxOfOrNull { it.sortOrder } ?: -1) + 1
             source.deepCopy(
                 id = newId(),
-                name = "${source.name} пороккнига",
+                name = "${source.name} 副本",
                 sortOrder = nextOrder,
                 builtIn = false,
             ).also { replaceProvider(it) }
@@ -196,7 +196,7 @@ internal object ProviderRepository {
         val currentPresets = OfficialModelCatalog.modelsForProvider(provider)
         val currentIds = currentPresets.mapTo(mutableSetOf()) { it.modelId.normalizedModelId() }
         val retained = provider.models.filter { it.source != ModelSource.CATALOG || it.modelId.normalizedModelId() in currentIds }
-        // Підключення, які вже мають віддалені каталоги або були очищені користувачем, більше не можуть бути заповнені за замовчуванням.
+        // 已有远端目录或用户清空的连接不能再由预设填充。
         val additions = if (provider.models.any { it.source == ModelSource.CATALOG } &&
             provider.models.none { it.source == ModelSource.REMOTE }
         ) OfficialModelCatalog.modelsAddedSince(provider, revision) else emptyList()

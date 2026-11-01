@@ -53,8 +53,8 @@ internal sealed interface AlpineInstallResult {
 }
 
 /**
- * Завантажте офіційні мінікорені Alpine і виконайте атомарну декомпресію в межах авторизації Root.
- * Завантажений вміст спочатку перевіряється за допомогою фіксованого SHA-256; процес встановлення не виходить за межі каталогу приватного середовища програми.
+ * 下载官方 Alpine minirootfs，并在 Root 授权边界内完成原子解压。
+ * 下载内容先校验固定 SHA-256；安装过程不会扩大到 App 私有环境目录之外。
  */
 internal class AlpineEnvironmentInstaller(
     private val context: Context,
@@ -133,9 +133,9 @@ internal class AlpineEnvironmentInstaller(
         } catch (failure: RootlessInstallFailure) {
             return@withContext AlpineInstallResult.Failed(AlpineInstallStage.EXTRACTING, failure.code, failure.message)
         } catch (_: java.io.IOException) {
-            return@withContext AlpineInstallResult.Failed(AlpineInstallStage.EXTRACTING, "INSTALL_IO_FAILED", "встановитиупаковкамистецтваштукнемаєЗакончитатиНапишіть，будь ласкаперевіритиперевіритиВсерединівідділжитизберігатинульовийміжіВажкаспробувати")
+            return@withContext AlpineInstallResult.Failed(AlpineInstallStage.EXTRACTING, "INSTALL_IO_FAILED", "安装文件无法读写，请检查内部存储空间并重试")
         } catch (_: IllegalArgumentException) {
-            return@withContext AlpineInstallResult.Failed(AlpineInstallStage.EXTRACTING, "INVALID_ARCHIVE", "кільцетериторіїповерненняфайлинемаєефектабоСумкаМіститьнемаєвстановитиПовнийдорогашлях，будь ласкаВажкановийвнизнавантаженняназадВажкаспробувати")
+            return@withContext AlpineInstallResult.Failed(AlpineInstallStage.EXTRACTING, "INVALID_ARCHIVE", "环境归档无效或包含不安全路径，请重新下载后重试")
         } finally {
             archive.delete()
         }
@@ -349,13 +349,13 @@ internal class AlpineEnvironmentInstaller(
             "zstd",
         )
 
-        /** Лише одне домашнє зображення зберігається для реального комп’ютерного зв’язку, щоб уникнути блокування доступними, але надто повільними джерелами наступних спроб.*/
+        /** 真机链路只保留一个国内镜像，避免可访问但过慢的源阻塞后续尝试。 */
         internal val APK_MIRROR_BASE_URLS = listOf(
             "https://mirrors.aliyun.com/alpine",
             "https://dl-cdn.alpinelinux.org/alpine",
         )
 
-        /** Спробуйте зображення одне за одним і запишіть успішні назад у сховища, які будуть повторно використані під час наступних інсталяцій профілю.*/
+        /** 逐个尝试镜像并把成功者写回 repositories，后续 profile 安装会复用它。 */
         internal fun apkMirrorScript(): String = "#!/bin/sh\n${apkMirrorScriptBody()}"
 
         private fun apkMirrorScriptBody(): String = buildString {

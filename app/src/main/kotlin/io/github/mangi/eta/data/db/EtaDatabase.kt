@@ -184,12 +184,12 @@ internal abstract class EtaDatabase : RoomDatabase() {
             database.execSQL(
                 "UPDATE provider_models SET source = 'catalog' WHERE is_built_in = 1"
             )
-            // У старій версії «Додати спеціальну модель» під час відкриття вікна редагування заздалегідь буде видалено порожній запис.
+            // 旧版“添加自定义模型”会在打开编辑框时提前落下一条空记录。
             database.execSQL("DELETE FROM provider_models WHERE TRIM(model_id) = ''")
-            // Очищаються лише записи-заповнювачі, згенеровані старою версією «Нової розмови», які користувач ніколи не використовував і не називав.
+            // 只清理由旧版“新建对话”产生、且用户从未真正使用或命名过的占位记录。
             database.execSQL(
                 "DELETE FROM conversations " +
-                    "WHERE title = 'новийправильноговорити' " +
+                    "WHERE title = '新对话' " +
                     "AND TRIM(history_json) = '[]' " +
                     "AND TRIM(applied_runtime_run_ids_json) = '[]' " +
                     "AND NOT EXISTS (" +
@@ -230,7 +230,7 @@ internal abstract class EtaDatabase : RoomDatabase() {
                 "INSERT INTO conversation_context_checkpoints (conversation_id, history_json) " +
                     "SELECT id, history_json FROM conversations"
             )
-            // Повний текст переміщується в SQL; наступна міграція блоку відповідає за розмір рядка, і історію не можна відкинути, оскільки старі поля завеликі.
+            // SQL 内搬移完整正文；后续分块迁移负责行大小，不能因旧字段过大丢弃历史。
             database.execSQL("UPDATE conversations SET history_json = '[]'")
         }
 

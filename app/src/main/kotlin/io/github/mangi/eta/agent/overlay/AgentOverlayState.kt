@@ -4,11 +4,11 @@ import androidx.compose.runtime.Immutable
 import io.github.mangi.eta.agent.runtime.AgentEvent
 import io.github.mangi.eta.agent.runtime.GuiControlStatus
 
-/** Агент Сцена плаваючого вікна.*/
+/** Agent 浮窗所处的阶段。 */
 internal enum class AgentOverlayPhase { RUNNING, PAUSED, FINISHED, FAILED }
 
 /**
- * Стан візуалізації плаваючого вікна агента. Накопичується з потоку [AgentEvent] і споживається безпосередньо [AgentOverlayBubble].
+ * Agent 浮窗的渲染状态。由 [AgentEvent] 流累积而来，[AgentOverlayBubble] 直接消费。
  */
 @Immutable
 internal data class AgentOverlayState(
@@ -17,8 +17,8 @@ internal data class AgentOverlayState(
     val status: AgentOverlayStatus = AgentOverlayStatus.Reasoning,
     val detailText: String = "",
     /**
-     * Другий рядок капсули: під час мислення це найновіший видимий висновок моделі, а під час виконання інструменту – це зведення параметрів (наприклад, «натисніть «Пошук»»).
-     * Лише невеликий розділ у кінці зберігається, щоб користувач міг поглянути на нього та знати, що думає агент; повна аргументація ще на сесії.
+     * 胶囊第二行：思考时是模型最近一句可见推理，执行工具时是参数摘要（如"点击「搜索」"）。
+     * 只保留尾部一小段，供用户扫一眼知道 Agent 在想什么；完整推理仍在会话里。
      */
     val thought: String = "",
 ) {
@@ -28,15 +28,15 @@ internal data class AgentOverlayState(
 }
 
 /**
- * Згорнути [AgentEvent] до поточного стану візуалізації.
+ * 将一个 [AgentEvent] 折叠进当前渲染状态。
  *
- * Капсули та сповіщення відображають лише кілька етапів, які важливі для користувачів: обдумування, використання інструменту та систематизація відповідей.
- * Внутрішні кроки, такі як запит моделі, відповідь моделі, генерація параметрів інструменту, раунди, читання скріншотів тощо, не розкриваються окремо:
- * Вони з'являються кожного раунду і тривають менше секунди. Часте перемикання буде тільки заважати користувачеві.
- * Він не перемикається на «Завершено» між завершенням того самого інструменту та наступним викликом і залишається в робочому стані, щоб уникнути стрибків тексту вперед і назад.
+ * 胶囊与通知只展示用户关心的少数几个阶段：思考、操作某个工具、整理回答。
+ * 请求模型、模型已响应、生成工具参数、轮次、读取截图等内部步骤不单独露出：
+ * 它们每轮都会出现、持续不到一秒，频繁切换只会干扰用户。
+ * 同一工具的完成与下一次调用之间也不切到"完成"，保持在操作态，避免文字来回跳。
  */
 internal fun AgentOverlayState.applyEvent(event: AgentEvent): AgentOverlayState {
-    // Пауза набуває чинності в наступній контрольній точці, і такі події, як кінець інструменту, який раніше був у дорозі, не можуть повернути текст назад у запущений стан.
+    // 暂停在下一个检查点生效，之前已在途的工具结束等事件不能把文字切回运行态。
     if (phase == AgentOverlayPhase.PAUSED && event !is AgentEvent.RunFinished &&
         event !is AgentEvent.RunFailed && event !is AgentEvent.GuiControlChanged) {
         return this
@@ -62,14 +62,14 @@ private fun AgentOverlayState.projectEvent(event: AgentEvent): AgentOverlayState
         AgentEvent.AssistantBlockKind.TOOL_CALL -> this
     }
 
-    // Почніть новий раунд обдумування з чистого аркуша і не сприймайте останнє речення попереднього раунду як свою поточну думку.
+    // 新一轮思考从空白开始，避免把上一轮的尾句当成当前想法。
     is AgentEvent.AssistantBlockStart -> if (event.kind == AgentEvent.AssistantBlockKind.THINKING) copy(thought = "") else this
 
     is AgentEvent.ToolStarted -> running(AgentOverlayStatus.RunningTool(event.name), event.round)
         .copy(thought = event.argsPreview.trim())
     is AgentEvent.HostedToolStarted -> running(AgentOverlayStatus.HostedToolRunning(event.name), event.round)
 
-    // Після того, як інструмент закінчується, модель негайно починає наступний раунд мислення; він повертається безпосередньо до стану мислення, а текст перемикається наступним викликом інструменту.
+    // 工具结束后模型马上开始下一轮思考；直接回到思考态，由下一次工具调用切换文字。
     is AgentEvent.ToolFinished -> running(AgentOverlayStatus.Reasoning, event.round).copy(thought = "")
     is AgentEvent.HostedToolFinished -> running(AgentOverlayStatus.Reasoning, event.round).copy(thought = "")
 
@@ -104,7 +104,7 @@ private fun AgentOverlayState.projectEvent(event: AgentEvent): AgentOverlayState
 private fun AgentOverlayState.running(status: AgentOverlayStatus, round: Int) =
     copy(phase = AgentOverlayPhase.RUNNING, round = round, status = status)
 
-/** Коли інструмент виконується або виводиться відповідь, фонові запити, повторні спроби та події стиснення не переривають поточний текст.*/
+/** 正在执行工具或输出回答时，后台的请求、重试与压缩事件不打断当前文字。 */
 private fun AgentOverlayState.thinkingUnlessWorking(): AgentOverlayState = when (status) {
     is AgentOverlayStatus.RunningTool,
     is AgentOverlayStatus.HostedToolRunning,
@@ -118,7 +118,7 @@ private fun AgentOverlayState.thinkingUnlessWorking(): AgentOverlayState = when 
 private const val MaxStreamingPreviewChars = 320
 private const val MaxThoughtChars = 96
 
-/** З’єднуємо заготовки і залишаємо тільки хвостик. У капсулі відображається «те, про що я щойно подумав», а не повне міркування.*/
+/** 合并空白并只保留尾部，胶囊里显示的是"刚刚想到哪"，不是整段推理。 */
 private fun appendThought(current: String, delta: String): String {
     val merged = (current + delta).replace(Regex("\\s+"), " ").trimStart()
     return if (merged.length <= MaxThoughtChars) merged else merged.takeLast(MaxThoughtChars).trimStart()

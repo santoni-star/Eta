@@ -186,7 +186,7 @@ internal class AgentLocalTools(
             if (AgentToolRequirements.find(toolCall.name) != null &&
                 AgentToolRequirements.rootDenied(toolCall.name, args, rootAvailable())
             ) {
-                return@runCatching textResult(errorResult("ROOT_REQUIRED", "цеТримайтеробитипотребахочуть Root навчатиправильно，книгаДругосортнийще ніВиконатидобре"))
+                return@runCatching textResult(errorResult("ROOT_REQUIRED", "此操作需要 Root 授权，本次未执行"))
             }
             deviceToolPermissionError(toolCall.name)?.let { return@runCatching it }
             memoryToolPermissionError(toolCall.name)?.let { return@runCatching it }
@@ -194,7 +194,7 @@ internal class AgentLocalTools(
                 publishedObservation.set(PublishedObservation())
                 if (AgentToolRequirements.requiresFreshObservation(toolCall.name)) {
                     return@runCatching textResult(errorResult(
-                        "NO_OBSERVATION", "рукумашинаТримайтеробитиправильновжеЗміназмінити，будь ласкапершемелодіявикористовувати observe_screen Важкановийпереглянутиоглядати，ЗновуТримайтеробитиколивпередСторінкалокшина",
+                        "NO_OBSERVATION", "手机操作权已变化，请先调用 observe_screen 重新观察，再操作当前页面",
                     ))
                 }
             }
@@ -228,7 +228,7 @@ internal class AgentLocalTools(
                 }
                 "browser_use" -> browserUse(args, toolCall.id)
                 "web_search", "fetch_url" -> {
-                    if (!browserToolsEnabled()) textResult(errorResult("BROWSER_TOOLS_DISABLED", "будь ласкапершепочатоквикористовуватичистийСторінкапошукОтже、читатиВиберітьіпереглядатиПереглянутипристрійпрацюватиІнструмент"))
+                    if (!browserToolsEnabled()) textResult(errorResult("BROWSER_TOOLS_DISABLED", "请先启用网页搜索、读取与浏览器工具"))
                     else textResult(webTools.execute(toolCall.name, args))
                 }
                 "observe_screen" -> observeScreen(args, guiGeneration)
@@ -246,7 +246,7 @@ internal class AgentLocalTools(
                 "scroll" -> afterAction(deviceController.scroll(args.optString("direction"), args.optString("amount")))
                 "scroll_element" -> afterAction(scrollElement(args))
                 "type_text" -> afterAction(typeText(args))
-                // Старі сесії або старі портали все ще можуть запитувати ці назви інструментів; шлях виконання зберігається, але вони більше не відображаються в каталозі моделі.
+                // 旧会话或旧入口仍可能请求这些工具名；保留执行路径，但不再出现在模型目录里。
                 "input_text" -> afterAction(inputText(args))
                 "replace_text" -> afterAction(replaceText(args))
                 "clear_text" -> afterAction(clearText(args))
@@ -263,7 +263,7 @@ internal class AgentLocalTools(
                 }
                 in DEVICE_TOOL_NAMES ->
                     structuredDeviceTools.execute(toolCall.name, args)
-                        ?: textResult(errorResult("UNKNOWN_TOOL", "ще нізнатиналаштуватиПриготуйтепрацюватиІнструмент"))
+                        ?: textResult(errorResult("UNKNOWN_TOOL", "未知设备工具"))
                 "read_image" -> fileVisionTool { imageTools.readImage(args) }
                 in AgentTerminalToolCatalog.names -> textResult(terminalTool {
                     if (toolCall.name == "terminal" && args.optString("action").equals("check_root", ignoreCase = true)) checkRoot()
@@ -281,7 +281,7 @@ internal class AgentLocalTools(
                 else -> textResult(
                     errorResult(
                         code = "UNKNOWN_TOOL",
-                        message = "ще нізнатипрацюватиІнструмент：${toolCall.name}"
+                        message = "未知工具：${toolCall.name}"
                     )
                 )
             }
@@ -325,11 +325,11 @@ internal class AgentLocalTools(
     ): AgentModelClient.ToolResult? {
         val error = when {
             toolName in DEVICE_DIRECT_TOOL_NAMES && !deviceDirectToolsEnabled() ->
-                "DEVICE_DIRECT_TOOLS_DISABLED" to "будь ласкапершепочатоквикористовуватиналаштуватиПриготуйтепрямодосяжністьпрацюватиІнструмент"
+                "DEVICE_DIRECT_TOOLS_DISABLED" to "请先启用设备直达工具"
             toolName in DEVICE_SENSITIVE_READ_TOOL_NAMES && !deviceSensitiveReadToolsEnabled() ->
-                "DEVICE_SENSITIVE_READ_TOOLS_DISABLED" to "будь ласкапершедозволяютьтравнячитатиВиберітьчутливийвідчуватиналаштуватиПриготуйтелистінтерес"
+                "DEVICE_SENSITIVE_READ_TOOLS_DISABLED" to "请先允许读取敏感设备信息"
             toolName in DEVICE_SENSITIVE_ACTION_TOOL_NAMES && !deviceSensitiveActionToolsEnabled() ->
-                "DEVICE_SENSITIVE_ACTION_TOOLS_DISABLED" to "будь ласкапершедозволяютьтравнячутливийвідчуватиналаштуватиПриготуйтеТримайтеробити"
+                "DEVICE_SENSITIVE_ACTION_TOOLS_DISABLED" to "请先允许敏感设备操作"
             else -> null
         } ?: return null
         return AgentModelClient.ToolResult(
@@ -341,14 +341,14 @@ internal class AgentLocalTools(
 
     private fun terminalTool(block: () -> String): String {
         if (!terminalToolsEnabled()) {
-            return errorResult("TERMINAL_TOOLS_DISABLED", "будь ласкапершепочатоквикористовуватикінецькінець/мистецтваштукпрацюватиІнструмент")
+            return errorResult("TERMINAL_TOOLS_DISABLED", "请先启用终端/文件工具")
         }
         return block()
     }
 
     private fun fileVisionTool(block: () -> AgentModelClient.ToolResult): AgentModelClient.ToolResult {
         if (!terminalToolsEnabled()) {
-            return textResult(errorResult("TERMINAL_TOOLS_DISABLED", "будь ласкапершепочатоквикористовуватикінецькінець/мистецтваштукпрацюватиІнструмент"))
+            return textResult(errorResult("TERMINAL_TOOLS_DISABLED", "请先启用终端/文件工具"))
         }
         return block()
     }
@@ -356,13 +356,13 @@ internal class AgentLocalTools(
     private fun memoryToolPermissionError(toolName: String): AgentModelClient.ToolResult? {
         if (toolName == "memory_write" && !memoryWritable) {
             return AgentModelClient.ToolResult(
-                content = errorResult("REAL_MEMORY_READ_ONLY", "рігколірзасіданняговоритиззаразРеальністьзапам'ятативідкликатиТількичитати；драмаПрихильністьбудь ласказробитивикористовуватирігколірзапам'ятативідкликатипрацюватиІнструмент"),
+                content = errorResult("REAL_MEMORY_READ_ONLY", "角色会话的现实记忆只读；剧情请使用角色记忆工具"),
                 sensitive = true,
             )
         }
         if (toolName !in MEMORY_TOOL_NAMES || memoryToolsEnabled()) return null
         return AgentModelClient.ToolResult(
-            content = errorResult("MEMORY_DISABLED", "запам'ятативідкликативжеіснуютьналаштувативстановитисерединазакритизакрити"),
+            content = errorResult("MEMORY_DISABLED", "记忆已在设置中关闭"),
             sensitive = true,
         )
     }
@@ -385,7 +385,7 @@ internal class AgentLocalTools(
             .put("content", result.content)
             .toString()
     } catch (failure: AgentMemoryException) {
-        errorResult(failure.code, failure.message ?: "запам'ятативідкликатичитатиВиберітьвтратитипоразка")
+        errorResult(failure.code, failure.message ?: "记忆读取失败")
     }
 
     private fun memoryWrite(args: JSONObject): String = try {
@@ -402,7 +402,7 @@ internal class AgentLocalTools(
                 content = args.requiredText("content"),
             )
             "clear" -> AgentMemoryMutation.Clear(revision)
-            else -> error("немаєвідділенняутримуватиззапам'ятативідкликатиНапишітьвведітьцвільРежим")
+            else -> error("不支持的记忆写入模式")
         }
         when (val result = AgentMemoryRepository.mutate(mutation)) {
             is AgentMemoryWriteResult.Success -> JSONObject()
@@ -414,19 +414,19 @@ internal class AgentLocalTools(
             is AgentMemoryWriteResult.Conflict -> JSONObject()
                 .put("ok", false)
                 .put("code", "MEMORY_CONFLICT")
-                .put("message", "запам'ятативідкликативжеволоссянародивсяЗміназмінити，будь ласкапершемелодіявикористовувати memory_get отриматиВиберітьбільшістьновийВсерединіДозволити")
+                .put("message", "记忆已发生变化，请先调用 memory_get 获取最新内容")
                 .put("revision", result.snapshot.revision)
                 .put("bytes", result.snapshot.byteSize)
                 .put("line_count", result.snapshot.lineCount)
                 .toString()
         }
     } catch (failure: AgentMemoryException) {
-        errorResult(failure.code, failure.message ?: "запам'ятативідкликатиНапишітьвведітьвтратитипоразка")
+        errorResult(failure.code, failure.message ?: "记忆写入失败")
     }
 
     private fun browserUse(args: JSONObject, toolCallId: String): AgentModelClient.ToolResult {
         if (!browserToolsEnabled()) {
-            return textResult(errorResult("BROWSER_TOOLS_DISABLED", "будь ласкапершепочатоквикористовуватичистийСторінкапереглядатиПереглянутипрацюватиІнструмент"))
+            return textResult(errorResult("BROWSER_TOOLS_DISABLED", "请先启用网页浏览工具"))
         }
         val result = browserSessionRef.value.execute(
             context = context,
@@ -482,9 +482,9 @@ internal class AgentLocalTools(
     }
 
     /**
-     * Успішні дії графічного інтерфейсу супроводжуються легким спостереженням: лише читання дерева інтерфейсу користувача, без знімків екрана, а кількість вузлів зменшується вдвічі.
-     * Модель підтверджує, що дія набуває чинності, і продовжує операцію безпосередньо з новим observation_id, без окремого назірання_screen;
-     * Дії, які не виконуються або мають невідомі результати, не додаються, а наявне обмеження «спочатку спостерігати повторно» зберігається.
+     * 成功的 GUI 动作附带一次轻量观察：只读 UI 树、不截图，节点数减半。
+     * 模型据此确认动作生效并直接用新的 observation_id 继续操作，不必再单独 observe_screen；
+     * 失败或结果未知的动作不附带，保持"先重新观察"的既有约束。
      */
     private fun afterAction(raw: String): AgentModelClient.ToolResult {
         if (closed.get()) throw AgentRunCancelledException()
@@ -503,7 +503,7 @@ internal class AgentLocalTools(
             return textResult(raw)
         }
         val elements = after.elementObservation ?: return textResult(raw)
-        // Новий знімок замінює знімок до дії: старий індекс за своєю суттю стає ненадійним після зміни інтерфейсу, і продовження його збереження призведе лише до неправильного використання моделі.
+        // 新快照取代动作前的快照：旧 index 在界面变化后本就不可靠，继续保留只会让模型误用。
         publishedObservation.set(publishedObservation.get().copy(elements = elements))
         result.put("after", AgentAfterActionSummary.build(before, elements))
         return textResult(result.toString())
@@ -546,7 +546,7 @@ internal class AgentLocalTools(
         val observation = requireElementObservation(args) ?: return observationError(args)
         val node = observation.nodes.firstOrNull { it.index == index }
         if (node == null) {
-            return errorResult("INVALID_NODE_INDEX", "переглянутиоглядатишвидкийВідповідно досерединанемаєжитиіснуютьФестивальточка index=$index")
+            return errorResult("INVALID_NODE_INDEX", "观察快照中不存在节点 index=$index")
         }
         val result = clearOverlay(ScreenPoint(node.centerX, node.centerY)) {
             deviceController.tapElement(observation, index)
@@ -564,7 +564,7 @@ internal class AgentLocalTools(
         val node = observation.nodes.firstOrNull { it.index == index }
         val durationMs = args.optInt("duration_ms", 800)
         if (node == null) {
-            return errorResult("INVALID_NODE_INDEX", "переглянутиоглядатишвидкийВідповідно досерединанемаєжитиіснуютьФестивальточка index=$index")
+            return errorResult("INVALID_NODE_INDEX", "观察快照中不存在节点 index=$index")
         }
         val result = clearOverlay(ScreenPoint(node.centerX, node.centerY)) {
             deviceController.longPressElement(observation, index, durationMs)
@@ -626,9 +626,9 @@ internal class AgentLocalTools(
     }
 
     /**
-     * Уніфіковане введення тексту: заміна (за замовчуванням) замінює весь текст текстом. Якщо текст порожній, він очищається; append вставляється біля курсору.
-     * При вказівці індексу спочатку підтвердьте, що вузол походить від останнього спостереження; якщо не вказано, діятиме на поточний фокус введення.
-     * submit=true натисніть Enter після успішного написання, використовується для пошуку, надсилання та інших дій надсилання.
+     * 统一的文本输入：replace（默认）整体替换为 text，text 为空即清空；append 在光标处插入。
+     * 指定 index 时先确认节点来自最近一次观察；不指定时作用于当前输入焦点。
+     * submit=true 在写入成功后按输入法回车，用于搜索、发送等提交动作。
      */
     private fun typeText(args: JSONObject): String {
         val text = args.requiredText("text")
@@ -636,14 +636,14 @@ internal class AgentLocalTools(
         val written = when (mode) {
             "replace" -> replaceText(args)
             "append" -> {
-                if (text.isEmpty()) return errorResult("INVALID_ARGUMENT", "append цвільРежимз text немаєздатнийдлянульовий")
+                if (text.isEmpty()) return errorResult("INVALID_ARGUMENT", "append 模式的 text 不能为空")
                 if (args.optNullableInt("index") != null) {
-                    return errorResult("INVALID_ARGUMENT", "append Тількиробитивикористовуватинаколивпередвтратитивведітьфокусточка；хочутьНапишітьвведітьзвертатися доЗвичайновтратитивведітькоробкабудь ласкавикористовувати mode=replace")
+                    return errorResult("INVALID_ARGUMENT", "append 只作用于当前输入焦点；要写入指定输入框请用 mode=replace")
                 }
-                // Довгий текст можна вставити у виділений фрагмент і вставити з резервним копіюванням, що є більш стабільним, ніж введення слово в слово.
+                // 长文本走选区插入加粘贴回退，比逐字键入更稳定。
                 if (text.length > TYPE_TEXT_INCREMENTAL_CHARS) pasteText(args) else deviceController.inputText(text)
             }
-            else -> return errorResult("INVALID_ARGUMENT", "mode Тількиздатнийтак replace або append")
+            else -> return errorResult("INVALID_ARGUMENT", "mode 只能是 replace 或 append")
         }
         val json = runCatching { JSONObject(written) }.getOrNull() ?: return written
         json.put("tool", "type_text").put("mode", mode)
@@ -651,7 +651,7 @@ internal class AgentLocalTools(
         val submitted = runCatching { JSONObject(deviceController.pressKey("ENTER")) }.getOrNull()
         json.put("submitted", submitted?.optBoolean("ok") == true)
         if (submitted?.optBoolean("ok") != true) {
-            // Текст був написаний, але подання не вдалося: загальний результат все ще вважається успішним, щоб уникнути повторного введення моделі; submit=false пропонує вам натиснути Enter або натиснути кнопку окремо.
+            // 文本已写入但提交失败：整体仍算成功，避免模型重复输入；由 submitted=false 提示单独补按回车或点按钮。
             json.put("submit_error", submitted?.optString("code").orEmpty().ifBlank { "SUBMIT_FAILED" })
         }
         return json.toString()
@@ -660,7 +660,7 @@ internal class AgentLocalTools(
     private fun inputText(args: JSONObject): String {
         val text = args.requiredText("text")
         if (text.length > 1_000) {
-            return errorResult("TEXT_TOO_LONG", "input_text більшістьбагатовідділенняутримувати 1000 індивідуальнийхарактерсимвол")
+            return errorResult("TEXT_TOO_LONG", "input_text 最多支持 1000 个字符")
         }
         return when (args.optString("mode", "append").lowercase(Locale.ROOT)) {
             "replace" -> replaceText(args)
@@ -717,20 +717,20 @@ internal class AgentLocalTools(
         )
 
     /**
-     * Система координат має бути оголошена явно. У старій версії натискання «Чи було зроблено останнє спостереження зі знімком екрана» неявно перемикається на значення за замовчуванням, і модель не може дізнатися.
-     * Завжди розглядайте пікселі знімка екрана як пікселі екрана; за замовчуванням помилки параметрів повідомляються безпосередньо, і модель можна виправити на наступному кроці.
+     * 坐标系必须显式声明。旧版按"上一次观察是否带截图"隐式切换默认值，模型无从得知，
+     * 经常把截图像素当成屏幕像素；缺省时直接报参数错误，让模型在下一步改正。
      */
     private fun convertPoint(x: Int, y: Int, coordinateSpace: String): ScreenPoint {
         val space = publishedObservation.get().coordinateSpace
         val requestedSpace = coordinateSpace.trim().lowercase(Locale.ROOT)
         if (requestedSpace.isBlank()) {
             throw InvalidToolArgumentException(
-                "відсутністьмало coordinate_space：подивітьсявирізатималюнокЗвичайнобітвикористовувати normalized（0–999），сидітизнакприходьоскільки ui_nodes використовувати screen",
+                "缺少 coordinate_space：看截图定位用 normalized（0–999），坐标来自 ui_nodes 用 screen",
             )
         }
         if (requestedSpace == "normalized") {
             if (x !in 0..NORMALIZED_MAX || y !in 0..NORMALIZED_MAX) {
-                throw InvalidToolArgumentException("normalized сидітизнакповиненОбов'язковоіснують 0–$NORMALIZED_MAX зміж：($x,$y)")
+                throw InvalidToolArgumentException("normalized 坐标必须在 0–$NORMALIZED_MAX 之间：($x,$y)")
             }
             val (width, height) = space?.let { it.screenWidth to it.screenHeight }
                 ?: deviceController.screenDimensions()
@@ -744,23 +744,23 @@ internal class AgentLocalTools(
                 ?: deviceController.screenDimensions()
             if (x !in 0 until width || y !in 0 until height) {
                 throw InvalidToolArgumentException(
-                    "екранекрансидітизнакобганятипозавентилятороточують：($x,$y) not in ${width}x$height",
+                    "屏幕坐标超出范围：($x,$y) not in ${width}x$height",
                 )
             }
             return ScreenPoint(x, y)
         }
         if (requestedSpace != "screenshot") {
-            throw InvalidToolArgumentException("coordinate_space Тількиздатнийтак normalized、screen або screenshot")
+            throw InvalidToolArgumentException("coordinate_space 只能是 normalized、screen 或 screenshot")
         }
         if (space == null) {
             throw InvalidToolArgumentException(
-                "більшістьзакритиодинДругосортнийпереглянутиоглядатибезматидодаєтьсямалюнок，безмати screenshot сидітизнакКраватка；подивітьсявирізатималюнокЗвичайнобітбудь ласкавикористовувати normalized，абопершепринестивирізатималюнокВажкановийпереглянутиоглядати",
+                "最近一次观察没有附图，没有 screenshot 坐标系；看截图定位请用 normalized，或先带截图重新观察",
             )
         }
         val point = runCatching { space.fromScreenshot(x, y) }
             .getOrElse { throwable ->
                 throw InvalidToolArgumentException(
-                    throwable.message ?: "вирізатималюноксидітизнакобганятипозавентилятороточують",
+                    throwable.message ?: "截图坐标超出范围",
                 )
             }
         return ScreenPoint(point.x, point.y)
@@ -769,7 +769,7 @@ internal class AgentLocalTools(
     private fun searchApps(args: JSONObject): String {
         val query = args.optString("query").trim()
         if (query.isBlank()) {
-            return errorResult("INVALID_ARGUMENT", "query немаєздатнийдлянульовий")
+            return errorResult("INVALID_ARGUMENT", "query 不能为空")
         }
         val includeSystem = args.optBoolean("include_system", false)
         val limit = args.optInt("limit", 10).coerceIn(1, 20)
@@ -790,7 +790,7 @@ internal class AgentLocalTools(
             findAppByPackage(packageName) ?: AppInfo(packageName = packageName, appName = appName ?: packageName)
         } else {
             if (appName == null) {
-                return errorResult("INVALID_ARGUMENT", "package_name і app_name домалонестидляодиніндивідуальний")
+                return errorResult("INVALID_ARGUMENT", "package_name 和 app_name 至少提供一个")
             }
             val matches = findAppsByName(appName, includeSystem = false)
             val exactMatches = matches.filter { it.appName.equals(appName, ignoreCase = true) }
@@ -799,12 +799,12 @@ internal class AgentLocalTools(
                 matches.size == 1 -> matches.single()
                 matches.isEmpty() -> return errorResult(
                     code = "APP_NOT_FOUND",
-                    message = "ще ніспробуйте знайтиприбутивідповідьвикористовувати：$appName"
+                    message = "未找到应用：$appName"
                 )
                 else -> return JSONObject()
                     .put("ok", false)
                     .put("code", "AMBIGUOUS_APP")
-                    .put("message", "матчматчприбутибагатоіндивідуальнийвідповідьвикористовувати，будь ласказвертатися доЗвичайно package_name")
+                    .put("message", "匹配到多个应用，请指定 package_name")
                     .put("candidates", matches.take(10).toJsonArray())
                     .toString()
             }
@@ -815,7 +815,7 @@ internal class AgentLocalTools(
         if (launchIntent == null) {
             return errorResult(
                 code = "APP_NOT_LAUNCHABLE",
-                message = "відповідьвикористовуватинемаєможепочатокрухатисяабоще нівстановитиупаковка：${app.packageName}"
+                message = "应用不可启动或未安装：${app.packageName}"
             )
         }
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
@@ -832,17 +832,17 @@ internal class AgentLocalTools(
     private fun openUri(args: JSONObject): String {
         val uriText = args.optString("uri").trim()
         if (uriText.isBlank()) {
-            return errorResult("INVALID_ARGUMENT", "uri немаєздатнийдлянульовий")
+            return errorResult("INVALID_ARGUMENT", "uri 不能为空")
         }
         val uri = Uri.parse(uriText)
         if (uri.scheme.isNullOrBlank()) {
-            return errorResult("INVALID_ARGUMENT", "uri відсутністьмало scheme")
+            return errorResult("INVALID_ARGUMENT", "uri 缺少 scheme")
         }
         val context = requireContext()
         val intent = Intent(Intent.ACTION_VIEW, uri)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!HookSupport.resolvesActivity(context, intent)) {
-            return errorResult("NO_ACTIVITY", "безмативідповідьвикористовуватиможезавпричинаСлід URI")
+            return errorResult("NO_ACTIVITY", "没有应用可以处理该 URI")
         }
         context.startActivity(intent)
         logger.info("Agent local tool action=open_uri outcome=started")
@@ -863,14 +863,14 @@ internal class AgentLocalTools(
         kotlinx.coroutines.runBlocking {
             while (probe.isActive && !closed.get()) kotlinx.coroutines.delay(100)
         }
-        if (closed.get()) return errorResult("CANCELLED", "вжеВиберітьвидалитичекатилікувати Root перевірититест")
+        if (closed.get()) return errorResult("CANCELLED", "已取消等待 Root 检测")
         val state = RootAccess.state.value
         return JSONObject().put("ok", true).put("tool", "terminal").put("action", "check_root")
             .put("root_available", state.isGranted).put("status", state.status.name.lowercase(Locale.ROOT))
             .put("checking", state.isChecking).put("su_present", state.suPresent)
             .put("uid", if (state.isGranted) 0 else JSONObject.NULL)
-            .put("message", if (state.isGranted) "вжеправильнорозпізнати Root навчатиправильно；назадПродовженняновийжиттязробитимовчазнийрозпізнатизробитивикористовувати Root" else
-                "досіще ніправильнорозпізнати Root навчатиправильно；будь ласкакоріньвідповідно до status перевіритиперевіритинавчатиправильноабоперевірититествузолфрукти，мовчазнийрозпізнати user немаєповерхніПоказатикінецькінецьнемаєвідділенняутримувати Root")
+            .put("message", if (state.isGranted) "已确认 Root 授权；后续新命令默认使用 Root" else
+                "尚未确认 Root 授权；请根据 status 检查授权或检测结果，默认 user 不表示终端不支持 Root")
             .toString()
     }
 
@@ -934,7 +934,7 @@ internal class AgentLocalTools(
 
     private fun requireContext(): Context =
         AgentAppContext.resolve()
-            ?: error("немаєЗаконотриматиВиберіть Android ВведітьПроцедура Context")
+            ?: error("无法获取 Android 进程 Context")
 
     private fun List<AppInfo>.toJsonArray(): JSONArray =
         JSONArray().also { array ->
@@ -973,18 +973,18 @@ internal class AgentLocalTools(
         val requestedId = args.optString("observation_id").trim()
         return when (ObservationReferencePolicy.validate(current?.id, requestedId)) {
             ObservationReferencePolicy.Status.NO_OBSERVATION ->
-                errorResult("NO_OBSERVATION", "будь ласкапершемелодіявикористовувати observe_screen отриматиВиберіть UI Фестивальточка")
+                errorResult("NO_OBSERVATION", "请先调用 observe_screen 获取 UI 节点")
             ObservationReferencePolicy.Status.ID_REQUIRED -> errorResult(
                 "OBSERVATION_ID_REQUIRED",
-                "ФестивальточкарухатисяробитиповиненОбов'язковонестипринестите самеодинДругосортний observe_screen поверненняповерненняз observation_id",
+                "节点动作必须携带同一次 observe_screen 返回的 observation_id",
             )
             ObservationReferencePolicy.Status.STALE -> errorResult(
                 "STALE_OBSERVATION",
-                "observation_id=$requestedId вжеПасОчікуйте；коливпереддля ${current?.id}，будь ласкаВажкановийпереглянутиоглядатиекранекран",
+                "observation_id=$requestedId 已过期；当前为 ${current?.id}，请重新观察屏幕",
             )
             ObservationReferencePolicy.Status.MATCH -> errorResult(
                 "OBSERVATION_ERROR",
-                "переглянутиоглядатишвидкийВідповідно доформустанрізнічасто，будь ласкаВажкановийпереглянутиоглядатиекранекран",
+                "观察快照状态异常，请重新观察屏幕",
             )
         }
     }
@@ -992,9 +992,9 @@ internal class AgentLocalTools(
     // ==================== Skills tools ====================
 
     private fun skillsList(args: JSONObject): String {
-        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill дерево")
+        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill 树")
         val indexService = skillIndexService
-            ?: return errorResult("SKILLS_UNAVAILABLE", "технологіїздатнийОдягобслуговуванняще ніранопочатокзмінити")
+            ?: return errorResult("SKILLS_UNAVAILABLE", "技能服务未初始化")
         val query = args.optString("query").trim().lowercase()
         val limit = args.optInt("limit", 50).coerceIn(1, 200)
         val entries = indexService.listInstalledSkills()
@@ -1034,21 +1034,21 @@ internal class AgentLocalTools(
     }
 
     private fun skillsRead(args: JSONObject): String {
-        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill дерево")
+        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill 树")
         val indexService = skillIndexService
-            ?: return errorResult("SKILLS_UNAVAILABLE", "технологіїздатнийОдягобслуговуванняще ніранопочатокзмінити")
+            ?: return errorResult("SKILLS_UNAVAILABLE", "技能服务未初始化")
         val loader = skillLoader
-            ?: return errorResult("SKILLS_UNAVAILABLE", "технологіїздатнийдодатинавантаженняпристрійще ніранопочатокзмінити")
+            ?: return errorResult("SKILLS_UNAVAILABLE", "技能加载器未初始化")
         val skillId = args.optString("skillId").trim()
-        if (skillId.isBlank()) return errorResult("MISSING_PARAM", "відсутністьмало skillId")
+        if (skillId.isBlank()) return errorResult("MISSING_PARAM", "缺少 skillId")
         val maxChars = args.optInt("maxChars", 16_000).coerceIn(512, 64_000)
         val entry = indexService.findInstalledSkill(skillId)
-            ?: return errorResult("NOT_FOUND", "ще ніспробуйте знайтиприбути skill：$skillId")
+            ?: return errorResult("NOT_FOUND", "未找到 skill：$skillId")
         if (!isVisibleInCurrentRun(entry.id)) return nextTurnRequired(entry.id)
         val compat = SkillCompatibilityChecker.evaluate(entry)
-        if (!compat.available) return errorResult("INCOMPATIBLE", compat.reason ?: "коливпередкільцетериторіїнемаєможевикористовувати")
-        val resolved = loader.load(entry, "agent хострухатисячитатиВиберіть skill")
-            ?: return errorResult("READ_FAILED", "читатиВиберіть SKILL.md втратитипоразка：${entry.skillFilePath}")
+        if (!compat.available) return errorResult("INCOMPATIBLE", compat.reason ?: "当前环境不可用")
+        val resolved = loader.load(entry, "agent 主动读取 skill")
+            ?: return errorResult("READ_FAILED", "读取 SKILL.md 失败：${entry.skillFilePath}")
         val body = if (resolved.bodyMarkdown.length <= maxChars) {
             resolved.bodyMarkdown
         } else {
@@ -1074,22 +1074,22 @@ internal class AgentLocalTools(
     }
 
     private fun skillsReadResource(args: JSONObject): String {
-        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill дерево")
+        if (skillTreeMutationUncertain.get()) return nextTurnRequired("Skill 树")
         val indexService = skillIndexService
-            ?: return errorResult("SKILLS_UNAVAILABLE", "технологіїздатнийОдягобслуговуванняще ніранопочатокзмінити")
+            ?: return errorResult("SKILLS_UNAVAILABLE", "技能服务未初始化")
         val reader = skillResourceReader
-            ?: return errorResult("SKILLS_UNAVAILABLE", "Skill КапіталджерелочитатиВиберітьпристрійще ніранопочатокзмінити")
+            ?: return errorResult("SKILLS_UNAVAILABLE", "Skill 资源读取器未初始化")
         val skillId = args.getString("skillId").trim()
         val relativePath = args.getString("relativePath").trim()
         val maxChars = args.optInt("maxChars", 16_000).coerceIn(512, 64_000)
         val entry = indexService.findInstalledSkill(skillId)
-            ?: return errorResult("NOT_FOUND", "ще ніспробуйте знайтиприбутивжепочатоквикористовувати Skill：$skillId")
+            ?: return errorResult("NOT_FOUND", "未找到已启用 Skill：$skillId")
         if (!isVisibleInCurrentRun(entry.id)) return nextTurnRequired(entry.id)
         val compatibility = SkillCompatibilityChecker.evaluate(entry)
         if (!compatibility.available) {
             return errorResult(
                 "INCOMPATIBLE",
-                compatibility.reason ?: "коливпередкільцетериторіїнемаєможевикористовувати",
+                compatibility.reason ?: "当前环境不可用",
             )
         }
         return when (val result = reader.readText(entry, relativePath)) {
@@ -1124,7 +1124,7 @@ internal class AgentLocalTools(
 
     private fun skillsListCurated(): String {
         val source = githubSkillSource
-            ?: return errorResult("SKILL_INSTALLER_UNAVAILABLE", "GitHub Skill Одягобслуговуванняще ніранопочатокзмінити")
+            ?: return errorResult("SKILL_INSTALLER_UNAVAILABLE", "GitHub Skill 服务未初始化")
         return skillSourceResult {
             val inspection = source.listCurated()
             rememberInspection(
@@ -1138,7 +1138,7 @@ internal class AgentLocalTools(
 
     private fun skillsInspectGitHub(args: JSONObject): String {
         val source = githubSkillSource
-            ?: return errorResult("SKILL_INSTALLER_UNAVAILABLE", "GitHub Skill Одягобслуговуванняще ніранопочатокзмінити")
+            ?: return errorResult("SKILL_INSTALLER_UNAVAILABLE", "GitHub Skill 服务未初始化")
         return skillSourceResult {
             val repository = GitHubSkillRepositoryParser.resolve(
                 repository = args.getString("repository"),
@@ -1170,7 +1170,7 @@ internal class AgentLocalTools(
             if (replaceExisting && selectedPaths.size != 1) {
                 return@skillSourceResult errorResult(
                     "SKILL_REPLACE_SCOPE_TOO_BROAD",
-                    "одинДругосортнийТількиздатнийдляЗмінаодиніндивідуальний Skill дорогашлях；будь ласкапогоняіндивідуальнийВажкаспробувати",
+                    "一次只能替换一个 Skill 路径；请逐个重试",
                 )
             }
             val expectedReplacementId = args.optString("expectedReplacementId").trim()
@@ -1186,7 +1186,7 @@ internal class AgentLocalTools(
                     inspectionKey(requestedRepository.slug, requestedRepository.ref)
                 ] ?: return@skillSourceResult errorResult(
                     "SKILL_INSPECTION_REQUIRED",
-                    "встановитиупаковкавпередповиненОбов'язковоіснуютькнигаколесопершеперевіритиперевіритите самеодинскладБібліотекаі ref з Skill чекативибрати",
+                    "安装前必须在本轮先检查同一仓库与 ref 的 Skill 候选",
                 )
                 val invalidSelection = selectedPaths.firstOrNull {
                     it !in snapshot.candidatesByPath
@@ -1194,7 +1194,7 @@ internal class AgentLocalTools(
                 if (invalidSelection != null) {
                     return@skillSourceResult errorResult(
                         "INVALID_SKILL_SELECTION",
-                        "Місцевибратидорогашляхнемаєіснуютькнигаколесоперевіритиперевіритиповерненняповерненнязчекативибратисередина：$invalidSelection",
+                        "所选路径不在本轮检查返回的候选中：$invalidSelection",
                     )
                 }
                 val snapshotPrefix = snapshot.prefix
@@ -1206,7 +1206,7 @@ internal class AgentLocalTools(
                 ) {
                     return@skillSourceResult errorResult(
                         "INVALID_SKILL_SELECTION",
-                        "МісцевибратидорогашляхнемаєіснуютькнигаколесоперевіритиперевіритизГоловазаписвентилятороточуютьВсередині",
+                        "所选路径不在本轮检查的目录范围内",
                     )
                 }
                 requestedRepository.copy(ref = snapshot.commitSha)
@@ -1218,24 +1218,24 @@ internal class AgentLocalTools(
             ) {
                 return@skillSourceResult errorResult(
                     "INVALID_SKILL_SELECTION",
-                    "Місцевибратидорогашляхнемаєіснують GitHub URL звертатися доЗвичайноГоловазаписВсередині",
+                    "所选路径不在 GitHub URL 指定目录内",
                 )
             }
             val source = githubSkillSource
                 ?: return@skillSourceResult errorResult(
                     "SKILL_INSTALLER_UNAVAILABLE",
-                    "GitHub Skill Одягобслуговуванняще ніранопочатокзмінити",
+                    "GitHub Skill 服务未初始化",
                 )
             val installer = skillPackageInstaller
                 ?: return@skillSourceResult errorResult(
                     "SKILL_INSTALLER_UNAVAILABLE",
-                    "Skill встановитиупаковкапристрійще ніранопочатокзмінити",
+                    "Skill 安装器未初始化",
                 )
             source.downloadArchive(repository).use { archive ->
                 if (closed.get()) {
                     return@skillSourceResult errorResult(
                         "SKILL_INSTALL_CANCELLED",
-                        "Skill встановитиупаковкавжеВиберітьвидалити，ще нінестиплатитимистецтваштук",
+                        "Skill 安装已取消，未提交文件",
                     )
                 }
                 val result = installer.installRepositoryZip(
@@ -1319,7 +1319,7 @@ internal class AgentLocalTools(
     ): String? {
         val pending = pendingSkillConflict.get() ?: return errorResult(
             "SKILL_REPLACE_CAPABILITY_REQUIRED",
-            "безматиможедляВишуканийправильноВажкапоставитиз Skill поспіхраптовий",
+            "没有可供精确重放的 Skill 冲突",
         )
         if (
             !requestedRepository.slug.equals(pending.repository, ignoreCase = true) ||
@@ -1329,7 +1329,7 @@ internal class AgentLocalTools(
         ) {
             return errorResult(
                 "SKILL_REPLACE_CAPABILITY_MISMATCH",
-                "кришкабудуватиженьшеньномерповиненОбов'язковоВишуканийправильноВажкапоставитипоспіхраптовийвузолфруктисерединазскладБібліотека、commitSha、дорогашляхі Skill ID",
+                "覆盖参数必须精确重放冲突结果中的仓库、commitSha、路径与 Skill ID",
             )
         }
         return null
@@ -1342,7 +1342,7 @@ internal class AgentLocalTools(
 
     private fun nextTurnRequired(skillId: String): String = errorResult(
         "NEXT_TURN_REQUIRED",
-        "Skill $skillId існуютькнигаколесовжевстановитиупаковкаабоЗмінаНавіть，ВолявідвнизодинколесоправильноговоритиВІДЧИНЕНОпочатокможевикористовувати",
+        "Skill $skillId 在本轮已安装或变更，将从下一轮对话开始可用",
     )
 
     private fun installResult(
@@ -1372,7 +1372,7 @@ internal class AgentLocalTools(
                 .put("installed", installed)
                 .put("available", "next_turn")
                 .put("scriptsExecuted", false)
-                .put("message", "Skill вжевстановитиупаковкаіпочатоквикористовувати，ВолявідвнизодинколесоправильноговоритиВІДЧИНЕНОпочатокможевикористовувати；встановитиупаковкаПасПроцедураще ніВиконатидобрестопакнига")
+                .put("message", "Skill 已安装并启用，将从下一轮对话开始可用；安装过程未执行脚本")
                 .toString()
         }
         is SkillInstallResult.Conflict -> {
@@ -1401,7 +1401,7 @@ internal class AgentLocalTools(
             JSONObject()
                 .put("ok", false)
                 .put("code", "SKILL_CONFLICT")
-                .put("message", "Skill вжежитиіснують；можедляЗміназодиніндивідуальнийвикористовуватипобутові Skill можевідповідно доповерненняповерненняженьшеньномерпрямозловитиВажкаспробувати，Всерединівстановити Skill немаєможекришкабудувати")
+                .put("message", "Skill 已存在；可替换的单个用户 Skill 可按返回参数直接重试，内置 Skill 不可覆盖")
                 .put("repository", repository)
                 .put("ref", ref)
                 .put("commitSha", commitSha)
@@ -1423,7 +1423,7 @@ internal class AgentLocalTools(
     private inline fun skillSourceResult(block: () -> String): String = try {
         block()
     } catch (failure: GitHubSkillSourceException) {
-        errorResult(failure.code, failure.message ?: "GitHub Skill будь ласкапроситивтратитипоразка")
+        errorResult(failure.code, failure.message ?: "GitHub Skill 请求失败")
     }
 
     private fun errorResult(code: String, message: String): String =
@@ -1452,7 +1452,7 @@ internal class AgentLocalTools(
         val candidatesByPath: Map<String, String>,
     )
 
-    /** Коли жест проходить через капсулу статусу, він тимчасово проникає всередину та зникає; ковзання оцінюється за обмежувальною рамкою початкової та кінцевої точок.*/
+    /** 手势经过状态胶囊时让它暂时穿透并淡出；滑动按起止点包围盒判断。 */
     private fun <T> clearOverlay(vararg points: ScreenPoint, gesture: () -> T): T {
         val area = Rect(
             points.minOf { it.x },
@@ -1545,8 +1545,8 @@ private val AFTER_ACTION_OPTIONS = AgentScreenObservationContract.Options(
     maxNodes = 30,
 )
 
-/** append змінить шлях вставки, якщо він перевищує цю довжину; поступова реконструкція послівного введення є одночасно повільною для довгого тексту та легко переривається методом введення.*/
+/** append 超过该长度改走粘贴路径；逐字键入的增量重建对长文本既慢又容易被输入法打断。 */
 private const val TYPE_TEXT_INCREMENTAL_CHARS = 200
 
-/** Верхня межа нормалізованої координати: 0–999, що відповідає звичаям виведення основних моделей GUI.*/
+/** 归一化坐标上界：0–999，与主流 GUI 模型的输出习惯一致。 */
 private const val NORMALIZED_MAX = 999

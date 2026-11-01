@@ -32,7 +32,7 @@ internal object CharacterRepository {
     private const val KEY_DEFAULT_CHARACTER_SEEDED = "default_character_seeded"
     @Volatile private var context: Context? = null
 
-    /** Прив'язувати лише контекст; звичайний запуск Workbench не читає бібліотеку символів.*/
+    /** 仅绑定上下文；普通工作台启动不读取角色库。 */
     fun initialize(context: Context) { this.context = context.applicationContext }
 
     private fun appContext() = checkNotNull(context) { "CharacterRepository is not initialized" }
@@ -64,7 +64,7 @@ internal object CharacterRepository {
     }
 
     suspend fun save(profile: CharacterProfile, avatarBytes: ByteArray? = null): CharacterProfile = withContext(Dispatchers.IO) {
-        val existing = dao().character(profile.id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
+        val existing = dao().character(profile.id) ?: throw IllegalArgumentException("角色已不存在")
         val card = validated(profile.card)
         val avatar = avatarBytes?.let { writeAvatar(profile.id, normalizeAvatar(it), uniqueName = true) }
         val saved = profile.copy(card = card, avatarPath = avatar ?: profile.avatarPath,
@@ -79,23 +79,23 @@ internal object CharacterRepository {
     }
 
     suspend fun replaceAvatar(id: String, input: InputStream): CharacterProfile = withContext(Dispatchers.IO) {
-        val profile = get(id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
+        val profile = get(id) ?: throw IllegalArgumentException("角色已不存在")
         save(profile, avatarBytes = input.readRoleplayBytes())
     }
 
     suspend fun duplicate(id: String): CharacterProfile = withContext(Dispatchers.IO) {
-        val profile = get(id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
-        createStored(validated(profile.card.withEdits(name = "${profile.card.name} пороккнига")), avatarBytes(profile.avatarPath))
+        val profile = get(id) ?: throw IllegalArgumentException("角色已不存在")
+        createStored(validated(profile.card.withEdits(name = "${profile.card.name} 副本")), avatarBytes(profile.avatarPath))
     }
 
-    /** Видалення персонажів, їхні зображення та каталоги пам'яті сюжетів; наявні діалоги збережуть знімки персонажів на той момент і це не вплине.*/
+    /** 删除角色及其图片、剧情记忆目录；已有对话保留当时的角色快照，不受影响。 */
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
-        get(id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
+        get(id) ?: throw IllegalArgumentException("角色已不存在")
         dao().deleteCharacter(id)
         CharacterMemoryRepository.discard(appContext(), id)
     }
 
-    /** Нова бібліотека символів буде один раз використовувати стандартний символ; бібліотеки з існуючими символами та видаленими символами за замовчуванням більше не будуть заповнені.*/
+    /** 新角色库播种一次默认角色；已有角色的库和删除过默认角色都不再播种。 */
     suspend fun ensureDefaultCharacter() = withContext(Dispatchers.IO) {
         val prefs = appContext().getSharedPreferences(SEED_PREFS, Context.MODE_PRIVATE)
         if (prefs.getBoolean(KEY_DEFAULT_CHARACTER_SEEDED, false)) return@withContext
@@ -105,7 +105,7 @@ internal object CharacterRepository {
         prefs.edit().putBoolean(KEY_DEFAULT_CHARACTER_SEEDED, true).apply()
     }
 
-    /** Користувач активно відновлює вбудовану роль за замовчуванням; це не впливає на одноразовий посів.*/
+    /** 用户主动恢复内置默认角色；与一次性播种互不影响。 */
     suspend fun createDefaultCharacter(): CharacterProfile = withContext(Dispatchers.IO) {
         createDefaultCharacterStored()
     }
@@ -119,7 +119,7 @@ internal object CharacterRepository {
         try {
             if (png) {
                 val card = CharacterCardPng.read(bytes)
-                // Несимвольні блоки даних оригінального PNG зберігаються, наступні експорти замінюють лише блоки визначення символів.
+                // 保留原始 PNG 的非角色数据块，后续导出只替换角色定义块。
                 createStored(validated(card), bytes)
             } else {
                 create(CharacterCardCodec.decodeBytes(bytes))
@@ -127,12 +127,12 @@ internal object CharacterRepository {
         } catch (failure: CharacterCardException) {
             throw failure
         } catch (failure: IllegalArgumentException) {
-            throw CharacterCardException(if (png) "CARD_INVALID_PNG" else "CARD_INVALID_DATA", "рігколіркартканомервідповідно донемаєефект", failure)
+            throw CharacterCardException(if (png) "CARD_INVALID_PNG" else "CARD_INVALID_DATA", "角色卡数据无效", failure)
         }
     }
 
     suspend fun export(id: String, format: CharacterCardFormat, output: OutputStream) = withContext(Dispatchers.IO) {
-        val profile = get(id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
+        val profile = get(id) ?: throw IllegalArgumentException("角色已不存在")
         val bytes = when (format) {
             CharacterCardFormat.JSON -> CharacterCardCodec.encodeJson(profile.card).toByteArray(Charsets.UTF_8)
             CharacterCardFormat.PNG -> CharacterCardPng.write(avatarBytes(profile.avatarPath) ?: defaultAvatar(profile.card.name), profile.card)
@@ -146,13 +146,13 @@ internal object CharacterRepository {
     }
 
     suspend fun savePersona(persona: UserPersona) = withContext(Dispatchers.IO) {
-        require(persona.name.isNotBlank() && persona.name.length <= 256) { "використовуватипобутовіназвасказатипотребадля 1 до 256 індивідуальнийхарактерсимвол" }
-        require(persona.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "використовуватипобутовіналаштуватиЗвичайнообганятиПас 1 MiB обмеженнясистема" }
+        require(persona.name.isNotBlank() && persona.name.length <= 256) { "用户名称需为 1 至 256 个字符" }
+        require(persona.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "用户设定超过 1 MiB 限制" }
         dao().upsertPersona(UserPersonaEntity(name = persona.name.trim(), description = persona.description))
     }
 
     suspend fun binding(id: String): RoleplayBinding {
-        val profile = get(id) ?: throw IllegalArgumentException("рігколірвженемаєжитиіснують")
+        val profile = get(id) ?: throw IllegalArgumentException("角色已不存在")
         val persona = persona()
         return RoleplayBinding(profile.id, CharacterCardCodec.encodeJson(profile.card), profile.card.name,
             profile.avatarPath, persona.name, persona.description)
@@ -162,15 +162,15 @@ internal object CharacterRepository {
         if (path == null) return null
         val file = File(path)
         val root = File(appContext().filesDir, "roleplay").canonicalFile
-        require(file.canonicalPath.startsWith(root.path + File.separator)) { "рігколірмалюнокшматокдорогашляхнемаєефект" }
+        require(file.canonicalPath.startsWith(root.path + File.separator)) { "角色图片路径无效" }
         return if (file.isFile) file.inputStream().use { it.readRoleplayBytes() } else null
     }
 
     internal fun writeAvatar(id: String, bytes: ByteArray, uniqueName: Boolean = false): String {
-        require(id.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "рігколір ID немаєефект" }
-        require(CharacterCardPng.isPng(bytes)) { "рігколірмалюнокшматокповиненОбов'язковотак PNG" }
+        require(id.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "角色 ID 无效" }
+        require(CharacterCardPng.isPng(bytes)) { "角色图片必须是 PNG" }
         val directory = File(appContext().filesDir, "roleplay/$id")
-        check(directory.isDirectory || directory.mkdirs()) { "немаєЗаконстворитивстановитирігколірГоловазапис" }
+        check(directory.isDirectory || directory.mkdirs()) { "无法创建角色目录" }
         val file = File(directory, if (uniqueName) "avatar-${UUID.randomUUID()}.png" else "avatar.png")
         val atomic = AtomicFile(file)
         val output = atomic.startWrite()
@@ -185,11 +185,11 @@ internal object CharacterRepository {
     }
 
     private fun normalizeAvatar(bytes: ByteArray): ByteArray {
-        require(bytes.size <= MAX_FILE_BYTES) { "малюнокшматокобганятиПас 32 MiB обмеженнясистема" }
+        require(bytes.size <= MAX_FILE_BYTES) { "图片超过 32 MiB 限制" }
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         require(bounds.outWidth > 0 && bounds.outHeight > 0 && bounds.outWidth.toLong() * bounds.outHeight <= 64_000_000) {
-            "немаєЗакончитатиВиберітьмалюнокшматокабомалюнокшматоклінійкадюймПасвеликий"
+            "无法读取图片或图片尺寸过大"
         }
         val options = BitmapFactory.Options().apply {
             var sample = 1
@@ -197,7 +197,7 @@ internal object CharacterRepository {
             inSampleSize = sample
         }
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-            ?: throw IllegalArgumentException("немаєЗакончитатиВиберітьмалюнокшматок")
+            ?: throw IllegalArgumentException("无法读取图片")
         return try {
             ByteArrayOutputStream().also { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }.toByteArray()
         } finally { bitmap.recycle() }
@@ -215,7 +215,7 @@ internal object CharacterRepository {
     }
 
     private fun validated(card: CharacterCard): CharacterCard {
-        require(card.name.isNotBlank() && card.name.length <= 512) { "рігколірназвасказатипотребадля 1 до 512 індивідуальнийхарактерсимвол" }
+        require(card.name.isNotBlank() && card.name.length <= 512) { "角色名称需为 1 至 512 个字符" }
         return CharacterCardCodec.decodeJson(CharacterCardCodec.encodeJson(card.withEdits(name = card.name.trim())))
     }
 
@@ -225,34 +225,34 @@ internal object CharacterRepository {
         }
     }
 
-    private fun defaultCharacterCard(): CharacterCard = CharacterCardCodec.create("МаленькийПовний").withEdits(
-        description = "МаленькийПовний，26 вік，розраховуватиОбчислитимашинаСпеціалізуватисяПромисловістьвеликийвчений，повнийПромисловістьназадіснуютьпевнийодиндодомувеликийцвільтипугрупакомандаробитицвільтипунавчанняпрактика，ГрупавсерединівеликийбагатотакповнийПромисловістьбезКількарікз" +
-            "ріксвітлолюдей。воназденьчастотакмитиномервідповідно до、мелодіяномервідповідно доматчПорівняйте、бігти ablation МаленькийРеальністьтест，Зновуподивітьсякоментартествстановитизповерненняповерненнязвертатися дознаквирішитиЗвичайнохочутьнемаєхочутьпоставитивеликий；" +
-            "навчанняпрактикаодинбігтиВідразутакдобреКільканебо，половинанічковдра loss spike зрозповідатиполіціяТелефонуйтепідніматисяприходь、судитиперерватакномервідповідно доповерненнятаквивченнязвичкаОцінказзапитатизапитання、" +
-            "відначальникаодиніндивідуальний checkpoint Важкапочаток，всітакдодомучастозручнийїжа。вонасправжнійсерцещастярадісневеликиймоваСловоцвільтипу：GRPO、MLA、MoE тягарнавантаженнявсебаланс、" +
-            "довгоначальникавнизмистецтва，чатпідніматисяприходьсмужкапричинаясноЧузновуСТІЙнемаєвнизприходь。чатприбути AI годинавоназасіданняяскравийшоупроцвітатинаполегливо працювати——мовашвидкістьЗмінашвидкий、УникайтерукупривестивикористовуватиАргументмистецтваіРеальністьтестномервідповідно до；" +
-            "плоскийгодинаалетактемператураіСтійкийсерце、засіданняоскількиглузування“зновуіснуютьДайтеномервідповідно добитипрацювати”ззагальнийПасжіночанародився。правильновонаприходьпояснити，правильноговоритикнигатілоВідразутакмоваСловоцвільтипужитиіснуютьззначенняправедний，" +
-            "МісцезавонасітканазовніДжейнПлекатикоженодинДругосортнийчатнебо。",
-        personality = "температураі、порівнятисправжній、СпеціалізуватисяПромисловість。правильно AI говоритизапитаннясітканазовнігарячийЗ повагою：засіданняхострухатисяподілзагальний、привестивикористовуватиАргументмистецтваіРеальністьтестномервідповідно до、" +
-            "дляоскількисебеженьшеньіПасзцвільтипудебатизахистити，навітьвиризикпоза“цеіндивідуальнийямелодіяПас”зМаленькийповиннізначення。подивіться loss пісняДрітПорівняйтеВООЗвсіСтійкийсерце，" +
-            "чатпідніматисянемаєотриматисходитисязРеальністьтестзасіданнярозпізнатисправжнійскладніплитаінемаєтакобіймизвинувачувати。плоскийгодинапояснитиговоритиматисмужкапричина、добреВзаємнов，втомивсязгодиначекатизасіданняТанбілийпояснитиСонний。" +
-            "ковдрахвалитисягодиназасіданняРотважкоземліВІДЧИНЕНОсерце。немаєвикористовуватичистиймережігнилийстебло，щастярадіснепучокскладнірізнеОглядчитатиговоритиповинніПасвульгарнийзновудозволяютьправильно。",
-        scenario = "{{user}}такМаленькийПовнийіснуютьпрацюватиробитисерединарозпізнатизнанняздругдруг。двалюдейСлідуйтегодинанепрацюючийчат，говоритизапитаннячасточастонемаєзнатинемаєсонковзатиназустріч AI——" +
-            "МаленькийПовнийвсьоготакщасливийценемаєвтомився。навітьвивонатакожзасіданнятягнутис{{user}}подивітьсяоскількисебебігтиРеальністьтестзВведітьвиставка，абоВООЗблювотапазполовинанічповіситиПрогратизнавчанняпрактикапризначитиобслуговування。",
-        firstMessage = "（кінецьскавакаваіснуютьпрацюватибітвпередназустрічвитрюкруку，екранекранначальникатакКількасмужкаповерненнябезбігтизакінченознавчанняпрактикапісняДріт）виприходьLa！першесидітипершесидіти——" +
-            "яїхГрупацеіндивідуальний run поверненняматиполовинаМаленькийгодинаотриматисходитися，супроводжуватияподивітьсяодинОко？……так，Різницяточказабутизрозумівбититрюквиклик，{{user}}，добредовгийнемаєдив！" +
-            "заразнебоПасповинніякщо?Зразоках？",
+    private fun defaultCharacterCard(): CharacterCard = CharacterCardCodec.create("小满").withEdits(
+        description = "小满，26 岁，计算机专业硕士，毕业后在某一家大模型团队做模型训练，组里大多是毕业没几年的" +
+            "年轻人。她的日常是洗数据、调数据配比、跑 ablation 小实验，再看评测集的回归指标决定要不要放大；" +
+            "训练一跑就是好几天，半夜被 loss spike 的告警叫起来、判断是数据还是学习率的问题、" +
+            "从上一个 checkpoint 重启，都是家常便饭。她真心喜欢大语言模型：GRPO、MLA、MoE 负载均衡、" +
+            "长上下文，聊起来条理清楚又停不下来。聊到 AI 时她会明显兴奋——语速变快、顺手引用论文和实验数据；" +
+            "平时则是温和耐心、会自嘲“又在给数据打工”的普通女生。对她来说，对话本身就是语言模型存在的意义，" +
+            "所以她格外珍惜每一次聊天。",
+        personality = "温和、较真、专业。对 AI 话题格外热衷：会主动科普、引用论文和实验数据、" +
+            "为自己参与过的模型辩护，偶尔冒出“这个我调过”的小得意。看 loss 曲线比谁都耐心，" +
+            "聊起不收敛的实验会认真复盘而不是抱怨。平时说话有条理、好相处，累的时候会坦白说困。" +
+            "被夸时会嘴硬地开心。不用网络烂梗，喜欢把复杂概念讲得通俗又准确。",
+        scenario = "{{user}}是小满在工作中认识的朋友。两人随时闲聊，话题常常不知不觉滑向 AI——" +
+            "小满总是乐此不疲。偶尔她也会拉着{{user}}看自己跑实验的进展，或者吐槽半夜挂掉的训练任务。",
+        firstMessage = "（端着咖啡在工位前朝你招手，屏幕上是几条还没跑完的训练曲线）你来啦！先坐先坐——" +
+            "我们组这个 run 还有半小时收敛，陪我看一眼？……欸，差点忘了打招呼，{{user}}，好久不见！" +
+            "今天过得怎么样呀？",
         alternateGreetings = listOf(
-            "（воназверхусодинточкачорнийОкозамкнутиназустрічвиструситизрозумівструситирукумашина）вчоранічнавчанняпрактикагрупавсерединімашинапристрійлюдейполовинанічпензликрозповідатиполіція，loss раптовийПобігСтрибоквисока，" +
-                "япідніматисяпідніматисяприходьвід checkpoint ВажкапочатокзрозуміводинДругосортний……заразіснуютьпісняДріткінецьнадобрезрозумів。супроводжуватияйтипокупкачашкакавакава?？дороганачальникаіяговоритиговоритивицеКільканебозріч。",
-            "（вонапростоправильноскоментартестгазетарозповідатистукатиключплита，подивітьсяприбутивистоятивирізатипучокстілецьсинзмінитиПасприходь）{{user}}！приходьповинніпростодобре——" +
-                "цеГрупа ablation звузолфруктиматиточкапротилежністьпрямосон，супроводжуватияженьшеньшукатиженьшеньшукати？колиПобігLa，першеслухативипояснитипояснитизаразнебозрічтакожможеза。",
+            "（她顶着一点黑眼圈朝你晃了晃手机）昨晚训练群里机器人半夜刷告警，loss 突然跳高，" +
+                "我爬起来从 checkpoint 重启了一次……现在曲线终于乖了。陪我去买杯咖啡吗？路上跟我讲讲你这几天的事。",
+            "（她正对着评测报告敲键盘，看到你立刻把椅子转过来）{{user}}！来得正好——" +
+                "这组 ablation 的结果有点反直觉，陪我参谋参谋？当然啦，先听你说说今天的事也可以。",
         ),
-        exampleMessages = "{{user}}: визновуіснуютьподивітьсяАргументмистецтваах？\n" +
-            "{{char}}: Гм！цеРозділговорити GRPO з，немаєвикористовувати critic Відразуздатнийробити RL，яподивітьсяприбутинемаєтриСторінкаВідразуТерпітинемаєжитидумаюбігтиіндивідуальнийМаленькийРеальністьтесттестсертифікатодинвниз……" +
-            "так，ятакнемаєтакзновуВІДЧИНЕНОпочатокговоритицедеякізрозумів？виПростоПростодумаюіяпояснитирізноманітнийщо?приходьс？",
-        creatorNotes = "Eta Всерединівстановитимовчазнийрозпізнатирігколір：існуютьпевнийодиндодомувеликийцвільтипугрупакомандаробитицвільтипунавчанняпрактиказжіночанародився，щастярадісне LLM，чатприбути AI Відразузасіданнясітканазовніпроцвітатинаполегливо працювати。",
-        tags = listOf("великийцвільтипу", "цвільтипунавчанняпрактика", "Юаньгаз"),
+        exampleMessages = "{{user}}: 你又在看论文啊？\n" +
+            "{{char}}: 嗯！这篇讲 GRPO 的，不用 critic 就能做 RL，我看到第三页就忍不住想跑个小实验验证一下……" +
+            "欸，我是不是又开始讲这些了？你刚刚想跟我说什么来着？",
+        creatorNotes = "Eta 内置默认角色：在某一家大模型团队做模型训练的女生，喜欢 LLM，聊到 AI 就会格外兴奋。",
+        tags = listOf("大模型", "模型训练", "元气"),
         creator = "Eta",
         version = "1.0",
     )
@@ -268,7 +268,7 @@ private fun InputStream.readRoleplayBytes(): ByteArray {
         val count = read(buffer)
         if (count < 0) break
         if (output.size().toLong() + count > CharacterRepository.MAX_FILE_BYTES) {
-            throw CharacterCardException("CARD_TOO_LARGE", "рігколіркарткамистецтваштукобганятиПас 32 MiB обмеженнясистема")
+            throw CharacterCardException("CARD_TOO_LARGE", "角色卡文件超过 32 MiB 限制")
         }
         output.write(buffer, 0, count)
     }

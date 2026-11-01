@@ -20,7 +20,7 @@ internal object ProviderRequestHeaders {
         val profile = ProviderConnectionProfile.forAuthMode(authMode)
         if (profile != null) {
             require(customHeaders.none { isSubscriptionManagedHeader(it.name) }) {
-                "порядокчитатинавітьзловитизрозпізнатисертифікат、Cookie ідорогаЗалежить відбудь ласкапроситиголоваЗалежить від Eta трубкапричина，немаєздатнийоскількиЗвичайноправеднийкришкабудувати"
+                "订阅连接的认证、Cookie 与路由请求头由 Eta 管理，不能自定义覆盖"
             }
         }
         builder.set("User-Agent", "Eta")
@@ -35,7 +35,7 @@ internal object ProviderRequestHeaders {
             builder.set("session-id", sessionId)
         }
         if (baseUrl.toHttpUrlOrNull()?.host == "opencode.ai") {
-            // Заголовки сеансу зберігаються середою виконання, щоб уникнути виправлення користувацьких значень і об’єднання всіх розмов в один маршрут.
+            // 会话头由 Runtime 持有，避免固定自定义值把所有对话合并到同一路由。
             builder.set(
                 "x-opencode-session",
                 UUID.nameUUIDFromBytes(sessionId.toByteArray(Charsets.UTF_8)).toString(),

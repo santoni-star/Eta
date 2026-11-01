@@ -21,16 +21,16 @@ internal class SpeechRecorder {
     @SuppressLint("MissingPermission")
     suspend fun record(onReady: () -> Unit, onLevel: (Float) -> Unit) = withContext(Dispatchers.IO) {
         val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-        if (minimum <= 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "налаштуватиПриготуйтенемаєвідділенняутримуватимовазвукзаписзвуксіткаРежим")
+        if (minimum <= 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "设备不支持语音录音格式")
         val audio = AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, RATE,
             AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, maxOf(minimum, FRAME_BYTES * 2))
         recorder = audio
         try {
-            if (audio.state != AudioRecord.STATE_INITIALIZED) throw SpeechFailure(SpeechErrorCode.AUDIO, "немаєЗаконранопочатокзмінитипшеницяграмвітер")
+            if (audio.state != AudioRecord.STATE_INITIALIZED) throw SpeechFailure(SpeechErrorCode.AUDIO, "无法初始化麦克风")
             if (finishing.get()) return@withContext
             audio.startRecording()
             if (audio.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
-                throw SpeechFailure(SpeechErrorCode.AUDIO, "пшеницяграмвітернемаєможевикористовувати，можездатнийпростоковдращовінвідповідьвикористовуватизаймативикористовувати")
+                throw SpeechFailure(SpeechErrorCode.AUDIO, "麦克风不可用，可能正被其他应用占用")
             }
             onReady()
             var total = 0
@@ -38,12 +38,12 @@ internal class SpeechRecorder {
                 val frame = ByteArray(minOf(FRAME_BYTES, MAX_BYTES - total))
                 val count = audio.read(frame, 0, frame.size)
                 if (count <= 0 && finishing.get()) break
-                if (count <= 0 || count % 2 != 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "пшеницяграмвітерчитатиВиберітьвтратитипоразка")
+                if (count <= 0 || count % 2 != 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "麦克风读取失败")
                 val bytes = if (count == frame.size) frame else frame.copyOf(count)
                 val sent = frames.trySend(bytes)
                 if (sent.isFailure) {
                     if (finishing.get() && sent.isClosed) break
-                    throw SpeechFailure(SpeechErrorCode.BACKPRESSURE, "чистиймережіначальникапропускнемаєігодина，будь ласкаВажкаспробувати")
+                    throw SpeechFailure(SpeechErrorCode.BACKPRESSURE, "网络上传不及时，请重试")
                 }
                 total += count
                 var energy = 0.0
@@ -63,8 +63,8 @@ internal class SpeechRecorder {
 
     fun finish() {
         finishing.set(true)
-        // зупинити розблокування читання; примірник звільняється лише співпрограмою запису в finally.
-        try { recorder?.stop() } catch (_: IllegalStateException) { /*Ініціалізація не завершена або припинена.*/ }
+        // stop 解除阻塞 read；由录音协程在 finally 中唯一释放实例。
+        try { recorder?.stop() } catch (_: IllegalStateException) { /* 初始化尚未完成或已经停止。 */ }
     }
 
     fun cancel() { finish(); frames.cancel() }
@@ -88,10 +88,10 @@ internal suspend fun collectSpeechAudio(frames: kotlinx.coroutines.channels.Rece
     val out = ByteArrayOutputStream()
     for (frame in frames) {
         if (out.size() + frame.size > SpeechRecorder.MAX_BYTES) {
-            throw SpeechFailure(SpeechErrorCode.AUDIO, "записзвукобганятиПасдовговитрачатиобмеженнясистема")
+            throw SpeechFailure(SpeechErrorCode.AUDIO, "录音超过长度限制")
         }
         out.write(frame)
     }
-    if (out.size() == 0) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "безматизаписприбутимовазвук，будь ласкаВажкаспробувати")
+    if (out.size() == 0) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "没有录到语音，请重试")
     return pcmToWav(out.toByteArray())
 }

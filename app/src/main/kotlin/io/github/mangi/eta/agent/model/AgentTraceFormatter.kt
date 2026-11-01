@@ -1,7 +1,5 @@
 package io.github.mangi.eta.agent.model
 
-import android.content.Context
-import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.subagent.AgentSubagentToolCatalog
 import io.github.mangi.eta.agent.subagent.SubagentActivitySnapshot
 import io.github.mangi.eta.agent.subagent.SubagentProfile
@@ -9,73 +7,68 @@ import java.net.URI
 import java.util.Locale
 import org.json.JSONObject
 
-/** Підсумок інструменту відображається користувачам і не містить конфіденційних параметрів; команди терміналу надаються для перевірки користувача через незалежні поля.*/
+/** 工具摘要面向用户展示，不包含敏感参数；终端命令通过独立字段提供给用户核对。 */
 internal class AgentTraceFormatter {
-
-    /** Повертає український або англійський варіант рядка залежно від поточної локалі. */
-    private fun loc(uk: String, en: String): String =
-        if (Locale.getDefault().language == "uk") uk else en
-
     fun summarizeArguments(toolCall: AgentModelClient.ToolCall): String =
         when (toolCall.name) {
             BROWSER_TOOL_NAME -> summarizeBrowserArguments(toolCall.argumentsJson)
-            "web_search" -> loc("Веб-пошук", "Web search")
+            "web_search" -> "搜索网页"
             "fetch_url" -> summarizeFetchArguments(toolCall.argumentsJson)
             "open_uri" -> summarizeOpenUriArguments(toolCall.argumentsJson)
             in AgentTerminalToolCatalog.names -> summarizeTerminalArguments(toolCall.name, toolCall.argumentsJson)
-            "run_command" -> loc("Виконати команду", "Execute command") + " · " + loc("Android", "Android")
-            "write_file" -> summarizeTextLength("Напишітьвведітьмистецтваштук", toolCall.argumentsJson, "content")
-            "read_file" -> "читатиВиберітьмистецтваштук"
-            "list_directory" -> "СписокпозаГоловазапис"
-            "edit_file" -> "Вишуканийправильнокомпілюватиредагуватимистецтваштук"
-            "stat_file" -> "перевіритиподивітьсямистецтваштуклистінтерес"
-            "glob_files" -> "відповідно додорогашляхперевіритиспробуйте знайтимистецтваштук"
-            "grep_files" -> "пошукОтжемистецтваштукВсерединіДозволити"
-            "inspect_app" -> "перевіритиперевіритивідповідьвикористовувати"
+            "run_command" -> "执行命令 · Android"
+            "write_file" -> summarizeTextLength("写入文件", toolCall.argumentsJson, "content")
+            "read_file" -> "读取文件"
+            "list_directory" -> "列出目录"
+            "edit_file" -> "精确编辑文件"
+            "stat_file" -> "查看文件信息"
+            "glob_files" -> "按路径查找文件"
+            "grep_files" -> "搜索文件内容"
+            "inspect_app" -> "检查应用"
             "type_text" -> summarizeTypeText(toolCall.argumentsJson)
-            "input_text" -> summarizeTextLength("втратитивведітьмистецтвакнига", toolCall.argumentsJson, "text")
-            "replace_text" -> summarizeTextLength("дляЗмінамистецтвакнига", toolCall.argumentsJson, "text")
+            "input_text" -> summarizeTextLength("输入文本", toolCall.argumentsJson, "text")
+            "replace_text" -> summarizeTextLength("替换文本", toolCall.argumentsJson, "text")
             "paste_text", "set_clipboard" ->
-                summarizeTextLength("палкапалкамистецтвакнига", toolCall.argumentsJson, "text")
-            "clear_text" -> "яснонульовиймистецтвакнига"
-            "get_clipboard" -> "читатиВиберітьВирізатипалкаплита"
-            "search_apps" -> summarizeQueryArguments("пошукОтжевідповідьвикористовувати", toolCall.argumentsJson)
-            "launch_app" -> "битиВІДЧИНЕНОвідповідьвикористовувати"
-            "get_current_context" -> "читатиВиберітьгодинаміжібітвстановити"
+                summarizeTextLength("粘贴文本", toolCall.argumentsJson, "text")
+            "clear_text" -> "清空文本"
+            "get_clipboard" -> "读取剪贴板"
+            "search_apps" -> summarizeQueryArguments("搜索应用", toolCall.argumentsJson)
+            "launch_app" -> "打开应用"
+            "get_current_context" -> "读取时间与位置"
             "observe_screen" -> summarizeObservationArguments(toolCall.argumentsJson)
-            "tap" -> summarizePointArguments("точкаударекранекран", toolCall.argumentsJson)
-            "long_press" -> summarizePointArguments("довговідповідно доекранекран", toolCall.argumentsJson)
-            "tap_area" -> "точкаударрайондомен"
-            "tap_element" -> summarizeElementArguments("точкаударЮаньбілий", toolCall.argumentsJson)
-            "long_press_element" -> summarizeElementArguments("довговідповідно доЮаньбілий", toolCall.argumentsJson)
-            "swipe" -> "ковзатирухатисяекранекран"
-            "scroll" -> summarizeScrollArguments("ролрухатисяекранекран", toolCall.argumentsJson)
+            "tap" -> summarizePointArguments("点击屏幕", toolCall.argumentsJson)
+            "long_press" -> summarizePointArguments("长按屏幕", toolCall.argumentsJson)
+            "tap_area" -> "点击区域"
+            "tap_element" -> summarizeElementArguments("点击元素", toolCall.argumentsJson)
+            "long_press_element" -> summarizeElementArguments("长按元素", toolCall.argumentsJson)
+            "swipe" -> "滑动屏幕"
+            "scroll" -> summarizeScrollArguments("滚动屏幕", toolCall.argumentsJson)
             "scroll_element" ->
-                summarizeScrollArguments("ролрухатисяЮаньбілий", toolCall.argumentsJson, withIndex = true)
+                summarizeScrollArguments("滚动元素", toolCall.argumentsJson, withIndex = true)
             "press_key" -> summarizePressKeyArguments(toolCall.argumentsJson)
             "wait" -> summarizeWaitArguments(toolCall.argumentsJson)
-            "wait_for_text" -> "чекатилікуватимистецтвакнигапозазараз"
-            "wait_for_package" -> "чекатилікувативідповідьвикористовуватиВідразунитка"
-            "open_system_panel" -> "битиВІДЧИНЕНОКраваткасистемалокшинаплита"
-            "read_image" -> "перевіритиподивітьсямалюнокшматок"
+            "wait_for_text" -> "等待文本出现"
+            "wait_for_package" -> "等待应用就绪"
+            "open_system_panel" -> "打开系统面板"
+            "read_image" -> "查看图片"
             AgentSubagentToolCatalog.TOOL_NAME -> summarizeSubagentArguments(toolCall.argumentsJson)
             AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> summarizeSubagentProfileArguments(toolCall.argumentsJson)
-            AgentConversationToolCatalog.READ_HISTORY -> "читатиВиберітьколивпередзасіданняговоритикалендарісторії"
+            AgentConversationToolCatalog.READ_HISTORY -> "读取当前会话历史"
             "memory_get", "character_memory_get" -> summarizeMemoryGetArguments(toolCall.argumentsJson)
             "memory_write", "character_memory_write" -> summarizeMemoryWriteArguments(toolCall.argumentsJson)
-            "skills_list" -> "перевіритиподивітьсятехнологіїздатнийСписокповерхні"
-            "skills_read" -> "читатиВиберітьтехнологіїздатний"
-            "skills_read_resource" -> "читатиВиберітьтехнологіїздатнийКапіталджерело"
-            "skills_list_curated" -> "переглядатиПереглянутиВишуканийвибратитехнологіїздатний"
-            "skills_inspect_github" -> "перевіритиподивітьсятехнологіїздатнийдокладноПрихильність"
-            "skills_install_from_github" -> "встановитиупаковкатехнологіїздатний"
+            "skills_list" -> "查看技能列表"
+            "skills_read" -> "读取技能"
+            "skills_read_resource" -> "读取技能资源"
+            "skills_list_curated" -> "浏览精选技能"
+            "skills_inspect_github" -> "查看技能详情"
+            "skills_install_from_github" -> "安装技能"
             else -> {
                 val label = DEVICE_ACTION_LABELS[toolCall.name]
                     ?: AgentPhoneToolCatalog.entries.firstOrNull { it.name == toolCall.name }?.title
                     ?: io.github.mangi.eta.agent.context.PersonalSearchTools.searches.firstOrNull { it.name == toolCall.name }?.title
-                    ?: when (toolCall.name) { "search_notes" -> "перевіритиЗапитуйтезручнийзнак"; "search_system_memories" -> "перевіритиЗапитуйтеКраваткасистемазапам'ятативідкликати"; "read_personal_item" -> "читатиВиберітьперевіритиОтжедокладноПрихильність"; "summarize_bills" -> "обмінвсьогорахунокодин"; else -> null }
+                    ?: when (toolCall.name) { "search_notes" -> "查询便签"; "search_system_memories" -> "查询系统记忆"; "read_personal_item" -> "读取检索详情"; "summarize_bills" -> "汇总账单"; else -> null }
                 when {
-                    label == null -> "дозволяютьПриготуйтеВиконатидобре"
+                    label == null -> "准备执行"
                     toolCall.name.startsWith("search_") ->
                         summarizeQueryArguments(label, toolCall.argumentsJson)
                     else -> label
@@ -83,7 +76,7 @@ internal class AgentTraceFormatter {
             }
         }
 
-    /** Команда вводить бігову доріжку з десенсибілізованою видимою для користувача проекцією; журнал все ще записує лише довжину.*/
+    /** 命令以脱敏后的用户可见投影进入运行轨迹；日志仍只记录长度。 */
     fun displayCommand(toolCall: AgentModelClient.ToolCall): String? =
         if (toolCall.name == AgentSubagentToolCatalog.TOOL_NAME) {
             SubagentActivitySnapshot.initialFromArguments(toolCall.argumentsJson)?.encode()
@@ -101,39 +94,39 @@ internal class AgentTraceFormatter {
 
     private fun String.redactDisplaySecrets(): String =
         replace(SENSITIVE_ASSIGNMENT) { match ->
-            "${match.groupValues[1]}=<вжеприхованийтибетська>"
+            "${match.groupValues[1]}=<已隐藏>"
         }
             .replace(SENSITIVE_FLAG) { match ->
-                "${match.groupValues[1]}<вжеприхованийтибетська>"
+                "${match.groupValues[1]}<已隐藏>"
             }
             .replace(SENSITIVE_HEADER) { match ->
-                "${match.groupValues[1]}${match.groupValues[2]}<вжеприхованийтибетська>"
+                "${match.groupValues[1]}${match.groupValues[2]}<已隐藏>"
             }
 
-    /** Зовнішні дайджести URI не записують шлях, запит, фрагмент або інформацію про користувача.*/
+    /** 外部 URI 摘要不记录 path、query、fragment 或用户信息。 */
     fun summarizeOpenUriArguments(argumentsJson: String): String =
         runCatching {
             val raw = JSONObject(argumentsJson).optString("uri").trim()
             val uri = URI(raw)
             val scheme = uri.scheme?.lowercase()?.take(24)
             val host = uri.host?.lowercase()?.take(160)
-            listOfNotNull("платитиДайтеназовнівідділвідповідьвикористовувати", scheme, host).joinToString(" · ")
-        }.getOrDefault("платитиДайтеназовнівідділвідповідьвикористовувати")
+            listOfNotNull("交给外部应用", scheme, host).joinToString(" · ")
+        }.getOrDefault("交给外部应用")
 
-    /** Підсумок browser_use розкриває лише дії та безпечні витягнуті хости.*/
+    /** browser_use 摘要只暴露动作和安全提取的 host。 */
     fun summarizeBrowserArguments(argumentsJson: String): String =
         runCatching {
             val arguments = JSONObject(argumentsJson)
             val action = arguments.optString("action").browserActionLabel()
             val host = safeHttpHost(arguments.optString("url"))
             listOfNotNull(action, host).joinToString(" · ")
-        }.getOrElse { "переглядатиПереглянутипристрійТримайтеробити" }
+        }.getOrElse { "浏览器操作" }
 
     private fun summarizeFetchArguments(argumentsJson: String): String = runCatching {
         val arguments = JSONObject(argumentsJson)
-        val label = if (arguments.has("document_id")) "слідуватиПродовженнячитатиВиберітьчистийСторінка" else "читатиВиберітьчистийСторінка"
+        val label = if (arguments.has("document_id")) "继续读取网页" else "读取网页"
         listOfNotNull(label, safeHttpHost(arguments.optString("url"))?.removePrefix("www.")).joinToString(" · ")
-    }.getOrDefault("читатиВиберітьчистийСторінка")
+    }.getOrDefault("读取网页")
 
     private fun summarizeTerminalArguments(toolName: String, argumentsJson: String): String =
         runCatching {
@@ -150,9 +143,9 @@ internal class AgentTraceFormatter {
                 add(action)
                 environment?.let(::add)
                 identity?.let(::add)
-                if (arguments.optBoolean("async", false)) add(loc("Асинхронно", "Async"))
+                if (arguments.optBoolean("async", false)) add("后台")
             }.joinToString(" · ")
-        }.getOrDefault("кінецькінець")
+        }.getOrDefault("终端")
 
     private fun summarizeTextLength(
         label: String,
@@ -161,27 +154,27 @@ internal class AgentTraceFormatter {
     ): String =
         runCatching {
             val chars = JSONObject(argumentsJson).optString(key).length
-            "$label · $chars характерсимвол"
+            "$label · $chars 字符"
         }.getOrDefault(label)
 
-    /** Відображаються лише дія та довжина, а текст не повторюється: вмістом введення може бути пароль або приватне повідомлення.*/
+    /** 只展示动作与长度，不回显正文：输入内容可能是密码或私人消息。 */
     private fun summarizeTypeText(argumentsJson: String): String =
         runCatching {
             val args = JSONObject(argumentsJson)
             val chars = args.optString("text").length
             val label = when {
-                chars == 0 -> "яснонульовиймистецтвакнига"
-                args.optString("mode") == "append" -> "Чейздодатимистецтвакнига"
-                else -> "втратитивведітьмистецтвакнига"
+                chars == 0 -> "清空文本"
+                args.optString("mode") == "append" -> "追加文本"
+                else -> "输入文本"
             }
             buildString {
                 append(label)
-                if (chars > 0) append(" · $chars характерсимвол")
-                if (args.optBoolean("submit")) append(" · нестиплатити")
+                if (chars > 0) append(" · $chars 字符")
+                if (args.optBoolean("submit")) append(" · 提交")
             }
-        }.getOrDefault("втратитивведітьмистецтвакнига")
+        }.getOrDefault("输入文本")
 
-    /** Ключові слова пошуку – це запити, ініційовані самим користувачем і відображаються безпосередньо; окремі рядки та скорочення довжини все ще виконуються.*/
+    /** 搜索关键词是用户自己发起的查询，直接展示；仍做单行化与长度截断。 */
     private fun summarizeQueryArguments(label: String, argumentsJson: String): String =
         runCatching {
             val query = sanitizeSummaryValue(
@@ -222,8 +215,8 @@ internal class AgentTraceFormatter {
     private fun summarizePressKeyArguments(argumentsJson: String): String =
         runCatching {
             val button = JSONObject(argumentsJson).optString("button").pressKeyLabel()
-            listOfNotNull("відповідно доключ", button).joinToString(" · ")
-        }.getOrDefault("відповідно доключ")
+            listOfNotNull("按键", button).joinToString(" · ")
+        }.getOrDefault("按键")
 
     private fun summarizeWaitArguments(argumentsJson: String): String =
         runCatching {
@@ -231,49 +224,49 @@ internal class AgentTraceFormatter {
                 .coerceAtLeast(0)
             val duration = if (durationMs >= 1_000) {
                 String.format(Locale.US, "%.1f", durationMs / 1_000f)
-                    .trimEnd('0').trimEnd('.') + " " + loc("секунд", "seconds")
+                    .trimEnd('0').trimEnd('.') + " 秒"
             } else {
-                "$durationMs " + loc("мс", "ms")
+                "$durationMs 毫秒"
             }
-            loc("Очікувати", "Wait") + " · " + duration
-        }.getOrDefault("чекатилікувати")
+            "等待 · $duration"
+        }.getOrDefault("等待")
 
     private fun summarizeObservationArguments(argumentsJson: String): String =
         runCatching {
             val options = AgentScreenObservationContract.resolve(JSONObject(argumentsJson))
             buildList {
-                add("переглянутиоглядатиекранекран")
-                if (options.includeScreenshot) add("Міститьвирізатималюнок")
-                if (options.includeUiTree) add("Міститьмежалокшинадерево")
+                add("观察屏幕")
+                if (options.includeScreenshot) add("含截图")
+                if (options.includeUiTree) add("含界面树")
             }.joinToString(" · ")
-        }.getOrDefault("переглянутиоглядатиекранекран")
+        }.getOrDefault("观察屏幕")
 
     private fun summarizeMemoryGetArguments(argumentsJson: String): String =
         runCatching {
             val arguments = JSONObject(argumentsJson)
-            if (arguments.optString("query").isNotBlank()) "перевіритиОтжезапам'ятативідкликати" else "читатиВиберітьзапам'ятативідкликати"
-        }.getOrDefault("читатиВиберітьзапам'ятативідкликати")
+            if (arguments.optString("query").isNotBlank()) "检索记忆" else "读取记忆"
+        }.getOrDefault("读取记忆")
 
     private fun summarizeMemoryWriteArguments(argumentsJson: String): String =
         runCatching {
             val arguments = JSONObject(argumentsJson)
             val mode = when (arguments.optString("mode")) {
-                "replace_range" -> "дляЗмінашматокчастина"
-                "append" -> "Чейздодати"
-                "clear" -> "яснонульовий"
+                "replace_range" -> "替换片段"
+                "append" -> "追加"
+                "clear" -> "清空"
                 else -> null
             }
             val content = arguments.optString("content")
             val lines = if (content.isEmpty()) 0 else content.count { it == '\n' } + 1
             buildList {
-                add("Навітьновийзапам'ятативідкликати")
+                add("更新记忆")
                 mode?.let(::add)
-                add("$lines добре")
-                add("${content.toByteArray(Charsets.UTF_8).size} характерФестиваль")
+                add("$lines 行")
+                add("${content.toByteArray(Charsets.UTF_8).size} 字节")
             }.joinToString(" · ")
-        }.getOrDefault("Навітьновийзапам'ятативідкликати")
+        }.getOrDefault("更新记忆")
 
-    /** Успішний або невдалий результат використовується подіями та станами інтерфейсу користувача, більше не покладаючись на теги в підсумковому тексті.*/
+    /** 结果成败供事件与 UI 状态使用，不再依赖摘要文本里的标记。 */
     fun isSuccessResult(result: AgentModelClient.ToolResult): Boolean =
         parseResultJson(result)?.optBoolean("ok", true) ?: true
 
@@ -283,11 +276,11 @@ internal class AgentTraceFormatter {
     ): String {
         val json = parseResultJson(result)
         if (toolName == "web_search" || toolName == "fetch_url") return summarizeWebResult(toolName, json)
-        // Коли термінал exit_code != 0, ok=false, але поле коду відсутнє, ви повинні взяти спеціальну гілку, щоб зберегти код виходу та вихід
+        // 终端 exit_code != 0 时 ok=false 但没有 code 字段，必须走专用分支保留退出码与输出
         if (toolName in AgentTerminalToolCatalog.names || toolName == "run_command") {
             return summarizeTerminalResult(toolName, json)
         }
-        if (json?.optString("status") == "unconfirmed") return "Тримайтеробитивженестиплатити，ефектфруктище ніправильнорозпізнати"
+        if (json?.optString("status") == "unconfirmed") return "操作已提交，效果未确认"
         if (!isSuccessResult(result)) return summarizeFailure(json)
         if (json != null) {
             val summary = AgentDeviceResultFormatter.summarize(toolName, json)
@@ -296,18 +289,18 @@ internal class AgentTraceFormatter {
             if (summary != null) return summary
         }
         return when (toolName) {
-            BROWSER_TOOL_NAME -> json?.let(::summarizeBrowserResult) ?: "переглядатиПереглянутипристрійТримайтеробитизакінченостати"
-            AgentSubagentToolCatalog.TOOL_NAME -> json?.let(::summarizeSubagentResult) ?: "закінченостати"
-            AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> json?.let(::summarizeSubagentProfileResult) ?: "закінченостати"
-            AgentConversationToolCatalog.READ_HISTORY -> "вжечитатиВиберітькалендарісторіїточкаСторінка"
+            BROWSER_TOOL_NAME -> json?.let(::summarizeBrowserResult) ?: "浏览器操作完成"
+            AgentSubagentToolCatalog.TOOL_NAME -> json?.let(::summarizeSubagentResult) ?: "完成"
+            AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> json?.let(::summarizeSubagentProfileResult) ?: "完成"
+            AgentConversationToolCatalog.READ_HISTORY -> "已读取历史分页"
             "memory_get", "memory_write", "character_memory_get", "character_memory_write" ->
-                json?.let { summarizeMemoryResult(toolName, it) } ?: "закінченостати"
-            "search_apps" -> json?.let(::summarizeSearchAppsResult) ?: "закінченостати"
-            "launch_app" -> json?.let(::summarizeLaunchAppResult) ?: "вжебитиВІДЧИНЕНО"
+                json?.let { summarizeMemoryResult(toolName, it) } ?: "完成"
+            "search_apps" -> json?.let(::summarizeSearchAppsResult) ?: "完成"
+            "launch_app" -> json?.let(::summarizeLaunchAppResult) ?: "已打开"
             "skills_list", "skills_list_curated", "skills_inspect_github", "skills_install_from_github" -> json?.let {
                 summarizeSkillResult(toolName, it) ?: summarizeGenericResult(it, result)
-            } ?: "закінченостати"
-            else -> json?.let { summarizeGenericResult(it, result) } ?: "закінченостати"
+            } ?: "完成"
+            else -> json?.let { summarizeGenericResult(it, result) } ?: "完成"
         }
     }
 
@@ -315,38 +308,38 @@ internal class AgentTraceFormatter {
         runCatching { JSONObject(result.content) }.getOrNull()
 
     /**
-     * Текст помилки веб-сторінки, пошукові терміни та заголовки сторінок можуть повторювати приватні URL-адреси, зберігаються лише підрахунки. Дія та хост уже є в підсумку параметрів,
-     * Результати надають лише висновки, щоб уникнути дублювання однієї і тієї ж лінії роботи.
+     * 网页错误正文、搜索词和页面标题可能回显私密 URL，只保留计数。动作与主机已在参数摘要中，
+     * 结果只给出结论，避免工作过程同一行重复。
      */
     private fun summarizeWebResult(toolName: String, json: JSONObject?): String {
-        val label = if (toolName == "web_search") "чистийСторінкапошукОтже" else "чистийСторінкачитатиВиберіть"
-        if (json == null) return "закінченостати"
+        val label = if (toolName == "web_search") "网页搜索" else "网页读取"
+        if (json == null) return "完成"
         if (!json.optBoolean("ok", true)) {
             val code = json.optString("code").takeIf { it.matches(Regex("[A-Z][A-Z0-9_]{0,79}")) }
-            return listOfNotNull("${label}втратитипоразка", code?.let { "code=$it" }).joinToString(" · ")
+            return listOfNotNull("${label}失败", code?.let { "code=$it" }).joinToString(" · ")
         }
         if (toolName == "web_search") {
             val count = json.optJSONArray("results")?.length() ?: json.firstNonNegativeInt("count")
             return when (count) {
-                null -> "закінченостати"
-                0 -> "безматиспробуйте знайтиприбутивузолфрукти"
-                else -> "$count смужкавузолфрукти"
+                null -> "完成"
+                0 -> "没有找到结果"
+                else -> "$count 条结果"
             }
         }
         val chars = (json.opt("text") as? String)?.length
             ?: json.firstNonNegativeInt("returned_chars", "text_chars")
-            ?: return "закінченостати"
-        return if (json.optBoolean("has_more")) "вжечитативперед ${formatCharCount(chars)}" else formatCharCount(chars)
+            ?: return "完成"
+        return if (json.optBoolean("has_more")) "已读前 ${formatCharCount(chars)}" else formatCharCount(chars)
     }
 
-    /** Підсумок помилок зберігає позначку code= для отримання стабільних кодів помилок із поточного журналу; повідомлення - це китайська причина, яка вказана на стороні інструменту.*/
+    /** 失败摘要保留 code= 标记，供运行日志提取稳定错误码；message 是工具侧给出的中文原因。 */
     private fun summarizeFailure(json: JSONObject?): String {
         val code = json?.optString("code")?.takeIf { it.isNotBlank() }
         val reason = json?.optString("message")
             ?.let(::sanitizeSummaryValue)
             ?.takeIf { it.isNotBlank() }
         return buildList {
-            add("втратитипоразка")
+            add("失败")
             reason?.let(::add)
             code?.let { add("code=$it") }
         }.joinToString(" · ")
@@ -354,9 +347,9 @@ internal class AgentTraceFormatter {
 
     private fun summarizeMemoryResult(toolName: String, json: JSONObject): String =
         buildList {
-            add(if (toolName.endsWith("memory_get")) "вжечитатиВиберітьзапам'ятативідкликати" else "вжеНавітьновийзапам'ятативідкликати")
-            if (json.has("line_count")) add("${json.optInt("line_count")} добре")
-            if (json.has("bytes")) add("${json.optInt("bytes")} характерФестиваль")
+            add(if (toolName.endsWith("memory_get")) "已读取记忆" else "已更新记忆")
+            if (json.has("line_count")) add("${json.optInt("line_count")} 行")
+            if (json.has("bytes")) add("${json.optInt("bytes")} 字节")
         }.joinToString(" · ")
 
     private fun summarizeSubagentArguments(argumentsJson: String): String = runCatching {
@@ -374,7 +367,7 @@ internal class AgentTraceFormatter {
 
     private fun summarizeSubagentResult(json: JSONObject): String {
         val toolCalls = json.optInt("tool_calls", 0)
-        return if (toolCalls > 0) "закінченостати · $toolCalls ДругосортнийпрацюватиІнструментмелодіявикористовувати" else "закінченостати"
+        return if (toolCalls > 0) "完成 · $toolCalls 次工具调用" else "完成"
     }
 
     private fun summarizeSubagentProfileArguments(argumentsJson: String): String = runCatching {
@@ -382,31 +375,31 @@ internal class AgentTraceFormatter {
         val action = args.optString("action").trim().lowercase()
         val name = sanitizeSummaryValue(args.optString("name"), 32)
         val label = when (action) {
-            "save" -> "зберегтижити Subagent"
-            "delete" -> "видалитивидалити Subagent"
-            "get" -> "читатиВиберіть Subagent"
-            else -> "перевіритиподивіться Subagent Списокповерхні"
+            "save" -> "保存 Subagent"
+            "delete" -> "删除 Subagent"
+            "get" -> "读取 Subagent"
+            else -> "查看 Subagent 列表"
         }
         if (name.isNotBlank() && action != "list") "$label · $name" else label
-    }.getOrDefault("трубкапричина Subagent")
+    }.getOrDefault("管理 Subagent")
 
     private fun summarizeSubagentProfileResult(json: JSONObject): String =
         when (json.optString("action")) {
-            "save" -> listOfNotNull("вжезберегтижити", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
-            "delete" -> listOfNotNull("вжевидалитивидалити", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
-            "list" -> "${json.optJSONArray("profiles")?.length() ?: 0} індивідуальний Subagent"
-            else -> "закінченостати"
+            "save" -> listOfNotNull("已保存", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
+            "delete" -> listOfNotNull("已删除", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
+            "list" -> "${json.optJSONArray("profiles")?.length() ?: 0} 个 Subagent"
+            else -> "完成"
         }
 
     private fun summarizeSkillResult(toolName: String, json: JSONObject): String? {
         if (toolName == "skills_install_from_github") {
             val installed = json.optJSONArray("installed") ?: return null
-            return "вжевстановитиупаковка ${installed.length()} індивідуальнийтехнологіїздатний" +
-                if (json.optString("available") == "next_turn") " · внизодинколесоможевикористовувати" else ""
+            return "已安装 ${installed.length()} 个技能" +
+                if (json.optString("available") == "next_turn") " · 下一轮可用" else ""
         }
         val items = json.optJSONArray("items") ?: return null
         val installed = (0 until items.length()).count { items.optJSONObject(it)?.opt("installed") == true }
-        return "спробуйте знайтиприбути ${items.length()} індивідуальнийтехнологіїздатний" + if (installed > 0) " · $installed індивідуальнийвжевстановитиупаковка" else ""
+        return "找到 ${items.length()} 个技能" + if (installed > 0) " · $installed 个已安装" else ""
     }
 
     private fun summarizeGenericResult(
@@ -414,60 +407,60 @@ internal class AgentTraceFormatter {
         result: AgentModelClient.ToolResult,
     ): String =
         buildList {
-            add(if (json.has("verified") && !json.optBoolean("verified")) "вжеВиконатидобре，ефектфруктище ніправильнорозпізнати" else "закінченостати")
-            json.optJSONArray("entries")?.let { add("${it.length()} індивідуальнийсмужкаГолова") }
-            (json.optJSONArray("items") ?: json.optJSONArray("results"))?.let { add("поверненняповернення ${it.length()} смужкавузолфрукти") }
-            json.optJSONArray("matches")?.let { add("${it.length()} індивідуальнийматчматч") }
-            if (json.has("bytes_read")) add("вжечитати ${json.optLong("bytes_read")} характерФестиваль")
-            if (json.has("replacements")) add("дляЗміна ${json.optInt("replacements")} в")
-            if (json.optBoolean("truncated") || json.optBoolean("has_more")) add("можеслідуватиПродовженнячитатиВиберіть")
-            if (json.optBoolean("partial") || json.optBoolean("scan_limited")) add("Виберітьвстановитивентилятороточуютьматиобмеження")
-            json.optJSONArray("apps")?.let { add("спробуйте знайтиприбути ${it.length()} індивідуальнийвідповідьвикористовувати") }
-            json.optJSONArray("candidates")?.let { add("${it.length()} індивідуальнийчекативибрати") }
-            if (result.images.isNotEmpty()) add("${result.images.size} ВІДЧИНЕНОмалюнокшматок")
+            add(if (json.has("verified") && !json.optBoolean("verified")) "已执行，效果未确认" else "完成")
+            json.optJSONArray("entries")?.let { add("${it.length()} 个条目") }
+            (json.optJSONArray("items") ?: json.optJSONArray("results"))?.let { add("返回 ${it.length()} 条结果") }
+            json.optJSONArray("matches")?.let { add("${it.length()} 个匹配") }
+            if (json.has("bytes_read")) add("已读 ${json.optLong("bytes_read")} 字节")
+            if (json.has("replacements")) add("替换 ${json.optInt("replacements")} 处")
+            if (json.optBoolean("truncated") || json.optBoolean("has_more")) add("可继续读取")
+            if (json.optBoolean("partial") || json.optBoolean("scan_limited")) add("采集范围有限")
+            json.optJSONArray("apps")?.let { add("找到 ${it.length()} 个应用") }
+            json.optJSONArray("candidates")?.let { add("${it.length()} 个候选") }
+            if (result.images.isNotEmpty()) add("${result.images.size} 张图片")
         }.joinToString(" · ")
 
     private fun summarizeSearchAppsResult(json: JSONObject): String {
-        val apps = json.optJSONArray("apps") ?: return "ще ніспробуйте знайтиприбутиматчматчвідповідьвикористовувати"
+        val apps = json.optJSONArray("apps") ?: return "未找到匹配应用"
         val total = apps.length()
-        if (total == 0) return "ще ніспробуйте знайтиприбутиматчматчвідповідьвикористовувати"
+        if (total == 0) return "未找到匹配应用"
         val names = (0 until total).mapNotNull { index ->
             apps.optJSONObject(index)?.optString("app_name")
                 ?.let(::sanitizeSummaryValue)
                 ?.takeIf { it.isNotBlank() }
         }
         return buildString {
-            append("вжеспробуйте знайтиприбути $total індивідуальнийвідповідьвикористовувати")
+            append("已找到 $total 个应用")
             val shown = names.take(MAX_LISTED_APP_NAMES)
             if (shown.isNotEmpty()) {
                 append(" · ").append(shown.joinToString("、"))
-                if (total > shown.size) append(" чекати")
+                if (total > shown.size) append(" 等")
             }
         }
     }
 
     private fun summarizeLaunchAppResult(json: JSONObject): String {
         val appName = sanitizeSummaryValue(json.optString("app_name"))
-        return if (appName.isNotBlank()) "вжебитиВІДЧИНЕНО · $appName" else "вжебитиВІДЧИНЕНО"
+        return if (appName.isNotBlank()) "已打开 · $appName" else "已打开"
     }
 
     /**
-     * Результати терміналу відображають статус виходу та попередній перегляд для користувача; результат може бути дуже довгим,
-     * Зберігаються лише кілька перших рядків, а маркери пропусків додаються під час скорочення.
+     * 终端结果面向用户展示退出状态与输出预览；输出可能很长，
+     * 只保留开头几行，截断时追加省略标记。
      */
     private fun summarizeTerminalResult(toolName: String, json: JSONObject?): String {
         if (json == null) return terminalLabel(toolName)
         if (json.optString("code").isNotBlank()) return summarizeFailure(json)
         if (!json.has("exit_code") || json.isNull("exit_code")) {
             val action = terminalActionLabel(toolName, json.optString("action"))
-            return if (json.optBoolean("ok", true)) "${terminalLabel(toolName)} · $action" else "втратитипоразка · $action"
+            return if (json.optBoolean("ok", true)) "${terminalLabel(toolName)} · $action" else "失败 · $action"
         }
         val exitCode = json.optInt("exit_code")
         val timedOut = json.optBoolean("timed_out", false)
         val status = when {
-            timedOut -> "втратитипоразка · Виконатидобреобганятигодина"
-            exitCode == 0 -> "Виконатидобрезакінченостати"
-            else -> "втратитипоразка · відступпозакод $exitCode"
+            timedOut -> "失败 · 执行超时"
+            exitCode == 0 -> "执行完成"
+            else -> "失败 · 退出码 $exitCode"
         }
         val output = if (exitCode == 0) {
             json.optString("stdout", json.optString("output"))
@@ -534,18 +527,18 @@ internal class AgentTraceFormatter {
             host?.let(::add)
             title?.let { add("《$it》") }
             if (action in BROWSER_TEXT_ACTIONS) {
-                textChars?.let { add("приблизно ${formatCharCount(it)}") }
+                textChars?.let { add("约 ${formatCharCount(it)}") }
             }
-            elementCount?.let { add("$it індивідуальнийЮаньбілий") }
-            if (json.optBoolean("truncated", false)) add("вжевирізатиперерва")
+            elementCount?.let { add("$it 个元素") }
+            if (json.optBoolean("truncated", false)) add("已截断")
         }.joinToString(" · ")
     }
 
     private fun formatCharCount(chars: Int): String =
         if (chars >= 10_000) {
-            String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.') + " " + loc("тисяч символів", "thousand chars")
+            String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.') + " 万字"
         } else {
-            "$chars " + loc("символів", "chars")
+            "$chars 字"
         }
 
     private fun JSONObject.firstNonNegativeInt(vararg keys: String): Int? =
@@ -578,97 +571,97 @@ internal class AgentTraceFormatter {
             }
 
     private fun String.browserActionLabel(): String = when (this) {
-        "navigate" -> "битиВІДЧИНЕНОчистийСторінка"
-        "get_readable" -> "нестиВиберітьпростомистецтва"
-        "get_text" -> "читатиВиберітьмистецтвакнига"
-        "find_elements" -> "перевіритиспробуйте знайтиЮаньбілий"
-        "click" -> "точкаударчистийСторінка"
-        "type" -> "втратитивведітьВсерединіДозволити"
-        "scroll" -> "ролрухатисячистийСторінка"
-        "screenshot" -> "чистийСторінкавирізатималюнок"
-        "get_page_info" -> "перевіритиподивітьсячистийСторінкалистінтерес"
-        "go_back" -> "чистийСторінканазадвідступ"
-        "go_forward" -> "чистийСторінкавпередВведіть"
-        "reload" -> "пензликновийчистийСторінка"
-        "wait_for_selector" -> "чекатилікуватичистийСторінкаЮаньбілий"
-        else -> "переглядатиПереглянутипристрійТримайтеробити"
+        "navigate" -> "打开网页"
+        "get_readable" -> "提取正文"
+        "get_text" -> "读取文本"
+        "find_elements" -> "查找元素"
+        "click" -> "点击网页"
+        "type" -> "输入内容"
+        "scroll" -> "滚动网页"
+        "screenshot" -> "网页截图"
+        "get_page_info" -> "查看网页信息"
+        "go_back" -> "网页后退"
+        "go_forward" -> "网页前进"
+        "reload" -> "刷新网页"
+        "wait_for_selector" -> "等待网页元素"
+        else -> "浏览器操作"
     }
 
     private fun String.browserSuccessLabel(): String = when (this) {
-        "navigate" -> "вжебитиВІДЧИНЕНО"
-        "get_readable" -> "вженестиВиберітьпростомистецтва"
-        "get_text" -> "вжечитатиВиберітьмистецтвакнига"
-        "find_elements" -> "вжеспробуйте знайтиприбутиЮаньбілий"
-        "click" -> "вжеточкаударчистийСторінка"
-        "type" -> "вжевтратитивведітьВсерединіДозволити"
-        "scroll" -> "вжеролрухатисячистийСторінка"
-        "screenshot" -> "вжевирізатималюнок"
-        "get_page_info" -> "вжечитатиВиберітьСторінкалокшиналистінтерес"
-        "go_back" -> "вженазадвідступ"
-        "go_forward" -> "вжевпередВведіть"
-        "reload" -> "вжепензликновий"
-        "wait_for_selector" -> "вжечекатиприбутиГоловазнакЮаньбілий"
-        else -> "переглядатиПереглянутипристрійТримайтеробитизакінченостати"
+        "navigate" -> "已打开"
+        "get_readable" -> "已提取正文"
+        "get_text" -> "已读取文本"
+        "find_elements" -> "已找到元素"
+        "click" -> "已点击网页"
+        "type" -> "已输入内容"
+        "scroll" -> "已滚动网页"
+        "screenshot" -> "已截图"
+        "get_page_info" -> "已读取页面信息"
+        "go_back" -> "已后退"
+        "go_forward" -> "已前进"
+        "reload" -> "已刷新"
+        "wait_for_selector" -> "已等到目标元素"
+        else -> "浏览器操作完成"
     }
 
     private fun String.scrollDirectionLabel(): String? = when (lowercase(Locale.US)) {
-        "up" -> loc("Вгору", "Up")
-        "down" -> loc("Вниз", "Down")
-        "left" -> loc("Вліво", "Left")
-        "right" -> loc("Вправо", "Right")
+        "up" -> "向上"
+        "down" -> "向下"
+        "left" -> "向左"
+        "right" -> "向右"
         else -> null
     }
 
     private fun String.pressKeyLabel(): String? = when (lowercase(Locale.US)) {
-        "back" -> loc("Назад", "Back")
-        "home" -> loc("Додому", "Home")
-        "recents", "recent" -> loc("Недавні", "Recents")
-        "notifications" -> loc("Сповіщення", "Notifications")
-        "quick_settings" -> loc("Швидкі налаштування", "Quick settings")
-        "power" -> loc("Живлення", "Power")
-        "volume_up" -> loc("Гучність вгору", "Volume up")
-        "volume_down" -> loc("Гучність вниз", "Volume down")
-        "mute" -> loc("Без звуку", "Mute")
+        "back" -> "返回"
+        "home" -> "主页"
+        "recents", "recent" -> "最近任务"
+        "notifications" -> "通知栏"
+        "quick_settings" -> "控制中心"
+        "power" -> "电源"
+        "volume_up" -> "音量加"
+        "volume_down" -> "音量减"
+        "mute" -> "静音"
         else -> null
     }
 
     private fun terminalLabel(toolName: String): String = when (toolName) {
-        "terminal_job" -> loc("Асинхронна команда", "Async command")
-        "terminal_daemon" -> loc("Фонова служба", "Background service")
-        else -> loc("Термінал", "Terminal")
+        "terminal_job" -> "异步命令"
+        "terminal_daemon" -> "后台服务"
+        else -> "终端"
     }
 
     private fun terminalActionLabel(toolName: String, action: String): String = when (toolName) {
         "terminal_job" -> when (action) {
-            "start" -> loc("Запустити", "Start")
-            "list" -> loc("Список", "List")
-            "read" -> loc("Читати", "Read")
-            "wait" -> loc("Очікувати", "Wait")
-            "stop" -> loc("Стоп", "Stop")
-            else -> loc("Обслуговування", "Service")
+            "start" -> "启动命令"
+            "list" -> "任务列表"
+            "read" -> "读取输出"
+            "wait" -> "等待完成"
+            "stop" -> "停止命令"
+            else -> "任务操作"
         }
         "terminal_daemon" -> when (action) {
-            "start" -> loc("Запустити", "Start")
-            "list" -> loc("Список", "List")
-            "logs" -> loc("Журнали", "Logs")
-            "stop" -> loc("Стоп", "Stop")
-            else -> loc("Обслуговування", "Service")
+            "start" -> "启动服务"
+            "list" -> "服务列表"
+            "logs" -> "查看日志"
+            "stop" -> "停止服务"
+            else -> "服务操作"
         }
         else -> action.terminalActionLabel()
     }
 
     private fun String.terminalActionLabel(): String = when (this) {
-        "check_root" -> loc("Перевірити Root", "Check root")
-        "open" -> loc("Відкрити", "Open")
-        "exec" -> loc("Виконати", "Execute")
-        "open_and_exec" -> loc("Відкрити і виконати", "Open and execute")
-        "read_async_result" -> loc("Прочитати результат", "Read async result")
-        "close" -> loc("Закрити", "Close")
-        "daemon_start" -> loc("Запустити демон", "Start daemon")
-        "daemon_list" -> loc("Список démonів", "Daemon list")
-        "daemon_logs" -> loc("Журнали démonа", "Daemon logs")
-        "daemon_stop" -> loc("Зупинити демон", "Stop daemon")
-        else -> loc("Термінал", "Terminal")
+        "check_root" -> "检测 Root 授权"
+        "open" -> "创建会话"
+        "exec" -> "执行命令"
+        "open_and_exec" -> "单次执行"
+        "read_async_result" -> "读取后台输出"
+        "close" -> "关闭终端"
+        "daemon_start" -> "启动守护任务"
+        "daemon_list" -> "守护任务列表"
+        "daemon_logs" -> "查看守护日志"
+        "daemon_stop" -> "停止守护任务"
+        else -> "终端操作"
     }
 
     private fun String.terminalEnvironmentLabel(): String = when (this) {
@@ -678,8 +671,7 @@ internal class AgentTraceFormatter {
         else -> "Android"
     }
 
-    companion object {
-        lateinit var context: Context
+    private companion object {
         const val BROWSER_TOOL_NAME = "browser_use"
         const val MAX_DISPLAY_COMMAND_CHARS = 4_000
         const val MAX_QUERY_SUMMARY_CHARS = 30
@@ -712,50 +704,50 @@ internal class AgentTraceFormatter {
         )
         val BROWSER_TEXT_ACTIONS = setOf("get_readable", "get_text")
 
-        /** Інструмент структурованого пристрою відображає лише теги дій і не надає жодних параметрів.*/
+        /** 结构化设备工具只展示动作标签，不暴露任何参数。 */
         val DEVICE_ACTION_LABELS = mapOf(
-            "set_alarm" to "налаштувативстановитишумнодзвоник",
-            "set_timer" to "налаштувативстановитирозраховуватигодинапристрій",
-            "device_status" to "перевіритиподивітьсяналаштуватиПриготуйтеформустан",
-            "network_info" to "перевіритиподивітьсячистиймережілистінтерес",
-            "top_memory_apps" to "перевіритиподивітьсяВсерединіжитизаймативикористовуватирядокдобре",
-            "top_storage_apps" to "перевіритиподивітьсяжитизберігатизаймативикористовуватирядокдобре",
-            "media_control" to "КОНТРОЛЬсистемаЗМІтілотрансляціяпоставити",
-            "set_volume" to "мелодіявсезвуккількість",
-            "get_setting" to "читатиВиберітьКраваткасистеманалаштувативстановити",
-            "wifi_credentials" to "читатиВиберіть Wi-Fi щільнийкод",
-            "recent_notifications" to "читатиВиберітьбільшістьзакритиПасзнати",
-            "search_notification_history" to "пошукОтжеПасзнатикалендарісторії",
-            "recent_app_activity" to "перевіритиподивітьсявідповідьвикористовуватижитирухатися",
-            "app_usage_summary" to "перевіритиподивітьсявідповідьвикористовуватизробитивикористовуватисистемарозраховувати",
-            "get_current_location" to "отриматиВиберітьколивпередбітвстановити",
-            "get_device_environment" to "перевіритиподивітьсяналаштуватиПриготуйтекільцетериторії",
-            "list_alarms" to "перевіритиподивітьсяшумнодзвоникСписокповерхні",
-            "list_active_timers" to "перевіритиподивітьсярозраховуватигодинапристрій",
-            "search_clipboard_history" to "пошукОтжеВирізатипалкаплитакалендарісторії",
-            "get_health_summary" to "перевіритиподивітьсяздоровийЗдоровийвибратихочуть",
-            "read_sms_code" to "читатиВиберітькороткийлисттестсертифікаткод",
-            "get_logcat" to "читатиВиберітьКраваткасистемаденьчестолюбство",
-            "search_media" to "пошукОтжеЗМІтіломистецтваштук",
-            "search_audio" to "пошукОтжезвукчастота",
-            "search_recordings" to "пошукОтжезаписзвук",
-            "search_files" to "пошукОтжемистецтваштук",
-            "search_calendar_events" to "пошукОтжеденьПроцедура",
-            "search_contacts" to "пошукОтжепосиланняКраваткалюдей",
-            "search_call_history" to "пошукОтжеПасговоритизапам'ятатизапис",
-            "search_messages" to "пошукОтжекороткийлист",
-            "search_downloads" to "пошукОтжевнизнавантаженняВсерединіДозволити",
-            "search_coloros_notes" to "пошукОтжезручнийзнак",
-            "search_coloros_recordings" to "пошукОтжезаписзвукмашина",
-            "search_recording_summaries" to "пошукОтжезаписзвуквибратихочуть",
-            "search_coloros_memories" to "пошукОтжеМаленькийтканиназапам'ятативідкликати",
-            "search_saved_places" to "пошукОтжеотриматитибетськаземліточка",
-            "search_personal_orders" to "пошукОтжеіндивідуальнийлюдейпорядокодин",
-            "search_qq_chat_images" to "пошукОтже QQ чатнебомалюнокшматок",
-            "search_wechat_chat_images" to "пошукОтжемікролистчатнебомалюнокшматок",
-            "set_setting" to "будуватизмінитиКраваткасистеманалаштувативстановити",
-            "set_device_state" to "будуватизмінитиналаштуватиПриготуйтеформустан",
-            "app_state_control" to "трубкапричинавідповідьвикористовуватиформустан",
+            "set_alarm" to "设置闹钟",
+            "set_timer" to "设置计时器",
+            "device_status" to "查看设备状态",
+            "network_info" to "查看网络信息",
+            "top_memory_apps" to "查看内存占用排行",
+            "top_storage_apps" to "查看存储占用排行",
+            "media_control" to "控制媒体播放",
+            "set_volume" to "调整音量",
+            "get_setting" to "读取系统设置",
+            "wifi_credentials" to "读取 Wi-Fi 密码",
+            "recent_notifications" to "读取最近通知",
+            "search_notification_history" to "搜索通知历史",
+            "recent_app_activity" to "查看应用活动",
+            "app_usage_summary" to "查看应用使用统计",
+            "get_current_location" to "获取当前位置",
+            "get_device_environment" to "查看设备环境",
+            "list_alarms" to "查看闹钟列表",
+            "list_active_timers" to "查看计时器",
+            "search_clipboard_history" to "搜索剪贴板历史",
+            "get_health_summary" to "查看健康摘要",
+            "read_sms_code" to "读取短信验证码",
+            "get_logcat" to "读取系统日志",
+            "search_media" to "搜索媒体文件",
+            "search_audio" to "搜索音频",
+            "search_recordings" to "搜索录音",
+            "search_files" to "搜索文件",
+            "search_calendar_events" to "搜索日程",
+            "search_contacts" to "搜索联系人",
+            "search_call_history" to "搜索通话记录",
+            "search_messages" to "搜索短信",
+            "search_downloads" to "搜索下载内容",
+            "search_coloros_notes" to "搜索便签",
+            "search_coloros_recordings" to "搜索录音机",
+            "search_recording_summaries" to "搜索录音摘要",
+            "search_coloros_memories" to "搜索小布记忆",
+            "search_saved_places" to "搜索收藏地点",
+            "search_personal_orders" to "搜索个人订单",
+            "search_qq_chat_images" to "搜索 QQ 聊天图片",
+            "search_wechat_chat_images" to "搜索微信聊天图片",
+            "set_setting" to "修改系统设置",
+            "set_device_state" to "修改设备状态",
+            "app_state_control" to "管理应用状态",
         )
     }
 }

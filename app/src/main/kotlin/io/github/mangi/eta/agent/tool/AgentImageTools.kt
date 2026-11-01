@@ -13,7 +13,7 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import org.json.JSONObject
 
-/** Прочитайте окреме зображення, яке було явно вказано користувачем, і передайте його поточній моделі як тимчасове візуальне прикріплення.*/
+/** 读取用户已明确指定的单张图片，并以临时视觉附件交给当前模型回合。 */
 internal class AgentImageTools(
     private val context: Context,
     private val root: BoundedRootCommandExecutor,
@@ -24,18 +24,18 @@ internal class AgentImageTools(
         val sourceKind = when {
             source.startsWith("content://") -> ImageSourceKind.ContentUri
             source.startsWith("/") && !source.contains('\u0000') -> ImageSourceKind.File
-            else -> return sensitive(error("IMAGE_PATH_DENIED", "малюнокшматокдорогашляхповиненОбов'язковотакАбсолютноправильнодорогашлях、file URI абовженавчатиправильноз content URI"))
+            else -> return sensitive(error("IMAGE_PATH_DENIED", "图片路径必须是绝对路径、file URI 或已授权的 content URI"))
         }
         val temporaryFile = runCatching {
             File.createTempFile("eta-read-image-", ".img", imageCacheDirectory())
         }.getOrElse {
-            return sensitive(error("IMAGE_TEMPORARY_FILE_FAILED", "немаєЗаконстворитивстановитималюнокшматокProгодинамистецтваштук"))
+            return sensitive(error("IMAGE_TEMPORARY_FILE_FAILED", "无法创建图片临时文件"))
         }
         return try {
             val staged = copyAsApp(source, sourceKind, temporaryFile)
             if (!staged) {
                 if (!rootAvailable()) {
-                    return sensitive(error("IMAGE_ACCESS_DENIED", "Eta немаєЗакончитатиВиберітьцемалюнокшматок；будь ласкапершеПасПасмистецтваштуквибративибратипристрійкерівництвовведітьабонавчатидатичитатиВиберітьправильнообмеження"))
+                    return sensitive(error("IMAGE_ACCESS_DENIED", "Eta 无法读取此图片；请先通过文件选择器导入或授予读取权限"))
                 }
                 val copyResult = root.execute(
                     imageCopyCommand(source, sourceKind, temporaryFile),
@@ -47,7 +47,7 @@ internal class AgentImageTools(
             val image = AgentImageCodec.fromToolFile(
                 file = temporaryFile,
                 source = "tool_read_image",
-            ) ?: return sensitive(error("IMAGE_UNSUPPORTED", "мистецтваштукнемаєтакможезнанняне требазмалюнокшматок"))
+            ) ?: return sensitive(error("IMAGE_UNSUPPORTED", "文件不是可识别的图片"))
             sensitive(
                 content = JSONObject()
                     .put("ok", true)
@@ -58,7 +58,7 @@ internal class AgentImageTools(
                 images = listOf(image),
             )
         } catch (_: BoundedFileCopy.TooLargeException) {
-            sensitive(error("IMAGE_TOO_LARGE", "малюнокшматокобганятиПасвеликийМаленькийобмеженнясистема"))
+            sensitive(error("IMAGE_TOO_LARGE", "图片超过大小限制"))
         } finally {
             temporaryFile.delete()
         }
@@ -108,10 +108,10 @@ internal class AgentImageTools(
             ?: context.cacheDir
 
     private fun copyFailure(result: BoundedRootCommandExecutor.Result): String = when (result.exitCode) {
-        21 -> error("IMAGE_SOURCE_UNAVAILABLE", "малюнокшматокджереломистецтваштукнемаєжитиіснуютьабоколивпереднемаєможечитати")
-        22 -> error("IMAGE_TOO_LARGE", "малюнокшматокобганятиПасвеликийМаленькийобмеженнясистема")
-        23 -> error("IMAGE_STAGE_FAILED", "Root немаєЗаконВолямалюнокшматокскладнісистемаприбути Eta Proгодинаповільнийжити")
-        else -> error("IMAGE_UNAVAILABLE", "малюнокшматокчитатиВиберітьвтратитипоразка")
+        21 -> error("IMAGE_SOURCE_UNAVAILABLE", "图片源文件不存在或当前不可读")
+        22 -> error("IMAGE_TOO_LARGE", "图片超过大小限制")
+        23 -> error("IMAGE_STAGE_FAILED", "Root 无法将图片复制到 Eta 临时缓存")
+        else -> error("IMAGE_UNAVAILABLE", "图片读取失败")
     }
 
     private fun error(code: String, message: String): String =

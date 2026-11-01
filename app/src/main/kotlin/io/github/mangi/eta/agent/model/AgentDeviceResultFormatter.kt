@@ -16,8 +16,8 @@ internal object AgentDeviceResultFormatter {
             "get_device_state", "get_flashlight", "get_hotspot" -> {
                 if (json.opt("ok") != true) return null
                 val label = when (toolName) {
-                    "get_flashlight" -> "рукуелектроенергіяциліндр"
-                    "get_hotspot" -> "індивідуальнийлюдейгарячийточка"
+                    "get_flashlight" -> "手电筒"
+                    "get_hotspot" -> "个人热点"
                     else -> deviceLabel(json.optString("target")) ?: return null
                 }
                 val enabled = json.opt("enabled") as? Boolean ?: return null
@@ -30,13 +30,13 @@ internal object AgentDeviceResultFormatter {
         if (json.opt("verified") != true) return null
         return when (toolName) {
             "set_device_state" -> booleanChange(deviceLabel(json.optString("target")) ?: return null, json)
-            "set_flashlight" -> booleanChange("рукуелектроенергіяциліндр", json)
-            "set_hotspot" -> booleanChange("індивідуальнийлюдейгарячийточка", json)
+            "set_flashlight" -> booleanChange("手电筒", json)
+            "set_hotspot" -> booleanChange("个人热点", json)
             "set_volume" -> volume(json)
             "set_brightness" -> brightness(json)
             "set_screen_timeout" -> timeout(number(json, "before"), number(json, "after"))
-            "set_sound_mode" -> change("кільцедзвоникцвільРежим", soundMode(integer(json, "before")), soundMode(integer(json, "after")))
-            "set_do_not_disturb" -> change("не робититурбуватицвільРежим", dndMode(integer(json, "before")), dndMode(integer(json, "after")))
+            "set_sound_mode" -> change("响铃模式", soundMode(integer(json, "before")), soundMode(integer(json, "after")))
+            "set_do_not_disturb" -> change("勿扰模式", dndMode(integer(json, "before")), dndMode(integer(json, "after")))
             "app_state_control" -> applicationState(json)
             "set_setting" -> setting(json)
             else -> null
@@ -52,25 +52,25 @@ internal object AgentDeviceResultFormatter {
         }
         val location = json.optJSONObject("location") ?: return time
         val status = when (location.optString("status")) {
-            "permission_required" -> "бітвстановитище нінавчатиправильно"
-            "background_permission_required" -> "назадвежабітвстановитище нінавчатиправильно"
-            "location_disabled" -> "КраваткасистемаЗвичайнобітвжезакритизакрити"
-            "unavailable" -> "тимчасовонемаєбільшістьзакритибітвстановити"
+            "permission_required" -> "位置未授权"
+            "background_permission_required" -> "后台位置未授权"
+            "location_disabled" -> "系统定位已关闭"
+            "unavailable" -> "暂无最近位置"
             else -> null
         }
         if (status != null) return "$time · $status"
         val latitude = number(location, "latitude")?.takeIf { it in -90.0..90.0 }
         val longitude = number(location, "longitude")?.takeIf { it in -180.0..180.0 }
-        if (latitude == null || longitude == null) return "$time · бітвстановитинемаєможевикористовувати"
+        if (latitude == null || longitude == null) return "$time · 位置不可用"
         val age = integer(location, "age_s")?.let {
             when {
-                it < 60 -> "$it другевперед"
-                it < 3600 -> "${it / 60} точкадзвониквперед"
-                it < 86400 -> "${it / 3600} Маленькийгодинавперед"
-                else -> "${it / 86400} небовперед"
+                it < 60 -> "$it 秒前"
+                it < 3600 -> "${it / 60} 分钟前"
+                it < 86400 -> "${it / 3600} 小时前"
+                else -> "${it / 86400} 天前"
             }
         }
-        return "$time · більшістьзакритибітвстановити：${decimal(latitude)}, ${decimal(longitude)}" +
+        return "$time · 最近位置：${decimal(latitude)}, ${decimal(longitude)}" +
             if (age != null) "（$age）" else ""
     }
 
@@ -78,17 +78,17 @@ internal object AgentDeviceResultFormatter {
         label,
         (json.opt("before") as? Boolean)?.let(::booleanState),
         (json.opt("after") as? Boolean)?.let(::booleanState),
-        withoutBefore = "вже",
+        withoutBefore = "已",
     )
 
     private fun volume(json: JSONObject): String? {
         val stream = when (json.optString("stream")) {
-            "media" -> "ЗМІтіло"
-            "alarm" -> "шумнодзвоник"
-            "ring" -> "дзвоникГолос"
-            "notification" -> "Пасзнати"
-            "voice_call" -> "Пасговорити"
-            "system" -> "Краваткасистема"
+            "media" -> "媒体"
+            "alarm" -> "闹钟"
+            "ring" -> "铃声"
+            "notification" -> "通知"
+            "voice_call" -> "通话"
+            "system" -> "系统"
             else -> return null
         }
         val before = integer(json, "before")
@@ -100,25 +100,25 @@ internal object AgentDeviceResultFormatter {
             if (range != null) {
                 if (it !in range) null else "${((it - range.first) * 100.0 / (range.last - range.first)).roundToInt()}%"
             } else {
-                "$it файли"
+                "$it 档"
             }
         }
-        return change("${stream}звуккількість", display(before), display(after), unchanged = before == after)
+        return change("${stream}音量", display(before), display(after), unchanged = before == after)
     }
 
     private fun brightness(json: JSONObject): String? {
         val before = number(json, "before")?.takeIf { it in 0.0..100.0 }
         val after = number(json, "after")?.takeIf { it in 0.0..100.0 } ?: return null
         fun display(value: Double): String = "${decimal((value * 10).roundToInt() / 10.0)}%"
-        return change("Яскравийвитрачати", before?.let(::display), display(after), unchanged = before == after)
+        return change("亮度", before?.let(::display), display(after), unchanged = before == after)
     }
 
     private fun timeout(before: Double?, after: Double?): String? {
         fun display(value: Double?): String? = value?.takeIf { it >= 0 && it <= Long.MAX_VALUE.toDouble() && it % 1 == 0.0 }?.let {
-            if (it > 0 && it % 60_000 == 0.0) "${decimal(it / 60_000)} точкадзвоник"
-            else "${decimal(it / 1000)} друге"
+            if (it > 0 && it % 60_000 == 0.0) "${decimal(it / 60_000)} 分钟"
+            else "${decimal(it / 1000)} 秒"
         }
-        return change("оскількирухатисяінтересекран", display(before), display(after), unchanged = before == after)
+        return change("自动息屏", display(before), display(after), unchanged = before == after)
     }
 
     private fun applicationState(json: JSONObject): String? {
@@ -134,13 +134,13 @@ internal object AgentDeviceResultFormatter {
         val packageName = (json.opt("package_name") as? String)
             ?.takeIf { it.length <= 255 && PACKAGE_NAME.matches(it) }
             ?.let { if (it.length > 60) it.take(59) + "…" else it }
-        val label = packageName?.let { "відповідьвикористовувати $it" } ?: "відповідьвикористовувати"
+        val label = packageName?.let { "应用 $it" } ?: "应用"
         fun display(value: Boolean): String = if (field == "stopped") {
-            if (value) "СТІЙкінець" else "ще ніСТІЙкінець"
+            if (value) "停止" else "未停止"
         } else {
-            if (value) "початоквикористовувати" else "замерзнутивузол"
+            if (value) "启用" else "冻结"
         }
-        return change(label, before?.let(::display), display(after), withoutBefore = "вже")
+        return change(label, before?.let(::display), display(after), withoutBefore = "已")
     }
 
     private fun setting(json: JSONObject): String? {
@@ -149,42 +149,42 @@ internal object AgentDeviceResultFormatter {
         val namespace = json.optString("namespace")
         val key = json.optString("key")
         val booleanLabel = when (namespace to key) {
-            "system" to "accelerometer_rotation" -> "оскількирухатисяСпінзмінити"
-            "system" to "screen_brightness_mode" -> "оскількирухатисяЯскравийвитрачати"
-            "global" to "low_power" -> "ПровінціяелектроенергіяцвільРежим"
-            "global" to "airplane_mode_on" -> "літатидобрецвільРежим"
+            "system" to "accelerometer_rotation" -> "自动旋转"
+            "system" to "screen_brightness_mode" -> "自动亮度"
+            "global" to "low_power" -> "省电模式"
+            "global" to "airplane_mode_on" -> "飞行模式"
             else -> null
         }
         if (booleanLabel != null) {
             fun display(value: String?): String? = when (value) {
-                "0" -> "закритизакрити"
-                "1" -> "ВІДЧИНЕНОпочаток"
+                "0" -> "关闭"
+                "1" -> "开启"
                 else -> null
             }
-            return change(booleanLabel, display(before), display(after), withoutBefore = "вже")
+            return change(booleanLabel, display(before), display(after), withoutBefore = "已")
         }
         if (namespace == "system" && key == "screen_off_timeout") {
             return timeout(before?.toLongOrNull()?.toDouble(), after.toLongOrNull()?.toDouble())
         }
         if (namespace == "global" && key == "zen_mode") {
-            return change("не робититурбуватицвільРежим", dndMode(before?.toIntOrNull()), dndMode(after.toIntOrNull()))
+            return change("勿扰模式", dndMode(before?.toIntOrNull()), dndMode(after.toIntOrNull()))
         }
-        // Будь-яке значення параметра може містити інформацію про автентифікацію або текст користувача, а зведення зберігає лише те, чи змінено воно.
-        return if (before == after) "Краваткасистеманалаштувативстановитище ніЗміназмінити" else "Краваткасистеманалаштувативстановитивжебудуватизмінити"
+        // 任意设置值可能含认证信息或用户正文，摘要只保留是否变化。
+        return if (before == after) "系统设置未变化" else "系统设置已修改"
     }
 
     private fun mediaControl(json: JSONObject): String? {
         if (json.opt("ok") != true) return null
         val action = when (json.optString("action")) {
-            "play" -> "трансляціяпоставити"
-            "pause" -> "тимчасовоСТІЙ"
-            "play_pause" -> "трансляціяпоставити/тимчасовоСТІЙвирізатиЗміна"
-            "next" -> "внизодинголова"
-            "previous" -> "начальникаодинголова"
-            "stop" -> "СТІЙкінецьтрансляціяпоставити"
+            "play" -> "播放"
+            "pause" -> "暂停"
+            "play_pause" -> "播放/暂停切换"
+            "next" -> "下一首"
+            "previous" -> "上一首"
+            "stop" -> "停止播放"
             else -> return null
         }
-        return "вжеволоссядоставити${action}звертатися дозробити"
+        return "已发送${action}指令"
     }
 
     private fun networkInfo(json: JSONObject): String? {
@@ -195,22 +195,22 @@ internal object AgentDeviceResultFormatter {
         val labels = (0 until transports.length()).mapNotNull { index ->
             when (transports.opt(index) as? String ?: return null) {
                 "wifi" -> "Wi-Fi"
-                "cellular" -> "змінарухатисячистиймережі"
-                "ethernet" -> "затежчистий"
+                "cellular" -> "移动网络"
+                "ethernet" -> "以太网"
                 "vpn" -> "VPN"
                 else -> null
             }
         }.distinct()
-        if (!connected) return "чистиймережі：ще нінавітьзловити"
-        val label = labels.joinToString(" / ").ifEmpty { "чистиймережі" }
-        return "$label：${if (validated) "вженавітьзловитивзаємнийпосиланнячистий" else "вженавітьзловити，взаємнийпосиланнячистийще нітестсертифікат"}"
+        if (!connected) return "网络：未连接"
+        val label = labels.joinToString(" / ").ifEmpty { "网络" }
+        return "$label：${if (validated) "已连接互联网" else "已连接，互联网未验证"}"
     }
 
     private fun deviceStatus(json: JSONObject): String? {
         if (json.opt("ok") != true) return null
         val percent = integer(json, "battery_percent")?.takeIf { it in 0..100 } ?: return null
         val charging = json.opt("charging") as? Boolean ?: return null
-        return "електроенергіякількість $percent% · ${if (charging) "простоіснуютьзаряделектроенергія" else "ще нізаряделектроенергія"}"
+        return "电量 $percent% · ${if (charging) "正在充电" else "未充电"}"
     }
 
     private fun change(
@@ -218,46 +218,46 @@ internal object AgentDeviceResultFormatter {
         before: String?,
         after: String?,
         unchanged: Boolean = before == after,
-        withoutBefore: String = "вженалаштуватидля",
+        withoutBefore: String = "已设为",
     ): String? {
         if (after == null) return null
         return when {
             before == null -> "$label：$withoutBefore$after"
-            unchanged -> "$label：зберегтиутримувати$after"
+            unchanged -> "$label：保持$after"
             before == after -> "$label：$withoutBefore$after"
             else -> "$label：$before → $after"
         }
     }
 
-    private fun booleanState(value: Boolean): String = if (value) "ВІДЧИНЕНОпочаток" else "закритизакрити"
+    private fun booleanState(value: Boolean): String = if (value) "开启" else "关闭"
 
     private fun deviceLabel(target: String): String? = when (target) {
         "wifi" -> "Wi-Fi"
-        "bluetooth" -> "блакитнийзуб"
-        "mobile_data" -> "змінарухатисяномервідповідно до"
-        "airplane_mode" -> "літатидобрецвільРежим"
-        "location" -> "Звичайнобіт"
+        "bluetooth" -> "蓝牙"
+        "mobile_data" -> "移动数据"
+        "airplane_mode" -> "飞行模式"
+        "location" -> "定位"
         "nfc" -> "NFC"
-        "battery_saver" -> "ПровінціяелектроенергіяцвільРежим"
-        "auto_rotate" -> "оскількирухатисяСпінзмінити"
-        "auto_brightness" -> "оскількирухатисяЯскравийвитрачати"
-        "dark_mode" -> "глибокийколірцвільРежим"
-        "night_light" -> "захиститиОкоцвільРежим"
+        "battery_saver" -> "省电模式"
+        "auto_rotate" -> "自动旋转"
+        "auto_brightness" -> "自动亮度"
+        "dark_mode" -> "深色模式"
+        "night_light" -> "护眼模式"
         else -> null
     }
 
     private fun soundMode(value: Int?): String? = when (value) {
-        0 -> "тихийзвук"
-        1 -> "вібруватирухатися"
-        2 -> "просточасто"
+        0 -> "静音"
+        1 -> "振动"
+        2 -> "正常"
         else -> null
     }
 
     private fun dndMode(value: Int?): String? = when (value) {
-        0 -> "закритизакрити"
-        1 -> "відміннопершерічпункт"
-        2 -> "Повнийвідділтихийзвук"
-        3 -> "тількишумнодзвоник"
+        0 -> "关闭"
+        1 -> "优先事项"
+        2 -> "全部静音"
+        3 -> "仅闹钟"
         else -> null
     }
 

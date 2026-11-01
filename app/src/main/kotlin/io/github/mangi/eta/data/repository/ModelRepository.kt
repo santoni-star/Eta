@@ -36,16 +36,16 @@ internal object ModelRepository {
         val models = currentModels(providerId)
         val modelId = draft.modelId.trim()
         val displayName = draft.displayName.trim()
-        require(modelId.isNotEmpty()) { "Model ID немаєздатнийдлянульовий" }
-        require(displayName.isNotEmpty()) { "виставкаПоказатиназвасказатинемаєздатнийдлянульовий" }
+        require(modelId.isNotEmpty()) { "Model ID 不能为空" }
+        require(displayName.isNotEmpty()) { "展示名称不能为空" }
         require(draft.contextWindowOverride == null || draft.contextWindowOverride > 0) {
-            "начальникавнизмистецтвадовговитрачатиповиненОбов'язковотакпростовсеномер"
+            "上下文长度必须是正整数"
         }
         require(
             models.none { existing ->
                 existing.id != draft.id && existing.modelId.trim().equals(modelId, ignoreCase = true)
             }
-        ) { "Model ID вжежитиіснують" }
+        ) { "Model ID 已存在" }
 
         val existing = models.firstOrNull { it.id == draft.id }
         val saved = if (existing == null) {
@@ -96,7 +96,7 @@ internal object ModelRepository {
         ProviderRepository.repairSelection()
     }
 
-    /** Отримані результати включають моделі, які не були додані до постачальника послуг; часто існують сотні платформ агрегації, і користувачі можуть вибирати та додавати їх після того, як вони будуть вибрані.*/
+    /** 拉取结果里尚未添加到该服务商的模型；聚合平台动辄上百个，由用户挑选后再加入。 */
     suspend fun newRemoteModels(providerId: String, fetched: List<Model>): List<Model> {
         val existing = currentModels(providerId).mapTo(mutableSetOf()) { it.modelId.normalizedModelId() }
         return fetched
@@ -105,15 +105,15 @@ internal object ModelRepository {
             .filterNot { it.modelId.normalizedModelId() in existing }
     }
 
-    /** Каталог ключів API може бути безпосередньо синхронізований; каталог облікового запису повинен містити прив’язку сеансу автентифікації.*/
+    /** API Key 目录可直接同步；账号目录必须携带认证会话绑定。 */
     suspend fun syncRemoteModels(
         providerId: String,
         fetched: List<Model>,
         adoptedModelIds: Set<String>,
     ): RemoteModelSyncResult {
         val result = ProviderRepository.mutationMutex.withLock {
-            val provider = requireNotNull(ProviderRepository.providerById(providerId)) { "Provider немаєжитиіснують" }
-            require(provider.authMode == ProviderAuthModes.API_KEY) { "рахунокНомерцвільтипуГоловазаписповиненОбов'язковокраваткаЗвичайноколивпереддошказаписформустан，будь ласкаВажкановийтягнутиВиберіть" }
+            val provider = requireNotNull(ProviderRepository.providerById(providerId)) { "Provider 不存在" }
+            require(provider.authMode == ProviderAuthModes.API_KEY) { "账号模型目录必须绑定当前登录状态，请重新拉取" }
             applyRemoteModels(provider, fetched, adoptedModelIds)
         }
         if (result.applied) ProviderRepository.repairSelection()
@@ -125,15 +125,15 @@ internal object ModelRepository {
         adoptedModelIds: Set<String> = catalog.models.mapTo(mutableSetOf()) { it.modelId },
     ): RemoteModelSyncResult = withContext(Dispatchers.IO) {
         val result = ProviderRepository.mutationMutex.withLock {
-            val provider = requireNotNull(ProviderRepository.providerById(catalog.connection.id)) { "Provider немаєжитиіснують" }
-            require(catalog.matches(provider)) { "ОдягобслуговуваннябізнеснавітьзловитивжеЗмінаНавіть，будь ласкаВажкановийтягнутиВиберітьцвільтипу" }
+            val provider = requireNotNull(ProviderRepository.providerById(catalog.connection.id)) { "Provider 不存在" }
+            require(catalog.matches(provider)) { "服务商连接已变更，请重新拉取模型" }
             val binding = catalog.accountBinding
             if (ProviderAuthModes.isOAuth(provider.authMode)) {
                 if (binding == null || binding.providerId != provider.id || binding.authMode != provider.authMode ||
                     !ProviderCredentialRepository.isCurrent(binding)
-                ) throw ProviderAuthException("oauth_session_changed", "дошказаписформустанвжеЗмінаНавіть，будь ласкаВажкановийтягнутиВиберітьцвільтипу")
+                ) throw ProviderAuthException("oauth_session_changed", "登录状态已变更，请重新拉取模型")
             } else {
-                require(binding == null) { "API Key цвільтипуГоловазаписнемаєздатнийнестипринестирахунокНомеркраваткаЗвичайно" }
+                require(binding == null) { "API Key 模型目录不能携带账号绑定" }
             }
             applyRemoteModels(provider, catalog.models, adoptedModelIds)
         }
@@ -172,7 +172,7 @@ internal object ModelRepository {
     fun newId(): String = UUID.randomUUID().toString()
 
     private suspend fun currentModels(providerId: String): List<Model> =
-        requireNotNull(ProviderRepository.providerById(providerId)) { "Provider немаєжитиіснують" }
+        requireNotNull(ProviderRepository.providerById(providerId)) { "Provider 不存在" }
             .models
             .sortedBy { it.sortOrder }
 }

@@ -144,7 +144,7 @@ internal class XiaoAiStreamRenderer(
             val floatManager = floatManagerProvider()
             if (floatManager == null) {
                 logger.warnThrottled("xiaoai_card_sink_unavailable") {
-                    "обганятикласМаленькийяквузолфруктикарткашматоктрубкапричинапристрійтимчасовонемаєможевикористовувати"
+                    "超级小爱结果卡片管理器暂不可用"
                 }
                 return null
             }
@@ -153,7 +153,7 @@ internal class XiaoAiStreamRenderer(
             card.get()
         } catch (exception: Exception) {
             logger.warnThrottled("xiaoai_card_create_failed") {
-                "обганятикласМаленькийяквузолфруктикарткастворитивстановитивтратитипоразка: type=${exception.safeLogType()}"
+                "超级小爱结果卡创建失败: type=${exception.safeLogType()}"
             }
             null
         }
@@ -166,7 +166,7 @@ internal class XiaoAiStreamRenderer(
                 ?.invoke(player, text)
         } catch (exception: Exception) {
             logger.warnThrottled("xiaoai_tts_failed") {
-                "обганятикласМаленькийяк Eta вузолфруктидовгийчитативтратитипоразка: type=${exception.safeLogType()}"
+                "超级小爱 Eta 结果朗读失败: type=${exception.safeLogType()}"
             }
         }
     }

@@ -88,7 +88,7 @@ private fun SpeechApiKeyConnectionSection(
     }
 }
 
-/** Представлені лише ті параметри вокалізації, які фактично підтримуються службою.*/
+/** 只呈现该服务实际支持的发声参数。 */
 @Composable
 internal fun SpeechDeliveryFields(store: SpeechSettingsStore) {
     when (store.settings.tts) {

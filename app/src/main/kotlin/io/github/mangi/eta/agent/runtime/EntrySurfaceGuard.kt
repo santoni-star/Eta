@@ -7,9 +7,9 @@ import io.github.mangi.eta.core.AgentLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Ізолюйте зовнішній вхід від реального робочого об’єкта зовнішнього інструменту.
+ * 把外部入口从前台工具的真实操作对象中隔离开。
  *
- * Дія закриття, підтвердження стабільності вікна та перший знімок екрана виключають спільний доступ до того самого опису запису, запобігаючи кожному шару від вгадування статусу запису окремо.
+ * 关闭动作、窗口稳定确认和首张截图排除共享同一份入口描述，避免各层分别猜测入口状态。
  */
 internal class EntrySurfaceGuard private constructor(
     internal val targetPackageName: String?,
@@ -18,7 +18,7 @@ internal class EntrySurfaceGuard private constructor(
 ) {
     private val triggered = AtomicBoolean(false)
     private val dismissalCompleted = AtomicBoolean(false)
-    // Вікна спеціальних можливостей можуть зникнути перед виходом із Surface; має бути використано першим знімком екрана після закриття та не може бути очищено після підтвердження закриття.
+    // 无障碍窗口可能早于退场 Surface 消失；必须由关闭后的首张截图消费，不能在关闭确认时清除。
     private val screenshotExclusionPending = AtomicBoolean(targetPackageName != null)
 
     val wasTriggered: Boolean
@@ -38,7 +38,7 @@ internal class EntrySurfaceGuard private constructor(
                         "waitedMs=$waitedMillis"
                 }
             } else {
-                // Закриття власного під'їзду є ідемпотентною спрямованою операцією. Після помилки підтвердження знову дозволено, і базова програма не буде випадково закрита.
+                // 自有入口关闭是幂等定向操作，失败后允许再次确认，不会误退底层 App。
                 triggered.set(false)
                 logger.warn(
                     "Agent runtime owned entry surface dismiss incomplete before foreground " +

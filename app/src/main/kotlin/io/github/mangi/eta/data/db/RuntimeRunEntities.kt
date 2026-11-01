@@ -26,7 +26,7 @@ internal data class RuntimeResultEntity(
     @ColumnInfo(name = "created_at") val createdAt: Long,
 )
 
-/** drain лише перераховує ідентифікатори власності та запущені ідентифікатори, а не читає текст чи фрагменти.*/
+/** drain 只枚举归属与运行标识，不读取正文或分块。 */
 internal data class RuntimeResultHeader(
     @ColumnInfo(name = "run_id") val runId: String,
     @ColumnInfo(name = "handoff_id") val handoffId: String,

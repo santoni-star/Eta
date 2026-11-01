@@ -104,7 +104,7 @@ internal class AgentAppState(
     private val pendingConversationDeletes = mutableSetOf<String>()
     private val persistenceLock = Any()
     private var persistenceJob: Job? = null
-    // Призупинити збереження під час імпорту: поступове збереження старого стану видалить щойно імпортований сеанс; перезавантажити все після успішного імпорту, і база даних буде відкочуватися, якщо це не вдасться.
+    // 导入期间暂停保存：旧状态的增量保存会删除刚导入的会话；导入成功后整体重载，失败时数据库已回滚。
     private var persistencePaused = false
     private val runtimeRecoveryInProgress = AtomicBoolean(false)
     private val defaultThinkingEnabled = agentBooleanForUi(Prefs.Keys.AGENT_THINKING_ENABLED)
@@ -191,9 +191,9 @@ internal class AgentAppState(
     }
 
     /**
-     * Селектори, вікна інтенсивності думок і контексту однаково проектуються з ефективної моделі поточного сеансу:
-     * Використовуйте це, якщо модель із прив’язкою до сеансу все ще доступна, інакше використовуйте модель за замовчуванням. Відкат впливає лише на відображення та надсилання та не перезаписує прив’язку сеансу.
-     * Після повторного ввімкнення моделі сеанс автоматично повернеться до вихідної моделі; фактична модель буде записана в прив’язку лише після того, як її фактично буде надіслано.
+     * 选择器、思考强度与上下文窗口统一投影自当前会话的有效模型：
+     * 会话绑定的模型仍可用时用它，否则用默认模型。回落只影响显示与发送，不改写会话绑定，
+     * 模型重新启用后会话自动回到原模型；真正发送后才把实际模型写入绑定。
      */
     private fun refreshConversationModel() {
         val bound = providers.enabledModel(homeState.modelId)
@@ -247,7 +247,7 @@ internal class AgentAppState(
             runStore.hasActiveRuns || conversationsById.values.any { it.isStreaming }
         }
         if (locallyBusy) {
-            throw IllegalStateException("будь ласкапершеСТІЙкінецьпростоіснуютьтранспортдобрез Agent призначитиобслуговування")
+            throw IllegalStateException("请先停止正在运行的 Agent 任务")
         }
 
         val activeRunQuery = withContext(Dispatchers.IO) {
@@ -256,16 +256,16 @@ internal class AgentAppState(
         when (val active = activeRunQuery) {
             is AgentRuntimeClient.ActiveRunsQuery.Known -> {
                 if (active.runIds.isNotEmpty()) {
-                    throw IllegalStateException("будь ласкапершеСТІЙкінецьпростоіснуютьтранспортдобрез Agent призначитиобслуговування")
+                    throw IllegalStateException("请先停止正在运行的 Agent 任务")
                 }
             }
             AgentRuntimeClient.ActiveRunsQuery.Unavailable -> {
-                throw IllegalStateException("немаєЗаконправильнорозпізнати Agent Runtime формустан，будь ласкатрохиназадВажкаспробувати")
+                throw IllegalStateException("无法确认 Agent Runtime 状态，请稍后重试")
             }
         }
 
         val pendingPersistence = synchronized(persistenceLock) {
-            check(!persistencePaused) { "Приготуйтечасткапростоіснуютькерівництвовведіть" }
+            check(!persistencePaused) { "备份正在导入" }
             persistencePaused = true
             persistenceJob
         }
@@ -292,11 +292,11 @@ internal class AgentAppState(
                 }
             }
         } finally {
-            // Якщо імпорт надсилається, але перезавантаження не вдається, пам’ять усе ще перебуває в старому стані. Продовжуйте робити паузу, щоб уникнути перезапису результатів імпорту; завантажити відповідно до даних у бібліотеці після перезапуску.
+            // 导入已提交但重载失败时内存仍是旧状态，继续暂停，避免覆盖导入结果；重启后按库内数据加载。
             if (!imported || reloaded) {
                 synchronized(persistenceLock) { persistencePaused = false }
             }
-            // Стара пам'ять буде записана назад, лише якщо вона вийде з ладу перед надсиланням; якщо очищення не вдасться або його буде скасовано після надсилання, імпортовані дані матимуть перевагу.
+            // 仅提交前失败才回写旧内存；提交后的清理失败或取消仍以导入数据为准。
             if (!imported) withContext(Dispatchers.Main.immediate + NonCancellable) { persistConversations() }
         }
     }
@@ -332,7 +332,7 @@ internal class AgentAppState(
         }
     }
 
-    /** Використовуйте контрольну точку, вихідну скриньку кінцевого стану та активний сеанс для узгодження одночасно, щоб уникнути використання виживання процесу для визначення статусу виконання.*/
+    /** 用 checkpoint、终态 outbox 与 active session 一次性对账，避免用进程存活推断 run 状态。 */
     private suspend fun recoverRuntimeRuns() {
         val client = AgentRuntimeClient(appContext, AndroidAgentLogger)
         val checkpoints = withContext(Dispatchers.IO) {
@@ -420,7 +420,7 @@ internal class AgentAppState(
                     val conversationId = payload.conversationId
                     val state = conversationsById[conversationId]
                     if (state == null) {
-                        // Додаток просить зберегти сеанс перед його початком; результат відсутнього сеансу було видалено користувачем або замінено резервною копією, і сеанс неможливо відновити.
+                        // App 请求先保存会话才启动；缺失会话的结果已被用户删除或备份替换，不能重新建会话。
                         acknowledgeAfterSave += runId
                         return@forEach
                     }
@@ -457,7 +457,7 @@ internal class AgentAppState(
                 orphanRewrites.forEach { (conversationId, runId) ->
                     conversationsById[conversationId]?.let { state ->
                         updateConversation(conversationId, RoleplayConversationReducer.applyRewrite(state, runId,
-                            AgentRuntimeWire.RunResult(runId, false, "", "Важкановийнародивсястативжесерединаперерва，ОригіналповерненняскладнівжезберегтиТримайте。",
+                            AgentRuntimeWire.RunResult(runId, false, "", "重新生成已中断，原回复已保留。",
                                 operation = AgentRuntimeWire.OP_REWRITE_REPLY)))
                         stateChanged = true
                     }
@@ -505,7 +505,7 @@ internal class AgentAppState(
         }
     }
 
-    /** Відновлення подій безпеки до слідів інтерфейсу; напівремонти не потраплять в історію моделі, а інструменти пристрою не відтворюватимуть їх.*/
+    /** 把安全事件恢复为 UI 轨迹；半截回复不进入模型 history，设备工具也不会重放。 */
     private fun restoreCheckpointTrace(
         checkpoint: AgentRunCheckpointStore.Checkpoint,
         interrupted: Boolean,
@@ -520,7 +520,7 @@ internal class AgentAppState(
         if (checkpoint.operation == AgentRuntimeWire.OP_REWRITE_REPLY) {
             val restored = RoleplayConversationReducer.restorePendingRewrite(existing, runId, checkpoint.rewriteTargetMessageId)
             if (interrupted) updateConversation(conversationId, RoleplayConversationReducer.applyRewrite(
-                restored, runId, AgentRuntimeWire.RunResult(runId, false, "", "Важкановийнародивсястативжесерединаперерва，ОригіналповерненняскладнівжезберегтиТримайте。",
+                restored, runId, AgentRuntimeWire.RunResult(runId, false, "", "重新生成已中断，原回复已保留。",
                     operation = AgentRuntimeWire.OP_REWRITE_REPLY, rewriteTargetMessageId = checkpoint.rewriteTargetMessageId),
             )) else updateConversation(conversationId, restored)
             return interrupted || restored != existing
@@ -536,7 +536,7 @@ internal class AgentAppState(
             if (interrupted) {
                 val interruptedTools = runMessageProjector.interruptRunningTools(
                     reason = appContext.getString(R.string.system_notice_interrupted),
-                    messages = runMessageProjector.finishContextCompaction(runId, finalizedText, "начальникавнизмистецтвапресаскорочуватисявжесерединаперерва"),
+                    messages = runMessageProjector.finishContextCompaction(runId, finalizedText, "上下文压缩已中断"),
                 )
                 val noticeId = "interrupted-$runId"
                 if (interruptedTools.any { it.id == noticeId }) {
@@ -641,7 +641,7 @@ internal class AgentAppState(
     suspend fun openAssistantConversation(conversationKey: String): Boolean =
         openArchivedConversation(AgentRuntimeWire.ETA_VOICE_HANDOFF_SOURCE, conversationKey)
 
-    /** Відкрийте сеанс, заархівований [source] і [conversationKey] на зовнішньому порталі; спочатку імпортуйте заархівовані результати, які ще не збережено в базі даних.*/
+    /** 打开外部入口按 [source] 与 [conversationKey] 归档的会话；先导入尚未入库的归档结果。 */
     suspend fun openArchivedConversation(source: String, conversationKey: String): Boolean {
         if (source.isBlank() || conversationKey.isBlank()) return false
         importArchivedExternalRuns()
@@ -730,7 +730,7 @@ internal class AgentAppState(
         if (selectedConversationId != null) persistConversations()
     }
 
-    /** Перемикання в чаті одночасно змінює прив’язку поточного сеансу та модель за замовчуванням; модель за замовчуванням використовується для нових сеансів і входів системного помічника.*/
+    /** 聊天内切换同时改当前会话绑定与默认模型；默认模型供新会话和系统助手入口使用。 */
     fun selectModel(modelId: String) {
         if (
             !homeState.isConversationLoaded ||
@@ -902,7 +902,7 @@ internal class AgentAppState(
         historyPageJob = scope.launch {
             try {
                 conversationLoadMutex.withLock {
-                    // Перегортаючи сторінки або відкриваючи старі сторінки, спочатку надішліть поточне вікно, щоб уникнути перезапису результатів редагування або відкидання незбережених записів.
+                    // 翻页或释放旧页都先提交当前窗口，避免覆盖编辑结果或丢弃未保存的记录。
                     val state = conversationsById[conversationId] ?: return@withLock
                     val title = conversationTitles[conversationId].orEmpty()
                     val updatedAt = conversationUpdatedAt[conversationId] ?: 0L
@@ -963,7 +963,7 @@ internal class AgentAppState(
     private suspend fun releaseInactiveConversations(saved: Map<String, AgentChatHomeUiState>) {
         conversationLoadMutex.withLock {
             for ((id, state) in saved) {
-                // Старіші збереження в черзі можуть повторно утримувати базову лінію сеансу після вивантаження, і їх потрібно знову звільнити.
+                // 较旧的排队保存可能在卸载后重新持有该会话基线，必须再次释放。
                 if (conversationsById[id]?.isConversationLoaded != true) {
                     conversationPersistence.forgetConversation(id)
                     continue
@@ -1553,7 +1553,7 @@ internal class AgentAppState(
         rewriteTargetMessageId: String? = null,
     ) {
         if (conversationId in pendingConversationDeletes || !runStore.register(runId, conversationId)) return
-        // Надіслати та прив’язати: сеанс запам’ятовує модель, яка фактично використовувалася в цьому раунді, і буде оновлено, коли повернеться до моделі за замовчуванням.
+        // 发送即绑定：会话记住本轮实际使用的模型，回落到默认模型时也随之更新。
         val runModelId = state.effectiveModelId
         val runReasoningEffort = providers.enabledModel(runModelId)?.let { (provider, model) ->
             RuntimeConfigRepository.reasoningCapabilities(provider, model)?.normalize(reasoningEffort)
@@ -1575,7 +1575,7 @@ internal class AgentAppState(
         val initialPersistence = persistConversations()
 
         val preparationJob = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
-            // попереднє записування: не передавайте виконання, яке може мати побічні ефекти, для середовища виконання до того, як буде надіслано повідомлення користувача.
+            // write-ahead：用户消息未提交前不把可能产生副作用的 run 交给 Runtime。
             if (!initialPersistence.await()) {
                 withContext(Dispatchers.Main) {
                     applyRunResult(
@@ -1604,7 +1604,7 @@ internal class AgentAppState(
                             }
                             persistConversations()
                         }.await()
-                        check(saved) { "немаєЗаконзберегтижитирігколірзасіданняговоритиналаштуватиЗвичайно" }
+                        check(saved) { "无法保存角色会话设定" }
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -1613,7 +1613,7 @@ internal class AgentAppState(
                         "Character preparation failed: type=${failure.safeLogType()}"
                     }
                     withContext(Dispatchers.Main) {
-                        applyRunResult(runId, AgentRuntimeWire.RunResult(runId, false, "", "немаєЗакончитатиВиберітьабозберегтижитирігколірналаштуватиЗвичайно，будь ласкаВажкаспробувати。",
+                        applyRunResult(runId, AgentRuntimeWire.RunResult(runId, false, "", "无法读取或保存角色设定，请重试。",
                             operation = operation, rewriteTargetMessageId = rewriteTargetMessageId))
                     }
                     return@launch
@@ -1662,7 +1662,7 @@ internal class AgentAppState(
             }
             if (withContext(Dispatchers.Main) { runStore.isStopRequested(runId) }) {
                 withContext(Dispatchers.Main) {
-                    applyRunResult(runId, AgentRuntimeWire.RunResult(runId, false, "", "вжеСТІЙкінець", operation = operation))
+                    applyRunResult(runId, AgentRuntimeWire.RunResult(runId, false, "", "已停止", operation = operation))
                 }
                 return@launch
             }
@@ -1773,7 +1773,7 @@ internal class AgentAppState(
                 val preview = AgentImageCodec.previewFromReference(appContext, image) ?: image
                 val pending = PendingImageUi(
                     id = "img-${UUID.randomUUID()}",
-                    // Наступні надсилання використовують стабільне посилання після першого читання та більше не покладаються на життєвий цикл авторизації URI вибору фотографій ПЗУ.
+                    // 后续发送使用首次读取后的稳定引用，不再依赖 ROM Photo Picker URI 的授权生命周期。
                     uri = image.reference,
                     dataUrl = preview.reference,
                     mimeType = image.mimeType,
@@ -1940,8 +1940,8 @@ internal class AgentAppState(
 
     private fun restoreRunEvents(runId: String, events: List<AgentEvent>) {
         if (isReplyRewrite(runId)) return
-        // Відновлення — це повний знімок: спочатку очистіть старі прогнози того самого циклу та опублікуйте знову, щоб уникнути повторного додавання історичних приростів
-        // Або стан Running посередині дозволяє розгорнути завершене мислення та відтворити анімацію.
+        // 恢复是完整快照：先清除同一 run 的旧投影，再一次发布，避免历史增量重复追加
+        // 或中途的 Running 状态使已结束的思考重新展开、播放动画。
         Snapshot.withMutableSnapshot {
             flushPendingRunDelta(runId)
             updateMessages(runId, updateTimestamp = false) { messages ->
@@ -1985,7 +1985,7 @@ internal class AgentAppState(
             is AgentEvent.RunStarted -> if (runStore.isStopRequested(runId)) scope.launch(Dispatchers.IO) {
                 AgentRuntimeClient(appContext, AndroidAgentLogger).cancelRun(runId)
             }
-            // Потокові дельти та миттєві знімки процесів Subagent лише оновлюють повідомлення, не переміщують мітки часу сеансу та не перераховують підсумки бічної панелі; інші видимі зміни оновлюються обома.
+            // 流式增量与 Subagent 过程快照只刷新消息，不推进会话时间戳，也不重算侧栏摘要；其余可见变化两者都更新。
             is AgentEvent.AssistantBlockDelta,
             is AgentEvent.SubagentProgress,
             -> updateMessages(runId, updateTimestamp = false) { messages ->
@@ -2020,7 +2020,7 @@ internal class AgentAppState(
         updateRunTrace(runId) { messages ->
             runMessageProjector.finishContextCompaction(runId,
                 runMessageProjector.finalizeRun(runId, messages),
-                if (result.ok) "начальникавнизмистецтвапресаскорочуватисязакінченостати" else result.error ?: "начальникавнизмистецтвапресаскорочуватисявжеСТІЙкінець")
+                if (result.ok) "上下文压缩完成" else result.error ?: "上下文压缩已停止")
         }
         if (result.contextSnapshotRef.isBlank()) {
             applyConversationHistoryResult(runId, result.transcript, result.contextSnapshot, !result.ok || result.contextSnapshot != null)
@@ -2032,7 +2032,7 @@ internal class AgentAppState(
                         runId = runId,
                         messages = messages,
                         ok = result.ok,
-                        detail = if (result.ok) "начальникавнизмистецтвапресаскорочуватисязакінченостати" else result.error ?: "начальникавнизмистецтвапресаскорочуватисявтратитипоразка",
+                        detail = if (result.ok) "上下文压缩完成" else result.error ?: "上下文压缩失败",
                     )
                 }
             else -> {
@@ -2147,7 +2147,7 @@ internal class AgentAppState(
         val conversationId = conversationIdForRun(runId) ?: return false
         val state = conversationsById[conversationId] ?: return false
         val messages = transform(state.messages)
-        // Projection повертає вихідний список для подій без видимих ​​змін; позначка часу сеансу наразі не просувається, щоб уникнути зміни порядку подій, таких як початок запиту та початок раунду.
+        // 投影对无可见变化的事件返回原列表；此时不推进会话时间戳，避免请求开始、轮次开始等事件改变排序。
         if (messages === state.messages) return false
         updateConversation(
             conversationId = conversationId,
@@ -2296,7 +2296,7 @@ internal class AgentAppState(
         )
     }
 
-    // Збіги вмісту кешуються (термін запиту, посилання на стан сеансу): повнотекстове сканування не повторюється для незмінених сеансів під час оновлення підсумку.
+    // 内容匹配按（查询词, 会话状态引用）缓存：刷新摘要时未变化的会话不重复全文扫描。
     private val contentMatchCache = mutableMapOf<String, ContentMatchCacheEntry>()
 
     private fun conversationContentMatches(conversationId: String, query: String): Boolean {
@@ -2316,7 +2316,7 @@ internal class AgentAppState(
         val titles = conversationTitles
         val timestamps = conversationUpdatedAt
         return synchronized(persistenceLock) {
-            // Неможливість зберегти перешкоджає запуску підтвердження результату та попереднього запису, що завершується перезавантаженням після імпорту або записом після помилки.
+            // 未保存会阻止结果回执和 write-ahead 运行，由导入后的重载或失败后的补写收尾。
             if (persistencePaused) return CompletableDeferred(false)
             val previous = persistenceJob
             val persistence = conversationPersistence
@@ -2343,7 +2343,7 @@ internal class AgentAppState(
     private companion object {
         const val MAX_TITLE_CHARS = 24
         const val MAX_PREVIEW_CHARS = 48
-        const val LEGACY_STOPPED_ERROR = "вжеСТІЙкінець"
+        const val LEGACY_STOPPED_ERROR = "已停止"
         const val SYNTHETIC_STATUS_STOPPED = "eta_status:stopped"
 
         fun emptyChatState(thinkingEnabled: Boolean): AgentChatHomeUiState =

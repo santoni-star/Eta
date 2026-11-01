@@ -42,11 +42,11 @@ internal fun speechSupportDecision(support: RecognitionSupport, languageTag: Str
     }
     if (support.pendingOnDeviceLanguages.containsLanguage()) return EtaSpeechSupportDecision.PENDING
     if (support.supportedOnDeviceLanguages.containsLanguage()) return EtaSpeechSupportDecision.DOWNLOAD
-    // Список мов, наданий сервісом, може бути неповним; остаточне розпізнавання все ще визначається зворотним викликом startListening.
+    // 服务给出的语言列表可能不完整；最终能否识别仍由 startListening 的回调决定。
     return EtaSpeechSupportDecision.START
 }
 
-/** Одиночне розпізнавання здійснюється за допомогою плаваючого вікна; закриття, перемикання методів введення та повторне пробудження призведе до недійсності старого зворотного виклику.*/
+/** 单次识别由浮窗持有；关闭、切换输入方式和重新唤醒都会使旧回调失效。 */
 internal class EtaSpeechInput(
     private val context: Context,
     private val onListening: () -> Unit,
@@ -56,7 +56,7 @@ internal class EtaSpeechInput(
     private val onResult: (String) -> Unit,
     private val onError: (EtaSpeechIssue) -> Unit,
     private val onDownloadStatus: (EtaSpeechDownloadStatus) -> Unit,
-    /** Визначити тривалість мовчання після сказаних очікуваних слів; системна служба може проігнорувати цю підказку, і результат все одно підлягатиме зворотному виклику служби.*/
+    /** 期望的说完判定静音时长；系统服务可以忽略该提示，结果仍以服务回调为准。 */
     private val completeSilenceMs: Int? = null,
 ) {
     private val handler = Handler(Looper.getMainLooper())
@@ -211,7 +211,7 @@ internal class EtaSpeechInput(
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 delegate.triggerModelDownload(recognitionIntent())
                 downloadSource = null
-                // Android 13 не має зворотного виклику завантаження, і ідентифікатор зберігається, доки запис не буде скасовано, щоб уникнути знищення запиту до підключення служби.
+                // Android 13 没有下载回调，保留识别器到入口取消，避免服务连接前请求就被销毁。
                 onDownloadStatus(EtaSpeechDownloadStatus.SCHEDULED)
                 return
             }

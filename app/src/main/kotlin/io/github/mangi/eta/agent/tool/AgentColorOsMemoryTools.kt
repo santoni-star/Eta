@@ -37,7 +37,7 @@ internal fun buildColorOsMemorySnapshotCommand(source: String, snapshot: File): 
 }
 
 /**
- * Пріоритезація Xiaobu memory Hook для виконання запитів лише для читання в цільовому процесі; він сумісний зі старим кореневим шляхом знімка, коли хук недоступний.
+ * 优先让小布记忆 Hook 在目标进程内执行只读查询；Hook 不可用时兼容旧的 Root 快照路径。
  */
 internal class AgentColorOsMemoryTools(
     private val context: Context,
@@ -81,14 +81,14 @@ internal class AgentColorOsMemoryTools(
         val snapshotCreation = createSnapshot()
         val snapshot = snapshotCreation.file
             ?: return@synchronized sensitive(
-                error(snapshotCreation.errorCode, "ColorOS Краваткасистемазапам'ятативідкликатишвидкийВідповідно дотимчасовогодинанемаєможевикористовувати"),
+                error(snapshotCreation.errorCode, "ColorOS 系统记忆快照暂时不可用"),
             )
         try {
             if (!isPlaintextColorOsMemoryDatabase(snapshot)) {
                 return@synchronized sensitive(
                     error(
                         "COLOROS_MEMORY_ENCRYPTED_REQUIRES_HOOK",
-                        "Краваткасистемазапам'ятативідкликативжедодатищільний，потребахочутьпочатоквикористовуватиМаленькийтканиназапам'ятативідкликатиз Xposed робитивикористовуватидоменіВажкановийпочатокрухатисяМаленькийтканиназапам'ятативідкликати",
+                        "系统记忆已加密，需要启用小布记忆的 Xposed 作用域并重新启动小布记忆",
                     ),
                 )
             }
@@ -106,18 +106,18 @@ internal class AgentColorOsMemoryTools(
                         } else {
                             "COLOROS_MEMORY_OPEN_FAILED"
                         },
-                        "ColorOS Краваткасистемазапам'ятативідкликатишвидкийВідповідно донемаєЗакончитатиВиберіть",
+                        "ColorOS 系统记忆快照无法读取",
                     ),
                 )
             }
             database.use { db ->
                 runCatching { sensitive(block(db)) }
                     .getOrElse {
-                        sensitive(error("COLOROS_MEMORY_QUERY_FAILED", "ColorOS Краваткасистемазапам'ятативідкликатиперевіритиЗапитуйтевтратитипоразка"))
+                        sensitive(error("COLOROS_MEMORY_QUERY_FAILED", "ColorOS 系统记忆查询失败"))
                     }
             }
         } catch (_: IOException) {
-            sensitive(error("COLOROS_MEMORY_SNAPSHOT_INVALID", "ColorOS Краваткасистемазапам'ятативідкликатишвидкийВідповідно донемаєЗакончитатиВиберіть"))
+            sensitive(error("COLOROS_MEMORY_SNAPSHOT_INVALID", "ColorOS 系统记忆快照无法读取"))
         } finally {
             deleteSnapshot(snapshot)
         }

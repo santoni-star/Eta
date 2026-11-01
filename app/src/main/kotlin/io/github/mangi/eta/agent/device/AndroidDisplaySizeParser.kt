@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.device
 
-/** Перевизначення `wm size` — це поточна логічна система координат, яка використовується введенням, екранним зображенням і UIAutomator.*/
+/** `wm size` 的 override 才是 input、screencap 与 UIAutomator 使用的当前逻辑坐标系。 */
 internal object AndroidDisplaySizeParser {
     fun parse(output: String): Pair<Int, Int>? =
         parseLabel(output, "Override size") ?: parseLabel(output, "Physical size")

@@ -13,14 +13,14 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 
-/** Повертається лише ідентифікатор сеансу звернення, і пошук не повертає текст невідкритого сеансу до стану інтерфейсу.*/
+/** 只返回命中的会话标识，搜索不把未打开会话的正文带回界面状态。 */
 internal object ConversationSearchRepository {
     suspend fun search(context: Context, query: String, matchingNoticeCodes: List<String>): Set<String> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext emptySet()
         val database = EtaDatabase.get(context.applicationContext)
         database.withTransaction {
             val dao = database.conversationDao()
-            // Посилання надаються разом із розділеними знімками читання; Пам'ять зберігає лише суфікси, необхідні для відповідності поточного блоку та міжблоків.
+            // 引用与分块共享读快照；内存仅保留当前块和跨块匹配所需的后缀。
             searchMessageStreams(dao, query) + dao.searchSystemNotices(matchingNoticeCodes)
         }
     }

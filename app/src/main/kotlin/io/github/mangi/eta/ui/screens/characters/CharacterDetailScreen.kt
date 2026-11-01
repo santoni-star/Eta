@@ -30,7 +30,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
-internal fun greetingTitle(index: Int) = if (index == 0) "мовчазнийрозпізнатиВІДЧИНЕНОполебілий" else "ВІДЧИНЕНОполебілий ${index + 1}"
+internal fun greetingTitle(index: Int) = if (index == 0) "默认开场白" else "开场白 ${index + 1}"
 
 private data class CharacterTextPreview(val title: String, val text: String)
 
@@ -57,10 +57,10 @@ internal fun CharacterDetailScreen(
     val profile = store.selected?.takeIf { it.id == id }
     MiuixScaffoldPage(title = "", onBack = onBack, compactTitle = true) {
         if (profile == null) {
-            item { CharacterPageMessage(if (store.busy) "простоіснуютьчитатиВиберітьрігколір…" else "немаєЗакончитатиВиберітьрігколір，будь ласкаповерненняповерненняназадВажкаспробувати") }
+            item { CharacterPageMessage(if (store.busy) "正在读取角色…" else "无法读取角色，请返回后重试") }
             return@MiuixScaffoldPage
         }
-        val userName = if (store.usePersona) store.persona.name.ifBlank { "використовуватипобутові" } else "використовуватипобутові"
+        val userName = if (store.usePersona) store.persona.name.ifBlank { "用户" } else "用户"
         item(key = "hero") {
             CharacterHero(
                 profile = profile,
@@ -70,7 +70,7 @@ internal fun CharacterDetailScreen(
                 onStart = { store.startConversation(id, onStart) },
                 onReadDescription = {
                     preview = CharacterTextPreview(
-                        «Налаштування персонажа»,
+                        "角色设定",
                         CharacterMacros.expand(profile.card.description, profile.card, userName),
                     )
                 },
@@ -80,18 +80,18 @@ internal fun CharacterDetailScreen(
         item(key = "persona") {
             EtaPreferenceGroup {
                 EtaSwitchPreference(
-                    title = "Використовувати мій профіль",
-                    summary = store.persona.name.ifBlank { "Ім'я не встановлено" },
+                    title = "使用我的人设",
+                    summary = store.persona.name.ifBlank { "未设置称呼" },
                     checked = store.usePersona,
                     onCheckedChange = { store.usePersona = it },
                 )
                 EtaPreferenceDivider(hasLeading = false)
-                EtaArrowPreference(title = "Редагувати мого персонажа", onClick = { onNavigate(AppRoute.CharacterPersona) })
+                EtaArrowPreference(title = "编辑我的人设", onClick = { onNavigate(AppRoute.CharacterPersona) })
             }
         }
-        item(key = "greetings-title") { EtaPreferenceGroupTitle("Greetings") }
+        item(key = "greetings-title") { EtaPreferenceGroupTitle("开场白") }
         item(key = "greetings") {
-            // Попередній перегляд узгоджується з текстом, який ви бачите після початку розмови: макрос розгортається залежно від того, чи використовується персона в даний момент.
+            // 预览与开始对话后看到的文本一致：宏按当前是否使用人设展开。
             val greetings = remember(profile.card, userName) {
                 (listOf(profile.card.firstMessage) + profile.card.alternateGreetings)
                     .map { CharacterMacros.expand(it, profile.card, userName) }
@@ -103,30 +103,30 @@ internal fun CharacterDetailScreen(
                 onRead = { index -> preview = CharacterTextPreview(greetingTitle(index), greetings[index]) },
             )
         }
-        item(key = "management-title") { EtaPreferenceGroupTitle("management") }
+        item(key = "management-title") { EtaPreferenceGroupTitle("管理") }
         item(key = "management") {
             EtaPreferenceGroup {
-                EtaArrowPreference(title = "Редагувати роль", enabled = !store.busy, onClick = {
+                EtaArrowPreference(title = "编辑角色", enabled = !store.busy, onClick = {
                     store.discardEditor()
                     onNavigate(AppRoute.CharacterEditor(id))
                 })
                 EtaPreferenceDivider(hasLeading = false)
-                EtaArrowPreference(title = "Пам'ять сюжету", summary = "Історія та записи стосунків, спільні для кожного діалогу цього персонажа", onClick = {
+                EtaArrowPreference(title = "剧情记忆", summary = "此角色各次对话共享的故事与关系记录", onClick = {
                     onNavigate(AppRoute.CharacterMemory(id))
                 })
                 EtaPreferenceDivider(hasLeading = false)
-                EtaArrowPreference(title = "Копіювати роль", enabled = !store.busy, onClick = {
+                EtaArrowPreference(title = "复制角色", enabled = !store.busy, onClick = {
                     store.duplicate(id) { onNavigate(AppRoute.CharacterDetail(it)) }
                 })
                 EtaPreferenceDivider(hasLeading = false)
                 EtaArrowPreference(
-                    title = "Експорт картки символів PNG",
+                    title = "导出 PNG 角色卡",
                     enabled = !store.busy,
                     onClick = { pngExporter.launch(characterExportName(profile.card.name, "png")) },
                 )
                 EtaPreferenceDivider(hasLeading = false)
                 EtaArrowPreference(
-                    title = "Експорт картки ролі JSON",
+                    title = "导出 JSON 角色卡",
                     enabled = !store.busy,
                     onClick = { jsonExporter.launch(characterExportName(profile.card.name, "json")) },
                 )
@@ -136,8 +136,8 @@ internal fun CharacterDetailScreen(
             item(key = "compatibility") {
                 EtaPreferenceGroup {
                     EtaArrowPreference(
-                        title = "Опис сумісності",
-                        summary = "${store.compatibilityWarnings.size} елементів обробляється відповідно до діапазону сумісності",
+                        title = "兼容说明",
+                        summary = "${store.compatibilityWarnings.size} 项内容按兼容范围处理",
                         onClick = { showCompatibility = !showCompatibility },
                     )
                     if (showCompatibility) {
@@ -153,11 +153,11 @@ internal fun CharacterDetailScreen(
                 }
             }
         }
-        // Деструктивні операції групуються окремо та розміщуються в кінці сторінки, щоб дистанціюватися від щоденних операцій управління.
+        // 破坏性操作单独成组并放在页面末尾，与日常管理操作拉开距离。
         item(key = "danger") {
             EtaPreferenceGroup {
                 EtaArrowPreference(
-                    title = "Видалити роль",
+                    title = "删除角色",
                     titleColor = BasicComponentColors(
                         color = MiuixTheme.colorScheme.error,
                         disabledColor = MiuixTheme.colorScheme.disabledOnSurface,
@@ -172,12 +172,12 @@ internal fun CharacterDetailScreen(
     if (showDeleteConfirm && profile != null) {
         EtaWindowDialog(
             show = true,
-            title = "Видалити роль",
-            summary = ""${profile.card.name}" буде видалено з бібліотеки персонажів, а зображення персонажів і сюжетні спогади буде видалено; існуючі діалоги будуть збережені. Цю дію неможливо скасувати. ",
+            title = "删除角色",
+            summary = "「${profile.card.name}」将从角色库移除，角色图片与剧情记忆一并删除；已有对话保留。此操作无法撤销。",
             onDismissRequest = { showDeleteConfirm = false },
         ) {
             MiuixDialogActions(
-                confirmText = "Видалити",
+                confirmText = "删除",
                 destructive = true,
                 confirmEnabled = !store.busy,
                 onCancel = { showDeleteConfirm = false },
@@ -200,6 +200,6 @@ internal fun CharacterDetailScreen(
 
 private fun characterExportName(name: String, extension: String): String {
     val basename = name.map { if (it.isISOControl() || it in "\\/:*?\"<>|") '_' else it }
-        .joinToString("").trim().trimEnd('.').take(64).ifBlank { "роль" }
+        .joinToString("").trim().trimEnd('.').take(64).ifBlank { "角色" }
     return "$basename.$extension"
 }

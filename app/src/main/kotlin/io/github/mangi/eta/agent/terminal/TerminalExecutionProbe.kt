@@ -4,7 +4,7 @@ import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Вибірка всередині фактичної командної оболонки; результати лише описують процес і не слугують обліковими даними авторизації для наступних викликів.*/
+/** 在实际命令 Shell 内采样；结果仅描述该进程，不作为后续调用的授权凭据。 */
 internal object TerminalExecutionProbe {
     private val commands = listOf("sh", "toybox", "busybox", "cmd", "am", "pm", "dumpsys", "settings", "rg", "grep", "find", "python3")
 
@@ -58,7 +58,7 @@ internal object TerminalExecutionProbe {
             .put("shell_provider", provider)
             .put("shell_executable", executable ?: JSONObject.NULL)
             .put("available_commands", JSONArray(entries.filter { it.startsWith("command=") }.map { it.substringAfter('=') }.filter { it in commands }))
-            .put("capability_scope", "коливперед Shell зжиттязробитирозв'язатианалізувативузолфрукти；немаєповерхніПоказатиІнструментПриготуйтеОдягобслуговуваннявідвідатизапитатиправильнообмеження，такожнемаєдляпоколінняВиконатидобревпереднавчатиправильноперевіритиперевірити")
+            .put("capability_scope", "当前 Shell 的命令解析结果；不表示具备服务访问权限，也不替代执行前授权检查")
         return Output(
             text = text.take(start) + text.substring(endExclusive),
             runtime = runtime,

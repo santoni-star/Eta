@@ -17,12 +17,12 @@ internal object HyperOsPowerHooks {
         return hooks.install {
             val type = HookSupport.findClassOrNull(loader, "com.miui.server.input.util.ShortCutActionsUtils")
             if (type == null) {
-                skipped("hyperos.power-shortcut", "ShortCutActionsUtils", "коливпередКраваткасистемаще нінестидля HyperOS швидкийчеськарухатисяробититочкаволоссяпристрій")
+                skipped("hyperos.power-shortcut", "ShortCutActionsUtils", "当前系统未提供 HyperOS 快捷动作分发器")
                 return@install
             }
             val contextField = HookSupport.findField(type, "mContext")
             if (contextField == null || !Context::class.java.isAssignableFrom(contextField.type)) {
-                missing("hyperos.power-shortcut", "ShortCutActionsUtils.mContext", "HyperOS: швидкийчеськарухатисяробититочкаволоссяпристрійвідсутністьмало Context")
+                missing("hyperos.power-shortcut", "ShortCutActionsUtils.mContext", "HyperOS: 快捷动作分发器缺少 Context")
                 return@install
             }
             val parameters = arrayOf(String::class.java, String::class.java, Bundle::class.java, Boolean::class.javaPrimitiveType!!)
@@ -30,11 +30,11 @@ internal object HyperOsPowerHooks {
                 val method = HookSupport.findMethod(type, "triggerFunction", *signature)
                 val id = "hyperos.power-shortcut-${signature.size}"
                 if (method == null || method.returnType != Boolean::class.javaPrimitiveType) {
-                    missing(id, "ShortCutActionsUtils.triggerFunction/${signature.size}", "HyperOS: швидкийчеськарухатисяробититочкаволоссязнакназва ${signature.size} немаєматчматч")
+                    missing(id, "ShortCutActionsUtils.triggerFunction/${signature.size}", "HyperOS: 快捷动作分发签名 ${signature.size} 不匹配")
                     continue
                 }
                 intercept(id, method, "ShortCutActionsUtils.triggerFunction/${signature.size}") { chain ->
-                    // При цьому функція та джерело збігаються, а меню вимкнення, SOS або інші дії швидкого доступу не можна змінити на помічника.
+                    // 同时匹配功能与来源，不能把关机菜单、SOS 或其他快捷动作改成助理。
                     if (!HyperOsPowerPolicy.isAssistantShortcut(chain.getArg(0) as? String, chain.getArg(1) as? String)) {
                         return@intercept chain.proceed()
                     }

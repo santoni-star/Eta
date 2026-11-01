@@ -3,15 +3,15 @@ package io.github.mangi.eta.agent.terminal
 import java.io.File
 
 /**
- * Користувальницька система Linux rootfs для перегляду файлів лише для читання.
+ * 面向用户的 Linux rootfs 只读文件浏览后端。
  *
- * Кореневе середовище слідує за головною кореневою оболонкою; безкореневе середовище отримує доступ до гостьового шляху через PRoot.
- * Зберігайте семантику Linux для символічних посилань, робочих областей і спільних каталогів. Шляхи нормалізуються лише лексично.
+ * Root 环境沿用宿主 Root Shell；免 Root 环境通过 PRoot 访问 guest 路径，
+ * 保留符号链接、工作区和共享目录的 Linux 语义。路径只做词法归一化。
  */
 internal object LinuxFileExplorer {
     const val DEFAULT_MAX_READ_BYTES = 256L * 1024L
 
-    // Код виходу узгоджений у сценарії; інші ненульові коди виходу вважаються помилками команди.
+    // 脚本内约定退出码；其余非零退出码一律视为命令失败。
     private const val EXIT_NOT_DIRECTORY = 41
     private const val EXIT_UNREADABLE = 42
 
@@ -40,8 +40,8 @@ internal object LinuxFileExplorer {
     }
 
     /**
-     * Зіставте абсолютний шлях у chroot на шлях хоста. Приймати лише шляхи, що починаються з `/` (пробіли нормалізуються до `/`);
-     * `..` повертає null, якщо витягується зі стеку, вище кореня або відносного шляху.
+     * 把 chroot 内绝对路径映射为宿主路径。只接受 `/` 开头的路径（空白归一为 `/`）；
+     * `..` 弹栈、弹到根之上或相对路径返回 null。
      */
     fun resolveHostPath(rootfsDir: File, linuxPath: String): String? {
         val trimmed = linuxPath.trim()
@@ -56,11 +56,11 @@ internal object LinuxFileExplorer {
             }
         }
         val normalized = "/" + segments.joinToString("/")
-        // Підрозділи було видалено.., і сплайсинг File(parent, child) не може уникнути rootfsDir.
+        // 子段已剔除 ..，File(parent, child) 的拼接不可能逃逸出 rootfsDir。
         return File(rootfsDir, normalized).path
     }
 
-    /** Синхронне блокування; перемикання співпрограм є відповідальністю сторони, що викликає. Жодна оболонка не виконується, якщо rootfs не готова.*/
+    /** 同步阻塞；协程切换由调用侧负责。rootfs 未就绪时不执行任何 Shell。 */
     fun list(
         supervisor: ShellProcessSupervisor,
         rootfsDir: File,
@@ -70,7 +70,7 @@ internal object LinuxFileExplorer {
         val hostPath = resolveHostPath(rootfsDir, linuxPath) ?: return ListResult.NotDirectory
         val rootless = LinuxEnvironmentPaths.backendOf(rootfsDir.absolutePath) == LinuxExecutionBackend.PROOT
         val quoted = shellQuote(if (rootless) "/" + File(rootfsDir.path).toPath().relativize(File(hostPath).toPath()).toString() else hostPath)
-        // Коли каталог порожній, символ підстановки передається до stat як він є, помилка повідомляється до stderr і проковтується, а stdout порожній, тобто порожній список.
+        // 空目录时通配符原样传给 stat，报错进 stderr 被吞掉，stdout 为空即空列表。
         val script = """
             if [ ! -d $quoted ]; then exit $EXIT_NOT_DIRECTORY; fi
             if [ ! -r $quoted ] || [ ! -x $quoted ]; then exit $EXIT_UNREADABLE; fi
@@ -94,7 +94,7 @@ internal object LinuxFileExplorer {
         }
     }
 
-    /** Синхронне блокування; читати верхню межу [maxBytes], ще 1 байт використовується для визначення скорочення.*/
+    /** 同步阻塞；读取上限 [maxBytes]，多出 1 字节用于判定截断。 */
     fun readText(
         supervisor: ShellProcessSupervisor,
         rootfsDir: File,
@@ -128,14 +128,14 @@ internal object LinuxFileExplorer {
         }
         val truncated = result.output.size.toLong() > maxBytes
         val payload = if (truncated) result.output.copyOf(maxBytes.toInt()) else result.output
-        // Байти, що містять NUL, обробляються як двійкові, а спотворені символи не вставляються в засіб перегляду.
+        // 含 NUL 字节按二进制处理，不把乱码塞进查看器。
         if (payload.contains(0.toByte())) return ReadResult.Binary
         return ReadResult.Text(content = payload.decodeToString(), truncated = truncated)
     }
 
     /**
-     * Аналіз `stat -c '%F|%s|%Y|%n'` вихідних даних: розділений за першими 3 роздільниками, а решта класифікуються за назвами файлів,
-     * Допускаються імена файлів, що містять `|`; пропускати неправильно сформовані рядки та залишкові рядки з підстановкою.
+     * 解析 `stat -c '%F|%s|%Y|%n'` 输出：按前 3 个分隔符切分，其余全部归入文件名，
+     * 容忍文件名含 `|`；畸形行与通配符残留行跳过。
      */
     internal fun parseStatOutput(output: String): List<Entry> {
         val entries = mutableListOf<Entry>()
@@ -157,7 +157,7 @@ internal object LinuxFileExplorer {
         return sortEntries(entries)
     }
 
-    /** Спочатку каталог, кожен сортується за назвою.*/
+    /** 目录在前，各自按名称排序。 */
     internal fun sortEntries(entries: List<Entry>): List<Entry> =
         entries.sortedWith(compareBy<Entry> { !it.isDir }.thenBy { it.name })
 }

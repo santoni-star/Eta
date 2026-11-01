@@ -11,10 +11,10 @@ import android.service.voice.VoiceInteractionSession
 import android.view.View
 
 /**
- * Вхідний міст для системних цифрових помічників.
+ * 系统数字助理的入口桥接。
  *
- * Система створить вікно TYPE_VOICE_INTERACTION для цього класу, але фактичний інтерфейс Eta контролюється власним
- * TYPE_APPLICATION_OVERLAY носій вікна, щоб уникнути прив’язки анімації помічника виробника та рівня введення до вікна системного сеансу.
+ * 系统会为本类创建 TYPE_VOICE_INTERACTION 窗口，但 Eta 的实际界面由自己的
+ * TYPE_APPLICATION_OVERLAY 窗口承载，避免把厂商助手动画和输入层级绑定到系统会话窗口。
  */
 internal class EtaVoiceInteractionSession(context: Context) : VoiceInteractionSession(context) {
     private var screenContext: EtaAssistantScreenContext? = null
@@ -81,7 +81,7 @@ internal class EtaVoiceInteractionSession(context: Context) : VoiceInteractionSe
     }
 
     override fun onDestroy() {
-        // Плаваючі вікна мають незалежний життєвий цикл; реконструкція системного сеансу не означає, що користувач закрив помічника.
+        // 浮窗拥有独立生命周期；系统会话重建不代表用户关闭了助理。
         if (!shown) EtaAssistantScreenContexts.release(screenContext?.id)
         screenContext = null
         context.unregisterReceiver(controlReceiver)

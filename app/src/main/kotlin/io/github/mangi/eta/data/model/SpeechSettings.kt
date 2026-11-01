@@ -71,7 +71,7 @@ data class SpeechSettings(
     val asr: AsrProvider = AsrProvider.SYSTEM,
     val tts: TtsProvider = TtsProvider.NONE,
     val autoSpeak: Boolean = false,
-    /** Після завершення відповіді на сторінці чату остаточна відповідь буде автоматично зачитана вголос; воно буде збережено окремо від автоматичної трансляції у плаваючому вікні помічника.*/
+    /** 聊天页回答完成后自动朗读最终回答；与助手浮窗的自动播报分开保存。 */
     val chatAutoSpeak: Boolean = false,
     val language: String = "",
     val qwenAsr: QwenSpeechConfig = QwenSpeechConfig(),
@@ -83,11 +83,11 @@ data class SpeechSettings(
     val geminiTts: GeminiTtsConfig = GeminiTtsConfig(),
     val minimaxTts: MiniMaxTtsConfig = MiniMaxTtsConfig(),
     val oss: SpeechOssConfig = SpeechOssConfig(),
-    /** Скільки часу пауза плаваючого вікна помічника перед його автоматичним надсиланням; 0 означає, що його буде надіслано лише тоді, коли користувач натисне «Готово» або «Відпусти».*/
+    /** 助手浮窗停顿多久后自动发送；0 表示只在用户点击完成或松手时发送。 */
     val autoSendSilenceMs: Int = DEFAULT_AUTO_SEND_SILENCE_MS,
-    /** Використовуйте поточну модель діалогу для консервативного виправлення помилок перед наданням результатів розпізнавання.*/
+    /** 识别结果交付前使用当前对话模型保守纠错。 */
     val refineTranscript: Boolean = false,
-    /** Керує лише власним голосовим введенням Eta та зберігає конфігурацію служби, коли її закривають, щоб легко відкрити знову.*/
+    /** 只控制 Eta 自身的语音输入，关闭时保留服务配置以便再次开启。 */
     val recognitionEnabled: Boolean = true,
 ) {
     companion object {
@@ -100,7 +100,7 @@ internal enum class SpeechCredentialField {
     QWEN_ASR, QWEN_TTS, DOUBAO_ASR, DOUBAO_TTS, GEMINI_TTS, MINIMAX_TTS, OSS_KEY_ID, OSS_KEY_SECRET,
 }
 
-/** Облікові дані не належать до налаштувань, щоб уникнути їх виведення під час звичайного експорту конфігурації чи виведення налагодження.*/
+/** 凭据不属于 Settings，避免被普通配置导出或调试输出带出。 */
 @Serializable
 class SpeechCredentials(
     val qwenAsr: String = "",

@@ -19,7 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Рівень діяльності - державний власник; зміни конфігурації лише перебудовують інтерфейс і не замінюють запущені сеанси агента.*/
+/** Activity 级状态所有者；配置变更只重建 UI，不替换正在运行的 Agent 会话。 */
 internal class AgentAppViewModel(application: Application) : AndroidViewModel(application) {
     val state = AgentAppState(
         context = application,
@@ -59,7 +59,7 @@ internal class AgentAppViewModel(application: Application) : AndroidViewModel(ap
                     KimiWebUiState(KimiWebPhase.NOT_INSTALLED)
                 } else {
                     val runtime = kimiWebLauncher.status(distribution.terminalEnvironment)
-                    // Якщо перевірка виявить, що процес завершився, це не означає, що запуск не вдався; тільки результати активних операцій зберігаються в статусі відмови.
+                    // 巡检发现进程已退出不等于启动失败；失败状态只保留主动操作的结果。
                     when {
                         runtime.running -> KimiWebUiState(KimiWebPhase.RUNNING)
                         kimiWebState.phase == KimiWebPhase.FAILED -> kimiWebState

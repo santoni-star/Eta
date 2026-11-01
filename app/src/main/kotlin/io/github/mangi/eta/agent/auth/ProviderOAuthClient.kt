@@ -42,7 +42,7 @@ internal class LiveProviderOAuthClient(
             MessageDigest.getInstance("SHA-256").digest(pkceVerifier.toByteArray(Charsets.US_ASCII)),
         )
         val receiver = try { callbackReceiver() } catch (_: java.io.IOException) {
-            throw ProviderAuthException("oauth_callback_unavailable", "немаєЗаконпочатокрухатися Codex дошказаписповерненнямелодія，будь ласкавузолпучокщовіндошказаписназадВажкаспробувати")
+            throw ProviderAuthException("oauth_callback_unavailable", "无法启动 Codex 登录回调，请结束其他登录后重试")
         }
         return receiver.use {
             val url = "https://auth.openai.com/oauth/authorize".toHttpUrl().newBuilder()
@@ -93,10 +93,10 @@ internal class LiveProviderOAuthClient(
         onPrompt(ProviderLoginPrompt(verificationUri, userCode))
         while (true) {
             val remaining = (deadline - monotonicNow()) / 1_000_000
-            if (remaining <= 0) throw ProviderAuthException("oauth_login_expired", "тестсертифікаткодвжеПасОчікуйте，будь ласкаВажкановийдошказапис")
+            if (remaining <= 0) throw ProviderAuthException("oauth_login_expired", "验证码已过期，请重新登录")
             waitForPoll(controller, minOf(intervalSeconds * 1_000, remaining))
             controller.throwIfCancelled()
-            if (monotonicNow() >= deadline) throw ProviderAuthException("oauth_login_expired", "тестсертифікаткодвжеПасОчікуйте，будь ласкаВажкановийдошказапис")
+            if (monotonicNow() >= deadline) throw ProviderAuthException("oauth_login_expired", "验证码已过期，请重新登录")
             val response = try {
                 http.post(OAuthProvider.XAI.tokenEndpoint, mapOf(
                     "grant_type" to "urn:ietf:params:oauth:grant-type:device_code",
@@ -115,8 +115,8 @@ internal class LiveProviderOAuthClient(
             when (response.errorCode) {
                 "authorization_pending" -> Unit
                 "slow_down" -> intervalSeconds += 5
-                "access_denied" -> throw ProviderAuthException("oauth_access_denied", "дошказаписще ніотриматинавчатиправильно")
-                "expired_token" -> throw ProviderAuthException("oauth_login_expired", "тестсертифікаткодвжеПасОчікуйте，будь ласкаВажкановийдошказапис")
+                "access_denied" -> throw ProviderAuthException("oauth_access_denied", "登录未获授权")
+                "expired_token" -> throw ProviderAuthException("oauth_login_expired", "验证码已过期，请重新登录")
                 else -> requireSuccess(response)
             }
         }
@@ -163,14 +163,14 @@ internal class LiveProviderOAuthClient(
             VerifiedProviderIdentity(requireNotNull(previous!!.subject), previous.email, previous.displayName)
         }
         if (previous?.subject != null && previous.subject != identity.subject) {
-            throw ProviderAuthException("oauth_account_mismatch", "дошказаписрахунокНомеріОригіналрахунокНомернемаєодиндо，будь ласкановийвстановитиОдягобслуговуваннябізнеснавітьзловити")
+            throw ProviderAuthException("oauth_account_mismatch", "登录账号与原账号不一致，请新建服务商连接")
         }
         val scope = json.optString("scope").takeIf { it.isNotBlank() && it != "null" }
         val scopes = scope?.split(' ')?.filter(String::isNotBlank)?.toSet()
             ?: if (refreshing) previous!!.scopes else defaultScopes
         val accountId = if (provider == OAuthProvider.OPENAI) CodexOAuth.accountId(accessToken) else null
         if (refreshing && previous?.accountId != accountId) {
-            throw ProviderAuthException("oauth_account_mismatch", "пензликновийназадзрахунокНомерначальникавнизмистецтванемаєодиндо，будь ласкаВажкановийдошказапис")
+            throw ProviderAuthException("oauth_account_mismatch", "刷新后的账号上下文不一致，请重新登录")
         }
         return ProviderCredential(
             authMode = provider.authMode,
@@ -191,12 +191,12 @@ internal class LiveProviderOAuthClient(
     private fun requireSuccess(response: OAuthHttpResponse) {
         if (response.successful) return
         if (response.errorCode in TERMINAL_REFRESH_ERRORS) {
-            throw ProviderAuthException("oauth_session_expired", "дошказаписвжевтратитиефект，будь ласкаВажкановийдошказапис")
+            throw ProviderAuthException("oauth_session_expired", "登录已失效，请重新登录")
         }
         if (response.errorCode == "invalid_client") {
-            throw ProviderAuthException("oauth_client_rejected", "навчатиправильноОдягобслуговуванняще нізловитизацегістьпобутовікінець")
+            throw ProviderAuthException("oauth_client_rejected", "授权服务未接受此客户端")
         }
-        throw ProviderAuthException("oauth_request_failed", "навчатиправильнобудь ласкапроситивтратитипоразка（HTTP ${response.status}），будь ласкатрохиназадВажкаспробувати")
+        throw ProviderAuthException("oauth_request_failed", "授权请求失败（HTTP ${response.status}），请稍后重试")
     }
 
     private fun randomValue(): String = Base64.getUrlEncoder().withoutPadding()
@@ -204,14 +204,14 @@ internal class LiveProviderOAuthClient(
 
     private fun requiredString(json: JSONObject, key: String): String = json.optString(key)
         .takeIf { it.isNotBlank() && it != "null" && it.length <= 65_536 }
-        ?: throw ProviderAuthException("oauth_invalid_response", "навчатиправильноОдягобслуговуванняповерненняповерненнязномервідповідно донемаєзакінченовсе")
+        ?: throw ProviderAuthException("oauth_invalid_response", "授权服务返回的数据不完整")
 
     private fun positiveSeconds(json: JSONObject, key: String): Long = json.optLong(key, -1).also {
         requireProtocol(it in 1..31_536_000)
     }
 
     private fun requireProtocol(condition: Boolean) {
-        if (!condition) throw ProviderAuthException("oauth_invalid_response", "навчатиправильноОдягобслуговуванняповерненняповерненнязномервідповідно донемаєефект")
+        if (!condition) throw ProviderAuthException("oauth_invalid_response", "授权服务返回的数据无效")
     }
 
     private companion object {

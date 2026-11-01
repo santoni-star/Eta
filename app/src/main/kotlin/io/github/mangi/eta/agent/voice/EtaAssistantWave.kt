@@ -76,7 +76,7 @@ internal fun EtaAssistantWave(active: Boolean, level: () -> Float, modifier: Mod
     }
     Canvas(modifier.fillMaxWidth().height(65.dp)) {
         if (!entranceReachedBottom || !waveVisible) return@Canvas
-        // Деякі ПЗУ використовують програмне полотно під час перемикання вікон, а RuntimeShader можна надіслати лише на апаратне полотно.
+        // 部分 ROM 在窗口切换时使用软件画布，RuntimeShader 只能提交到硬件画布。
         if (!unavailable && drawContext.canvas.nativeCanvas.isHardwareAccelerated) {
             effect?.let {
                 try {
@@ -91,7 +91,7 @@ internal fun EtaAssistantWave(active: Boolean, level: () -> Float, modifier: Mod
     }
 }
 
-/** Відтворюватимуться лише цифрові доріжки в упакованих ресурсах, а сценарії в ресурсах не виконуватимуться.*/
+/** 只播放打包资源中的数值轨道，不执行资源里的脚本。 */
 internal class EtaWaveEffect(context: Context) {
     private val data = context.assets.open("assistant/wave.json").bufferedReader().use { JSONObject(it.readText()) }
     private val shader = RuntimeShader(context.assets.open("assistant/wave.agsl").bufferedReader().use { it.readText() })

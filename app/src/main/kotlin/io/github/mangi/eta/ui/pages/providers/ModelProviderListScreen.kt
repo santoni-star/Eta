@@ -93,8 +93,8 @@ internal fun ModelProviderListScreen(
         item(key = "create_section") {
             ProviderSection(title = stringResource(R.string.ui_add_new_provider_74df54)) {
                 EtaArrowPreference(
-                    title = "відГоловазаписдодатидодати",
-                    summary = "переглядатиПереглянутиможевикористовуватинестидлябізнесівибративибратицвільтипу",
+                    title = "从目录添加",
+                    summary = "浏览可用提供商并选择模型",
                     startAction = { EtaPreferenceIcon(Icons.Rounded.Storefront, tint = EtaPreferenceColors.Blue) },
                     onClick = { onNavigate(AppRoute.CommunityCatalog) },
                 )
@@ -118,8 +118,8 @@ internal fun ModelProviderListScreen(
                 )
                 EtaPreferenceDivider()
                 EtaArrowPreference(
-                    title = "новийзбільшення Gemini",
-                    summary = "зробитивикористовувати API Key навітьзловитиОригіналнародився Interactions API",
+                    title = "新增 Gemini",
+                    summary = "使用 API Key 连接原生 Interactions API",
                     startAction = { ProviderBrandIcon(ProviderSourceTypes.GEMINI) },
                     onClick = { onNavigate(AppRoute.ModelProviderNew(NewProviderType.Gemini)) },
                 )

@@ -30,7 +30,7 @@ internal class SpeechPlaybackController(
     private val interruptOnScreenOff: Boolean = true,
     private val afterPlayback: () -> Unit = {},
     private val synthesize: suspend (SpeechSettings, SpeechCredentials, String, (ByteArray) -> Unit) -> Unit = ::synthesizeSpeech,
-    /** Синтез потокової передачі всього одного сеансу; коли він дорівнює нулю, використовуються лише посегментні запити.*/
+    /** 整篇单会话流式合成；为 null 时只用逐段请求。 */
     private val streamSynthesize: (suspend (SpeechSettings, SpeechCredentials, List<String>, (ByteArray) -> Unit) -> Unit)? = ::streamSpeech,
     private val createOutput: () -> SpeechAudioOutput = ::SpeechPcmOutput,
 ) {
@@ -53,8 +53,8 @@ internal class SpeechPlaybackController(
                 val secrets = credentials ?: SpeechSettingsRepository.credentials(context)
                 validateSpeechSettings(config, secrets, synthesis = true)
                 val readable = withContext(Dispatchers.Default) { SpeechText.readable(text) }
-                if (readable.isBlank()) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "цесмужкавидалитиінтересбезматиможедовгийчитатизпростомистецтва")
-                if (readable.length > 30_000) throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "простомистецтваПасдовго，будь ласкавибративибратипорівнятикороткийзповерненнявідповідьдовгийчитати")
+                if (readable.isBlank()) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "这条消息没有可朗读的正文")
+                if (readable.length > 30_000) throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "正文过长，请选择较短的回答朗读")
                 lease?.requestPlaybackFocus { beforePlayback(); playbackActive = true }
                 val player = createOutput()
                 output = player
@@ -81,13 +81,13 @@ internal class SpeechPlaybackController(
     }
 
     /**
-     * Синтез завантажується зі швидкістю мережі, відтворення записується на звукову доріжку зі швидкістю в реальному часі, і обидва розділяються чергою. Якщо ви записуєте звукову доріжку безпосередньо у зворотному виклику синтезу,
-     * Потік читання буде затриманий ритмом відтворення, і сервер також довго чекатиме, поки клієнт прочитає.
+     * 合成按网络速度下载，播放按实时速度写入音轨，两者经队列解耦。若在合成回调里直接写音轨，
+     * 读流会被播放节奏拖住，服务端也会长时间等待客户端读取。
      *
-     * Визначте пріоритетне розміщення всієї статті в сеансі потокового синтезу. Аудіо – це безперервний потік, і вся стаття поступово зникає лише на початку та в кінці.
-     * Коли сеанс потокової передачі не вдається перед тим, як говорити (наприклад, обліковий запис не активує модель реального часу, спеціальна адреса не підтримує WebSocket),
-     * Повернення до запитів сегмента за сегментом: ведення, відтворюючи щонайбільше [PREFETCH_CHUNKS] сегментів, шви зникають [SpeechSegmentFade].
-     * Якщо це не вдається після того, як було зроблено оператор, буде повідомлено про помилку безпосередньо без повторного читання з початку.
+     * 优先把整篇放进一个流式合成会话，音频是一条连续的流，整体只在首尾淡入淡出。
+     * 流式会话在出声前失败（例如账号未开通实时模型、自定义地址不支持 WebSocket）时，
+     * 回落到逐段请求：最多领先播放 [PREFETCH_CHUNKS] 段，接缝处由 [SpeechSegmentFade] 淡入淡出。
+     * 已经出声后再失败则直接报错，不从头重读。
      */
     private suspend fun playChunks(
         config: SpeechSettings,
@@ -125,14 +125,14 @@ internal class SpeechPlaybackController(
                 }
                 queue.close()
             } catch (error: Throwable) {
-                // Синтетичний тайм-аут є CancellationException. Завершення дочірньої співпрограми з нею не скасовує батьківську область і має бути передано гравцеві через чергу.
+                // 合成超时是 CancellationException，子协程以它结束不会取消父作用域，必须经队列交给播放端。
                 queue.close(error)
             }
         }
         withContext(Dispatchers.IO) {
             var announced = false
             val fade = SpeechSegmentFade()
-            // Коли звукова доріжка буде заповнена, запис перейде в режим сну та повторить спробу; його можна перервати, щоб дозволити хосту скасувати та негайно завершити тут, а потім закрити звукову доріжку.
+            // 音轨写满时 write 会休眠重试；可中断才能让宿主取消立即结束这里，随后关闭音轨。
             suspend fun play(bytes: ByteArray) {
                 if (bytes.isNotEmpty()) runInterruptible { player.write(bytes) }
             }

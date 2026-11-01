@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** Підключіть оригінальний WebView сеансу, а сама сторінка містить вставки адресного рядка та системного рядка.*/
+/** 挂载会话原有的 WebView，页面自身持有地址栏及系统栏 Insets。 */
 @Composable
 internal fun AgentBrowserScreen(
     session: AgentBrowserSession,
@@ -59,7 +59,7 @@ internal fun AgentBrowserScreen(
     var actionPending by remember(session) { mutableStateOf(false) }
     var showClearDataDialog by remember { mutableStateOf(false) }
 
-    // Введені користувачем дані не перезаписуються під час редагування; у стані без редагування відображається лише доменне ім’я, а при вході в редагування відновлюється повна адреса.
+    // 编辑期间不覆盖用户输入；非编辑态仅显示域名，进入编辑时还原完整地址。
     LaunchedEffect(addressFocused) {
         if (addressFocused) {
             address = TextFieldValue(snapshot.displayUrl, TextRange(0, snapshot.displayUrl.length))

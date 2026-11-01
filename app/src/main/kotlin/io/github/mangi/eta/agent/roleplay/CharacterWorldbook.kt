@@ -13,7 +13,7 @@ internal data class WorldbookProjection(
 )
 
 internal object CharacterWorldbook {
-    /** Використовується лише для вибору елемента картки персонажа token_budget і не бере участі у використанні вхідних даних моделі та оцінці стиснення.*/
+    /** 仅用于角色卡 token_budget 的条目选择，不参与模型输入用量与压缩判断。 */
     fun estimateEntryTokens(text: String): Int {
         var ascii = 0
         var other = 0

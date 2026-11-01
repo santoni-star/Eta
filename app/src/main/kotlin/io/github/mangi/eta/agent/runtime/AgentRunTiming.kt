@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.runtime
 import android.os.SystemClock
 import io.github.mangi.eta.core.AgentLogger
 
-/** Запис ключових меж першого запиту, щоб відрізнити локальну підготовку, мережеве рукостискання та модель затримки першого маркера.*/
+/** 记录首请求关键边界，区分本地准备、网络握手和模型首 Token 延迟。 */
 internal class AgentRunTiming(
     private val logger: AgentLogger,
 ) {

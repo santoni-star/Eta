@@ -22,10 +22,10 @@ import io.github.mangi.eta.core.safeLogType
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Зберігайте служби доступності Eta доступними за вибором користувача, поки системний_сервер активний.
+ * 在 system_server 存活期间按用户选择保持 Eta 无障碍服务可用。
  *
- * За замовчуванням захист вимкнено; коли ввімкнено, зберігаються лише компонент Eta та головний комутатор користувача-власника, а інші служби завжди зберігаються.
- * У всій роботі повторно використовується BackgroundThread Android, додаткові потоки не створюються та періодичне опитування не виконується.
+ * 保护默认关闭；开启后只维护 owner 用户中的 Eta 组件与总开关，始终保留其他服务。
+ * 所有工作复用 Android 的 BackgroundThread，不创建额外线程，也不做周期轮询。
  */
 internal class AccessibilityServiceEnforcer(
     private val handler: Handler,
@@ -137,7 +137,7 @@ internal class AccessibilityServiceEnforcer(
                 )
                 controlSettingObserverRegistered = true
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконконтролюватислухатинемаєбар'єрперешкоджатизберегтизахиститиВІДЧИНЕНОзакрити", failure)
+                logFailure("无法监听无障碍保护开关", failure)
             }
         }
 
@@ -158,7 +158,7 @@ internal class AccessibilityServiceEnforcer(
                 )
                 controlReceiverRegistered = true
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконПриміткакниганемаєбар'єрперешкоджатизберегтизахиститиКОНТРОЛЬсистемавведітьрот", failure)
+                logFailure("无法注册无障碍保护控制入口", failure)
             }
         }
     }
@@ -181,7 +181,7 @@ internal class AccessibilityServiceEnforcer(
                 resolver.registerContentObserver(uri, false, observer)
                 activeSettingUris += uri
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконконтролюватислухатинемаєбар'єрперешкоджатиналаштувативстановити", failure)
+                logFailure("无法监听无障碍设置", failure)
             }
         }
 
@@ -208,7 +208,7 @@ internal class AccessibilityServiceEnforcer(
                 )
                 packageReceiverRegistered = true
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконконтролюватислухати Eta СумкаЗміназмінити", failure)
+                logFailure("无法监听 Eta 包变化", failure)
             }
         }
 
@@ -234,7 +234,7 @@ internal class AccessibilityServiceEnforcer(
                         addAction(Intent.ACTION_LOCKED_BOOT_COMPLETED)
                         addAction(Intent.ACTION_BOOT_COMPLETED)
                         addAction(Intent.ACTION_USER_UNLOCKED)
-                        // Підтвердьте реальне підключення один раз під час повернення до розблокованого стану та не опитуйте протягом стабільного періоду.
+                        // 回到解锁态时确认一次真实连接，稳定期间不轮询。
                         addAction(Intent.ACTION_USER_PRESENT)
                     },
                     null,
@@ -243,7 +243,7 @@ internal class AccessibilityServiceEnforcer(
                 )
                 lifecycleReceiverRegistered = true
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконконтролюватислухати owner використовуватипобутовінародивсяжиттятижденьОчікуйте", failure)
+                logFailure("无法监听 owner 用户生命周期", failure)
             }
         }
     }
@@ -254,7 +254,7 @@ internal class AccessibilityServiceEnforcer(
                 activeSettingsObserver?.let(context.contentResolver::unregisterContentObserver)
                 activeSettingUris.clear()
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконСТІЙкінецьконтролюватислухатинемаєбар'єрперешкоджатиналаштувативстановити", failure)
+                logFailure("无法停止监听无障碍设置", failure)
             }
         }
         if (packageReceiverRegistered) {
@@ -262,7 +262,7 @@ internal class AccessibilityServiceEnforcer(
                 packageReceiver?.let(context::unregisterReceiver)
                 packageReceiverRegistered = false
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконПриміткашпилька Eta Сумкаконтролюватислухати", failure)
+                logFailure("无法注销 Eta 包监听", failure)
             }
         }
         if (lifecycleReceiverRegistered) {
@@ -270,14 +270,14 @@ internal class AccessibilityServiceEnforcer(
                 lifecycleReceiver?.let(context::unregisterReceiver)
                 lifecycleReceiverRegistered = false
             } catch (failure: RuntimeException) {
-                logFailure("немаєЗаконПриміткашпилька owner народивсяжиттятижденьОчікуйтеконтролюватислухати", failure)
+                logFailure("无法注销 owner 生命周期监听", failure)
             }
         }
     }
 
     private fun createControlReceiver(): BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(receiverContext: Context, intent: Intent) {
-            // Елементи захисту покладаються на ідентифікаційні дані відправника, які постачаються разом із системою, а застарілі системи не приймають перевірку ідентифікаційних даних із пониженим рівнем.
+            // 保护控制依赖系统附带的发送者身份，旧系统不接受降级后的身份校验。
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
             val senderUid = sentFromUid
             val ordered = isOrderedBroadcast
@@ -306,7 +306,7 @@ internal class AccessibilityServiceEnforcer(
                         )
                         actualEnabled = isEnforcementEnabled(receiverContext)
                     } catch (failure: RuntimeException) {
-                        logFailure("немаєбар'єрперешкоджатизберегтизахиститиКОНТРОЛЬсистемабудь ласкапроситивтратитипоразка", failure)
+                        logFailure("无障碍保护控制请求失败", failure)
                     }
                     completeControlRequest(
                         pendingResult = pendingResult,
@@ -365,7 +365,7 @@ internal class AccessibilityServiceEnforcer(
 
         restoreBackoff.reset()
         reconcile(context, "user_control")
-        logger.info("немаєбар'єрперешкоджатизберегтизахиститиВІДЧИНЕНОзакритивженалаштувативстановитидля $requestedEnabled")
+        logger.info("无障碍保护开关已设置为 $requestedEnabled")
         return AccessibilityProtectionProtocol.RESULT_APPLIED
     }
 
@@ -380,7 +380,7 @@ internal class AccessibilityServiceEnforcer(
                     restoreMissingImmediately = true,
                 )
             } catch (failure: RuntimeException) {
-                logFailure("Runtime будь ласкапроситизнемаєбар'єрперешкоджативідновитискладнівтратитипоразка", failure)
+                logFailure("Runtime 请求的无障碍恢复失败", failure)
             }
         }
         if (!posted) {
@@ -402,7 +402,7 @@ internal class AccessibilityServiceEnforcer(
                 },
             )
         } catch (failure: RuntimeException) {
-            logFailure("немаєЗаконповерненняповерненнянемаєбар'єрперешкоджатизберегтизахиститиКОНТРОЛЬсистемавузолфрукти", failure)
+            logFailure("无法返回无障碍保护控制结果", failure)
         } finally {
             pendingResult.finish()
         }
@@ -423,7 +423,7 @@ internal class AccessibilityServiceEnforcer(
             }
         ) {
             registrationRetryScheduled.set(false)
-            logFailure("немаєЗаконмелодіявитрачатинемаєбар'єрперешкоджатиконтролюватислухатиПриміткакнигаВажкаспробувати")
+            logFailure("无法调度无障碍监听注册重试")
         }
     }
 
@@ -439,12 +439,12 @@ internal class AccessibilityServiceEnforcer(
                 try {
                     verifyServiceConnection(context, reason)
                 } catch (failure: RuntimeException) {
-                    logFailure("немаєбар'єрперешкоджатинавітьзловитиперевіритиперевіритивтратитипоразка", failure)
+                    logFailure("无障碍连接检查失败", failure)
                 }
             }
         ) {
             healthCheckScheduled.set(false)
-            logFailure("немаєЗаконмелодіявитрачатинемаєбар'єрперешкоджатинавітьзловитиперевіритиперевірити")
+            logFailure("无法调度无障碍连接检查")
         }
     }
 
@@ -467,8 +467,8 @@ internal class AccessibilityServiceEnforcer(
         )
         if (!containsAccessibilityService(currentServices, SERVICE_COMPONENT.flattenToString())) {
             if (restoreMissingImmediately) {
-                // Інструмент графічного інтерфейсу вже очікує на це відновлення, і його не можна відкласти попередньо поставленим у чергу 30-секундним набором відстрочки до закінчення часу очікування.
-                // Тут відповідають лише явні запити, які були перевірені версією протоколу та UID; нормальна боротьба за сет все ще поважає відступ.
+                // GUI 工具已经在等待本次恢复，不能被此前排队的 30 秒设置退避拖到超时。
+                // 这里只响应经过协议版本与 UID 校验的显式请求；常规设置争抢仍遵守退避。
                 enforce(context, "runtime_recovery_missing_service")
                 if (isExpectedServiceConfigured(context)) {
                     scheduleHealthCheck(
@@ -488,13 +488,13 @@ internal class AccessibilityServiceEnforcer(
             AccessibilityConnectionStatus.DISCONNECTED -> {
                 val attempt = repairLimiter.nextAttempt(SystemClock.elapsedRealtime())
                 if (attempt == null) {
-                    logFailure("немаєбар'єрперешкоджатиОдягобслуговуваннянавітьПродовженняВажкакраваткавтратитипоразка，вжеВведітьвведітьхолоднийале")
+                    logFailure("无障碍服务连续重绑失败，已进入冷却")
                 } else {
                     beginServiceRepair(context, attempt, reason)
                 }
             }
             AccessibilityConnectionStatus.UNKNOWN ->
-                logFailure("немаєЗаконправильнорозпізнатинемаєбар'єрперешкоджатиОдягобслуговуваннянавітьзловитиформустан")
+                logFailure("无法确认无障碍服务连接状态")
         }
     }
 
@@ -507,7 +507,7 @@ internal class AccessibilityServiceEnforcer(
                 AccessibilityProtectionProtocol.request(),
             )
         } catch (failure: RuntimeException) {
-            logFailure("немаєбар'єрперешкоджатиздоровийЗдоровийперевіритиперевірити Provider мелодіявикористовувативтратитипоразка", failure)
+            logFailure("无障碍健康检查 Provider 调用失败", failure)
             return AccessibilityConnectionStatus.UNKNOWN
         }
         return accessibilityConnectionStatus(
@@ -540,12 +540,12 @@ internal class AccessibilityServiceEnforcer(
             )
         ) {
             repairInProgress.set(false)
-            logFailure("немаєЗаконProгодиназакритизакрити Eta немаєбар'єрперешкоджатиОдягобслуговування")
+            logFailure("无法临时关闭 Eta 无障碍服务")
             return
         }
 
         logger.info(
-            "ВІДЧИНЕНОпочатокВажкакраватканемаєбар'єрперешкоджатиОдягобслуговування: reason=$reason attempt=${attempt.number}",
+            "开始重绑无障碍服务: reason=$reason attempt=${attempt.number}",
         )
         if (
             !post(attempt.disabledDurationMs) {
@@ -553,7 +553,7 @@ internal class AccessibilityServiceEnforcer(
             }
         ) {
             repairInProgress.set(false)
-            logFailure("немаєЗаконмелодіявитрачати Eta немаєбар'єрперешкоджатиОдягобслуговуванняВажкапочаток")
+            logFailure("无法调度 Eta 无障碍服务重启")
             schedule(context, "repair_schedule_failed", delayMs = 0L)
         }
     }
@@ -567,7 +567,7 @@ internal class AccessibilityServiceEnforcer(
                 enforce(context, "repair_${attempt.number}")
             }
         } catch (failure: RuntimeException) {
-            logFailure("немаєЗаконВажкановийпочатоквикористовувати Eta немаєбар'єрперешкоджатиОдягобслуговування", failure)
+            logFailure("无法重新启用 Eta 无障碍服务", failure)
         } finally {
             repairInProgress.set(false)
         }
@@ -593,7 +593,7 @@ internal class AccessibilityServiceEnforcer(
             try {
                 reconcile(context, reason)
             } catch (failure: RuntimeException) {
-                logFailure("немаєбар'єрперешкоджатизберегтизахиститишколатествтратитипоразка", failure)
+                logFailure("无障碍保护校验失败", failure)
             } finally {
                 workScheduled.set(false)
                 if (rerunRequested.get()) schedule(context, "late_change")
@@ -601,7 +601,7 @@ internal class AccessibilityServiceEnforcer(
         }
         if (!posted) {
             workScheduled.set(false)
-            logFailure("немаєЗаконмелодіявитрачатинемаєбар'єрперешкоджатизберегтизахиститишколатест")
+            logFailure("无法调度无障碍保护校验")
         }
         return posted
     }
@@ -619,7 +619,7 @@ internal class AccessibilityServiceEnforcer(
                 mergedServices,
             )
             if (!restoredServices) {
-                logFailure("немаєЗаконвідновитискладнінемаєбар'єрперешкоджатиОдягобслуговуванняСписокповерхні")
+                logFailure("无法恢复无障碍服务列表")
             }
         }
         val serviceIsEnabled = mergedServices == null || restoredServices
@@ -637,7 +637,7 @@ internal class AccessibilityServiceEnforcer(
                 ENABLED,
             )
             if (!restoredMasterSwitch) {
-                logFailure("немаєЗаконвідновитискладнінемаєбар'єрперешкоджативсьогоВІДЧИНЕНОзакрити")
+                logFailure("无法恢复无障碍总开关")
             }
         }
         if (restoredServices || restoredMasterSwitch) {
@@ -662,7 +662,7 @@ internal class AccessibilityServiceEnforcer(
     private fun isOwnerUnlocked(context: Context): Boolean = try {
         context.getSystemService(UserManager::class.java)?.isUserUnlocked == true
     } catch (failure: RuntimeException) {
-        logFailure("немаєЗакончитатиВиберіть owner використовуватипобутовіформустан", failure)
+        logFailure("无法读取 owner 用户状态", failure)
         false
     }
 
@@ -687,7 +687,7 @@ internal class AccessibilityServiceEnforcer(
     }
 
     /**
-     * Налаштування не розкривають CAS; якщо відсутній, прочитайте останній знімок ще раз і намагайтеся не перезаписувати інші служби, які ввімкнено одночасно.
+     * Settings 没有公开 CAS；缺失时再读一次最新快照，尽量不覆盖同时启用的其他服务。
      */
     private fun mergeLatestAccessibilitySetting(resolver: ContentResolver): String? {
         val initialValue = Settings.Secure.getString(
@@ -743,7 +743,7 @@ internal class AccessibilityServiceEnforcer(
         } catch (_: PackageManager.NameNotFoundException) {
             return false
         } catch (failure: RuntimeException) {
-            logFailure("немаєЗаконшколатест Eta немаєбар'єрперешкоджатиОдягобслуговуванняГрупаштук", failure)
+            logFailure("无法校验 Eta 无障碍服务组件", failure)
             return false
         }
         val applicationInfo = serviceInfo.applicationInfo
@@ -770,7 +770,7 @@ internal class AccessibilityServiceEnforcer(
         } catch (_: PackageManager.NameNotFoundException) {
             return false
         } catch (failure: RuntimeException) {
-            logFailure("немаєЗаконшколатестнемаєбар'єрперешкоджатизберегтизахиститиКОНТРОЛЬсистемамелодіявикористовуватиплощі", failure)
+            logFailure("无法校验无障碍保护控制调用方", failure)
             return false
         }
         return applicationInfo.enabled &&
@@ -791,7 +791,7 @@ internal class AccessibilityServiceEnforcer(
             handler.postDelayed(block, delayMs)
         } catch (failure: RuntimeException) {
             logger.warnThrottled("accessibility_handler_rejected", LOG_INTERVAL_MS) {
-                "немаєбар'єрперешкоджатизберегтизахиститиназадвежа Handler відхилитиАбсолютнопризначитиобслуговування: type=${failure.safeLogType()}"
+                "无障碍保护后台 Handler 拒绝任务: type=${failure.safeLogType()}"
             }
             false
         }
@@ -815,7 +815,7 @@ internal class AccessibilityServiceEnforcer(
         if (lastRestoreLogAt != 0L && now - lastRestoreLogAt < LOG_INTERVAL_MS) return
         lastRestoreLogAt = now
         logger.info(
-            "вжевідновитискладні Eta немаєбар'єрперешкоджати: reason=$reason " +
+            "已恢复 Eta 无障碍: reason=$reason " +
                 "serviceList=$restoredServices masterSwitch=$restoredMasterSwitch",
         )
     }
@@ -871,7 +871,7 @@ internal data class AccessibilityRepairAttempt(
 )
 
 /**
- * У разі постійного збою спробуйте щонайбільше три раунди, а потім заспокойтеся протягом однієї хвилини, щоб уникнути нескінченного циклу підтягування, коли служба продовжує виходити з ладу.
+ * 连续失败时最多尝试三轮，再冷却一分钟，避免服务持续崩溃时形成无限拉起循环。
  */
 internal class AccessibilityRepairLimiter(
     disabledDurationsMs: LongArray = longArrayOf(500L, 1_000L, 2_000L),
@@ -915,7 +915,7 @@ internal class AccessibilityRepairLimiter(
 }
 
 /**
- * OEM поступово відступить до 30 секунд, продовжуючи відновлення налаштувань; він відновить швидку відповідь після стабілізації протягом однієї хвилини.
+ * OEM 持续反删设置时逐步退避到 30 秒；稳定一分钟后恢复快速响应。
  */
 internal class AccessibilityRestoreBackoff(
     delaysMs: LongArray = longArrayOf(300L, 1_000L, 5_000L, 30_000L),

@@ -38,23 +38,23 @@ internal fun ProviderAccountControls(
     val needsLogin = !loggedIn || !account.planEnabled
     val brand = if (authMode == ProviderAuthModes.XAI_GROK) "Grok" else "Codex"
     EtaPreference(
-        title = account?.email ?: account?.displayName ?: "$brand рахунокНомер",
+        title = account?.email ?: account?.displayName ?: "$brand 账号",
         summary = browserError ?: state.message ?: when (state.phase) {
-            ProviderLoginPhase.Loading -> "простоіснуютьчитатиВиберітьдошказаписформустан…"
-            ProviderLoginPhase.Saving -> "простоіснуютьзберегтижитиматчвстановити…"
-            ProviderLoginPhase.Disconnecting -> "простоіснуютьвідступпозадошказапис…"
-            ProviderLoginPhase.Authorizing -> if (prompt == null) "простоіснуютьдозволяютьПриготуйтенавчатиправильно…" else "будь ласкаіснуютьпереглядатиПереглянутипристрійсерединазакінченостатинавчатиправильно"
-            ProviderLoginPhase.SyncingModels -> "дошказаписстатидосягнення，простоіснуютьтягнутиВиберітьбільшістьновийцвільтипу…"
+            ProviderLoginPhase.Loading -> "正在读取登录状态…"
+            ProviderLoginPhase.Saving -> "正在保存配置…"
+            ProviderLoginPhase.Disconnecting -> "正在退出登录…"
+            ProviderLoginPhase.Authorizing -> if (prompt == null) "正在准备授权…" else "请在浏览器中完成授权"
+            ProviderLoginPhase.SyncingModels -> "登录成功，正在拉取最新模型…"
             ProviderLoginPhase.Idle -> when {
                 account == null -> if (authMode == ProviderAuthModes.OPENAI_CHATGPT) {
-                    "зробитивикористовувати ChatGPT рахунокНомердошказапис Codex"
+                    "使用 ChatGPT 账号登录 Codex"
                 } else {
-                    "дошказаписназадзробитивикористовувати Grok порядокчитатиЛобвитрачати"
+                    "登录后使用 Grok 订阅额度"
                 }
-                account.needsReauthentication -> "будь ласкаВажкановийдошказапис"
-                !account.planEnabled -> "рахунокНомердосіще нінавчатидатицвільтипумелодіявикористовуватиправильнообмеження"
-                authMode == ProviderAuthModes.OPENAI_CHATGPT -> "вжедошказапис Codex"
-                else -> "вжедошказапис Grok"
+                account.needsReauthentication -> "请重新登录"
+                !account.planEnabled -> "账号尚未授予模型调用权限"
+                authMode == ProviderAuthModes.OPENAI_CHATGPT -> "已登录 Codex"
+                else -> "已登录 Grok"
             }
         },
     )
@@ -71,24 +71,24 @@ internal fun ProviderAccountControls(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (state.isBusy) {
                 if (prompt != null) {
-                    EtaTextButton(text = "битиВІДЧИНЕНОпереглядатиПереглянутипристрій", onClick = onOpenBrowser, modifier = Modifier.weight(1f))
+                    EtaTextButton(text = "打开浏览器", onClick = onOpenBrowser, modifier = Modifier.weight(1f))
                 }
                 if (state.phase in setOf(ProviderLoginPhase.Saving, ProviderLoginPhase.Authorizing, ProviderLoginPhase.SyncingModels)) {
-                    EtaTextButton(text = "Виберітьвидалити", onClick = onCancel, modifier = Modifier.weight(1f))
+                    EtaTextButton(text = "取消", onClick = onCancel, modifier = Modifier.weight(1f))
                 }
             } else {
                 if (needsLogin) {
                     EtaTextButton(
-                        text = if (loggedIn) "Важкановийнавчатиправильно" else "зробитивикористовувати $brand дошказапис",
+                        text = if (loggedIn) "重新授权" else "使用 $brand 登录",
                         enabled = enabled,
                         onClick = onLogin,
                         modifier = Modifier.weight(1f),
                     )
                 } else if (authMode == ProviderAuthModes.OPENAI_CHATGPT) {
-                    EtaTextButton(text = "трубкапричинавикористовуватикількість", enabled = enabled, onClick = onManageUsage, modifier = Modifier.weight(1f))
+                    EtaTextButton(text = "管理用量", enabled = enabled, onClick = onManageUsage, modifier = Modifier.weight(1f))
                 }
                 if (loggedIn) {
-                    EtaTextButton(text = "відступпозадошказапис", enabled = enabled, onClick = onDisconnect, modifier = Modifier.weight(1f))
+                    EtaTextButton(text = "退出登录", enabled = enabled, onClick = onDisconnect, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -99,7 +99,7 @@ internal fun openProviderAccountLink(context: Context, url: String): String? = t
     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     null
 } catch (_: ActivityNotFoundException) {
-    "ще ніспробуйте знайтиприбутиможевикористовуватипереглядатиПереглянутипристрій"
+    "未找到可用浏览器"
 } catch (_: SecurityException) {
-    "немаєЗаконбитиВІДЧИНЕНОпереглядатиПереглянутипристрій，будь ласкаперевіритиперевіритиКраваткасистеманалаштувативстановити"
+    "无法打开浏览器，请检查系统设置"
 }

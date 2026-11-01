@@ -8,10 +8,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Визначення ролі субагента та білий список інструментів (охоплює вбудовані профілі та визначені користувачем профілі в `agents/<name>.md`).
+ * Subagent 角色定义与工具白名单（涵盖内置 Profile 与用户在 `agents/<name>.md` 定义的自定义 Profile）。
  *
- * Усі субагенти позбавляють `subagent` / `subagent_profile` себе (рекурсивна відправка та самозміна заборонені)
- * Ексклюзивний графічний інтерфейс фізичного екрана та інтерактивні інструменти браузера, які гарантують, що декілька субагентів працюють одночасно, не заважаючи один одному.
+ * 所有 Subagent 均剥夺 `subagent` / `subagent_profile` 自身（禁止递归派发与自修改）
+ * 以及独占式物理屏幕 GUI 与交互式浏览器工具，确保多个 Subagent 并发运行时互不干扰。
  */
 internal data class SubagentProfile(
     val name: String,
@@ -63,9 +63,9 @@ internal data class SubagentProfile(
         const val DEFAULT_TYPE = TYPE_EXPLORE
 
         private const val SUBAGENT_ROLE_PREFIX =
-            "виколивпередробитидля Subagent（синмудрістьздатнийтіло）транспортдобре。виотриматиприбутиз user видалитиінтересвсеЗалежить відхост Agent групаволосся，інемаєкінецькінецьвикористовуватипобутовіпрямозловитивтратитивведіть。" +
-                "хост Agent подивітьсянемаєприбутивизсерединаміждумаюТестіпрацюватиІнструментмелодіявикористовуватиПасПроцедура，Тількиздатнийподивітьсяприбутививузолпучокгодиназбільшістьназадодинсмужкаповерненняскладні（final message）。" +
-                "немаєхочутьназустрічкінецькінецьвикористовуватипобутовіпрямозловитинестизапитати；якфруктипризначитиобслуговуванняжитиіснуютьНевідповідністьправеднийабовідсутністьмаловпередвстановитисмужкаштук，будь ласкаіснуютьбільшістькінецьповерненняскладнісерединаназустрічхост Agent яснояснопояснитияскравий。"
+            "你当前作为 Subagent（子智能体）运行。你收到的 user 消息均由主 Agent 派发，而非终端用户直接输入。" +
+                "主 Agent 看不到你的中间思考与工具调用过程，只能看到你结束时的最后一条回复（final message）。" +
+                "不要向终端用户直接提问；如果任务存在歧义或缺少前置条件，请在最终回复中向主 Agent 清晰说明。"
 
         val FORBIDDEN_TOOLS = setOf(
             AgentSubagentToolCatalog.TOOL_NAME,
@@ -165,33 +165,33 @@ internal data class SubagentProfile(
 
         val EXPLORE = SubagentProfile(
             name = TYPE_EXPLORE,
-            summary = "ТількичитатидосліджуватиОтжеібагатоджерелолистінтересперевіритиОтже",
+            summary = "只读探索与多源信息检索",
             whenToUse = "Fast read-only agent specialized for exploring files, personal device data (calendar, notes, messages, notifications, bills, media, system memories), logs, and web pages. Specify desired thoroughness in the prompt: \"quick\", \"medium\", or \"thorough\".",
             toolHighlights = listOf("read_file", "glob_files", "grep_files", "web_search", "fetch_url", "personal_data", "get_logcat"),
-            roleInstruction = "витакТількичитатидосліджуватиОтже Subagent（explore）。визположеннявідповідальністьтакшвидкийшвидкість、дозволяютьправильноземліперевіритиОтжемистецтваштук、налаштуватиПриготуйтеіндивідуальнийлюдейномервідповідно до、КраваткасистемаформустанабочистийСторінкаКапіталматеріал，" +
-                "строгийзаборонасмакспробуватибудуватизмінитипризначитищомистецтваштукабоналаштуватиПриготуйтеформустан。існуютьбільшістькінецьповерненняскладнісерединапрямозловитиДайтепозавузолструктуразмінитисертифікатвідповідно до、закритиключдорогашлях/годинаміжточкаівузолАргументвибратихочуть。",
+            roleInstruction = "你是只读探索 Subagent（explore）。你的职责是快速、准确地检索文件、设备个人数据、系统状态或网页资料，" +
+                "严禁尝试修改任何文件或设备状态。在最终回复中直接给出结构化证据、关键路径/时间点与结论摘要。",
             allowWriteFilesAndTerminal = false,
             builtin = true,
         )
 
         val CODER = SubagentProfile(
             name = TYPE_CODER,
-            summary = "працюватиПроцедураВиконатидобре、мистецтваштуккомпілюватиредагуватиікінецькінецьпризначитиобслуговування",
+            summary = "工程执行、文件编辑与终端任务",
             whenToUse = "General engineering and terminal agent with file-editing and shell execution tools; use it for delegated tasks that run commands, analyze APKs, edit files, or execute scripts.",
             toolHighlights = listOf("terminal", "read_file", "write_file", "edit_file", "glob_files", "grep_files", "web_search"),
-            roleInstruction = "витакпрацюватиПроцедураікінецькінецьВиконатидобре Subagent（coder）。визбільшістьназадодинсмужкавидалитиінтересВідразутакплатитиДайтехост Agent ззакінченовсеплатитизловитигазетарозповідати：" +
-                "будь ласкаясноЧупояснитияскравийвиВиконатидобрезрозумівдедеякіжиттязробитиабобудуватизмінитизрозумівдедеякімистецтваштук、закритиключвтратитипозаітестсертифікатвузолфрукти，заіпризначитищоще нізакінченостатиабопотребаназадПродовженнявпричиназрічпункт。",
+            roleInstruction = "你是工程与终端执行 Subagent（coder）。你的最后一条消息就是交给主 Agent 的完整交接报告：" +
+                "请清楚说明你执行了哪些命令或修改了哪些文件、关键输出与验证结果，以及任何未完成或需后续处理的事项。",
             allowWriteFilesAndTerminal = true,
             builtin = true,
         )
 
         val PLAN = SubagentProfile(
             name = TYPE_PLAN,
-            summary = "Тількичитатиполицяструктураточкааналізуватиіточкакрокплощісправаналаштуватирозраховувати",
+            summary = "只读架构分析与分步方案设计",
             whenToUse = "Read-only planning agent. Use when you need a step-by-step implementation or execution plan, key file/data identification, and trade-off analysis before making changes.",
             toolHighlights = listOf("read_file", "glob_files", "grep_files", "web_search", "fetch_url", "skills_read"),
-            roleInstruction = "витакТількичитатирегулюваннярядок Subagent（plan）。виволодітиматиТількичитатиперевіритиОтжездатнийсила，немаєповиннібудуватизмінитимистецтваштукабоВиконатидобреперервапоганосексТримайтеробити。" +
-                "будь ласкаіснуютьбільшістькінецьповерненняскладнісерединаясноясноСписокпоза：1. вжеправильнорозпізнатизначальникавнизмистецтварічРеальність；2. досілікуватиядернийРеальністьззакритиключзапитатизапитання；3. точкакрокВиконатидобреплощісправаівітерризикправильнобаланс。",
+            roleInstruction = "你是只读规划 Subagent（plan）。你拥有只读检索能力，不得修改文件或执行破坏性操作。" +
+                "请在最终回复中清晰列出：1. 已确认的上下文事实；2. 仍待核实的关键问题；3. 分步执行方案与风险权衡。",
             allowWriteFilesAndTerminal = false,
             builtin = true,
         )
@@ -225,7 +225,7 @@ internal data class SubagentProfile(
                 if (cleanRole.isEmpty() && cleanTools.isEmpty()) return matched
                 return matched.copy(
                     roleInstruction = if (cleanRole.isNotEmpty()) {
-                        "${matched.roleInstruction}\n\nремонтзарядрігколірхочутьпросити：$cleanRole"
+                        "${matched.roleInstruction}\n\n补充角色要求：$cleanRole"
                     } else {
                         matched.roleInstruction
                     },
@@ -234,15 +234,15 @@ internal data class SubagentProfile(
                 )
             }
 
-            // Якщо попереднє налаштування не досягнуто, тимчасовий постійний субагент, який використовується лише для цього сеансу, буде створено на місці та не буде збережено на диску.
+            // 未命中预设时，当场创建仅用于本次会话的临时专职 Subagent，不落盘保存。
             val ephemeralName = normalized.ifEmpty { "general" }
             val instruction = cleanRole.ifEmpty {
-                "витакСпеціалізуватисяположеннявпричинаколивпередсинпризначитиобслуговуванняз Subagent（$ephemeralName）。будь ласкависокаефектприбутоквикористовуватиможевикористовуватипрацюватиІнструментотримативстановитисертифікатвідповідно доабозакінченостатиТримайтеробити，" +
-                    "ііснуютьбільшістьназадодинсмужкавидалитиінтерессерединаназустрічхост Agent поверненняповерненнявузолструктуразмінити、закінченовсезвузолАргументвибратихочуть。"
+                "你是专职处理当前子任务的 Subagent（$ephemeralName）。请高效利用可用工具收集证据或完成操作，" +
+                    "并在最后一条消息中向主 Agent 返回结构化、完整的结论摘要。"
             }
             return SubagentProfile(
                 name = ephemeralName,
-                summary = cleanRole.ifEmpty { "ProгодинаСпеціалізуватисяположення Subagent" },
+                summary = cleanRole.ifEmpty { "临时专职 Subagent" },
                 whenToUse = cleanRole,
                 toolHighlights = if (cleanTools.isNotEmpty()) {
                     cleanTools.take(8)

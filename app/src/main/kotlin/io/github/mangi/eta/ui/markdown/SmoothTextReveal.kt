@@ -36,32 +36,32 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 
 /**
- * Одна відповідь використовує лише один годинник візуалізації, розподіляючи той самий кадр вперед між блоками Markdown у вихідному порядку.
+ * 一条回答只使用一个显现时钟，按源码顺序在 Markdown 块之间分配同一帧的推进量。
  *
- * Розбір і форматування тексту відбуваються лише тоді, коли цільовий текст змінюється; міжкадрове просування оновлює лише звичайні поля та виклики
- *[invalidateDraw]. Лише коли дисплей перетинає новий рядок, запитується додаткове вимірювання для збільшення висоти повідомлення.
- * Стан створення не записується під час усього процесу, тому кадр символу не запускатиме реорганізацію чи переформатування.
+ * 解析和文本排版仅在目标文本变化时发生；帧间推进只更新普通字段并调用
+ * [invalidateDraw]。只有显现跨入新行时才额外请求一次测量以增长消息高度，
+ * 全程不写 Compose State，因此字符帧不会触发重组或重新排版。
  */
 @Stable
 internal class SmoothTextRevealCoordinator {
     private val records = sortedMapOf<RevealBlockKey, RevealRecord>()
     private val wakeups = Channel<Unit>(capacity = Channel.CONFLATED)
     private val drainedState = MutableStateFlow(true)
-    // Маркер списку зчитує його під час фази малювання; використовуючи стан знімка замість потоку, блок починає відображатися лише для того, щоб перемалювати шар маркера,
-    // Це не призведе до реорганізації всього списку.
+    // 列表 marker 在绘制阶段读取它；用快照状态而非 Flow，块开始显现只让 marker 图层重绘，
+    // 不会让整个列表随之重组。
     private val startedState = mutableStateOf<Set<RevealBlockKey>>(emptySet())
     private var animationsPaused = false
 
     val drained: StateFlow<Boolean> = drainedState
-    /** Блок, який почав з’являтися, використовується для збереження маркера списку та тіла в одному життєвому циклі.*/
+    /** 已经开始显现的块，用于让列表 marker 与正文保持同一生命周期。 */
     val started: State<Set<RevealBlockKey>> get() = startedState
 
     val isAnimationPaused: Boolean
         get() = animationsPaused
 
     /**
-     * Годинник кадру зупиняється, коли сторінку не видно, але середовище виконання може продовжувати додавати текст. У цей час він безпосередньо прив’язує поточну ціль.
-     * І дозволити наступні результати макета завершити негайно, щоб уникнути повторного відтворення фонового відставання анімації дисплея після повернення на сторінку.
+     * 页面不可见时帧时钟会停，但 Runtime 仍可能继续追加文本。此时直接追平当前目标，
+     * 并让后续排版结果同样立即完成，避免回到页面后补播后台积压的显现动画。
      */
     fun pauseAnimationsAndCatchUp() {
         animationsPaused = true
@@ -114,7 +114,7 @@ internal class SmoothTextRevealCoordinator {
     fun detach(key: RevealBlockKey, node: SmoothTextRevealNode) {
         val record = records[key]?.takeIf { it.node === node } ?: return
         record.node = null
-        // Блоки, які залишили комбінацію, більше не споживають годинник кадру; прогрес завершення зберігається, і під час повторного монтування відображатиметься лише наступний новий текст.
+        // 已离开组合的块不再消费帧时钟；保留完成进度，重挂载时只显现后续新增文本。
         completeRecord(record)
         updateDrainedState()
         wakeups.trySend(Unit)
@@ -166,7 +166,7 @@ internal class SmoothTextRevealCoordinator {
                     totalBacklog = totalBacklog,
                 )
                 val newlyStarted = mutableSetOf<RevealBlockKey>()
-                // Обсяг просування, що залишився після блоку, продовжується для наступного блоку, щоб уникнути коротких абзаців, які обмежують швидкість наздоганяння одним блоком на кадр.
+                // 块结束后剩余的推进量继续用于下一块，避免短段落把追赶速度限制为每帧一块。
                 for (record in records.values) {
                     if (remainingAdvance <= 0f) break
                     if (record.node == null || record.layoutResult == null) continue
@@ -190,9 +190,9 @@ internal class SmoothTextRevealCoordinator {
         layoutResult: TextLayoutResult,
     ) {
         if (text != record.text) {
-            // Гнучкий текст лише додається, а не змінюється, але закриття вбудованого синтаксису (**жирний шрифт**, «код», згортання посилання тощо) спричинить
-            // Відображений текст втрачає символи розмітки та стає коротшим або неправильно вирівняним. На цьому етапі прогрес може лише монотонно рухатися вперед: коли він повертається назад,
-            // Відображуваний текст зникне та буде набраний повторно, показуючи, що результат блимає кілька разів.
+            // 流式文本只追加不修改，但行内语法闭合（**粗体**、`code`、链接折叠等）会让
+            // 渲染文本丢掉标记字符而变短或错位。此时进度只能保持单调前进：一旦回退，
+            // 已显现的文字会消失并重新打字，表现为输出反复闪烁。
             record.boundaries = updateGraphemeBoundaries(
                 previousText = record.text,
                 previousBoundaries = record.boundaries,
@@ -480,11 +480,11 @@ internal fun graphemeBoundaries(text: String): IntArray {
 }
 
 /**
- * Зберігайте межі графем для приростів тексту лише для додавання.
+ * 为只追加文本增量维护字素边界。
  *
- * Новий вміст може розширити останню графему старого тексту, наприклад комбіновані фонетичні символи, емодзі ZWJ, прапори та CRLF.
- * Таким чином, результати перед передостанньою межею зберігаються, і лише остання стара графема та новий суфікс перераховуються, щоб уникнути кожного потоку
- * Фрагменти сканують всю відповідь з початку.
+ * 新内容可能把旧文本的最后一个字素继续延长，例如组合音标、ZWJ emoji、旗帜和 CRLF。
+ * 因此保留倒数第二个边界之前的结果，只重算最后一个旧字素和新增后缀，避免每个流式
+ * 分片都从头扫描整条回答。
  */
 internal fun updateGraphemeBoundaries(
     previousText: String,
@@ -525,8 +525,8 @@ internal fun advanceSmoothReveal(
     totalBacklog: Float,
 ): Float {
     if (current >= target) return target
-    // Інтервал кадрів обмежено MAX_FRAME_DELTA_SECONDS на стороні, що викликає, а кількість просування одного кадру визначається адаптивною швидкістю.
-    // Жорстку верхню межу в 1 графему на кадр не можна додати, інакше швидкість наздоганяння буде втрачена під час відставання, і результат постійно відставатиме від моделі.
+    // 帧间隔已在调用侧限制在 MAX_FRAME_DELTA_SECONDS 内，单帧推进量由自适应速度决定。
+    // 不能再加每帧 1 字素的硬上限，否则积压时追赶速度失效，输出会稳定滞后于模型。
     val advance = (smoothRevealSpeed(totalBacklog) * elapsedSeconds).coerceAtLeast(0f)
     return (current + advance).coerceAtMost(target)
 }

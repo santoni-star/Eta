@@ -6,7 +6,7 @@ import org.luckypray.dexkit.result.MethodData
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
-/** Позиціонування завершується під час встановлення; запити та потокове рендеринг викликають лише перевірені учасники відображення та більше не сканують DEX.*/
+/** 安装时完成定位；请求和流式渲染只调用已校验的反射成员，不再扫描 DEX。 */
 internal class BreenoTargets private constructor(
     val outboundMessage: Method?,
     val inboundMessage: Method?,
@@ -112,7 +112,7 @@ internal class BreenoTargets private constructor(
                 key = "breeno.current-agent.v1",
                 validate = { it.declaringClass.name == ROOM_MANAGER && it.matches(STRING) },
             ) {
-                // Поточна кімната та агент є джерелами полів; засіб отримання типу кімнати також викликає запит статусу, і його не можна змішувати.
+                // 当前房间与 Agent 都是字段 getter；房间类型 getter 还会调用状态查询，不能混用。
                 if (currentRoom == null) return@findMethod emptyList()
                 findMethod {
                     matcher {

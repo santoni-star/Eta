@@ -70,7 +70,7 @@ internal class RootShellDeviceController(
     ) {
         fun fromScreenshot(x: Int, y: Int): ScreenPoint {
             require(x in 0 until screenshotWidth && y in 0 until screenshotHeight) {
-                "вирізатималюноксидітизнакобганятипозавентилятороточують：($x,$y) not in ${screenshotWidth}x$screenshotHeight"
+                "截图坐标超出范围：($x,$y) not in ${screenshotWidth}x$screenshotHeight"
             }
             return ScreenPoint(
                 x = (x.toFloat() * screenWidth / screenshotWidth).toInt(),
@@ -182,9 +182,9 @@ internal class RootShellDeviceController(
                     .put(
                         "note",
                         if (accessibility != null) {
-                            "Фестивальточкаприходьоскількинемаєбар'єрперешкоджатиОдягобслуговування，відділенняутримувати tap_element、type_text、scroll_element чекатистабільнийЗвичайноФестивальточкарухатисяробити"
+                            "节点来自无障碍服务，支持 tap_element、type_text、scroll_element 等稳定节点动作"
                         } else {
-                            "немаєбар'єрперешкоджатиОдягобслуговуванняще ніпочатоквикористовувати，Фестивальточкаприходьоскільки uiautomator；сидітизнакпрацюватиІнструментзасіданняповерненнявідступприбути Root Shell"
+                            "无障碍服务未启用，节点来自 uiautomator；坐标工具会回退到 Root Shell"
                         }
                     )
             )
@@ -192,7 +192,7 @@ internal class RootShellDeviceController(
                 "coordinate_contract",
                 if (coordinateSpace == null) {
                     JSONObject()
-                        .put("note", "сидітизнакпрацюватиІнструментповиненОбов'язковошоуРежимзаповнитиНапишіть coordinate_space：ui_nodes з center/bounds використовувати screen；книгаДругосортнийще нідодаєтьсямалюнок")
+                        .put("note", "坐标工具必须显式填写 coordinate_space：ui_nodes 的 center/bounds 用 screen；本次未附图")
                 } else {
                     JSONObject()
                         .put("recommended_coordinate_space", "normalized")
@@ -216,7 +216,7 @@ internal class RootShellDeviceController(
                         )
                         .put(
                             "note",
-                            "подивітьсявирізатималюнокЗвичайнобітвикористовувати normalized（0–999，Взаємноправильновсеекран），немаєзацвільтипубікмалюнокшматокскорочуватисяпоставитифільмкільце；ui_nodes з center/bounds використовувати screen",
+                            "看截图定位用 normalized（0–999，相对整屏），不受模型侧图片缩放影响；ui_nodes 的 center/bounds 用 screen",
                         )
                 }
             )
@@ -309,10 +309,10 @@ internal class RootShellDeviceController(
                 "scroll",
                 null,
                 "INVALID_ARGUMENT",
-                "direction тількивідділенняутримувати up/down/left/right",
+                "direction 仅支持 up/down/left/right",
             )
         val parsedAmount = ScrollAmount.parse(amount)
-            ?: return scrollErrorJson("scroll", parsed, "INVALID_ARGUMENT", "amount тількивідділенняутримувати small/page")
+            ?: return scrollErrorJson("scroll", parsed, "INVALID_ARGUMENT", "amount 仅支持 small/page")
         AgentAccessibilityService.current()?.let { service ->
             return scrollActionJson("scroll", service.scrollCurrent(parsed, parsedAmount))
         }
@@ -336,9 +336,9 @@ internal class RootShellDeviceController(
     }
 
     fun inputText(text: String): String {
-        if (text.isEmpty()) return errorJson("INVALID_ARGUMENT", "text немаєздатнийдлянульовий")
+        if (text.isEmpty()) return errorJson("INVALID_ARGUMENT", "text 不能为空")
         if (text.length > MAX_INPUT_TEXT_CHARS) {
-            return errorJson("TEXT_TOO_LONG", "input_text більшістьбагатовідділенняутримувати $MAX_INPUT_TEXT_CHARS індивідуальнийхарактерсимвол")
+            return errorJson("TEXT_TOO_LONG", "input_text 最多支持 $MAX_INPUT_TEXT_CHARS 个字符")
         }
         AgentAccessibilityService.current()?.let { service ->
             val result = service.inputTextFocused(text)
@@ -350,7 +350,7 @@ internal class RootShellDeviceController(
         }
         return errorJson(
             "ACCESSIBILITY_UNAVAILABLE",
-            "input_text потребахочутьнемаєбар'єрперешкоджатиОдягобслуговуванняправильнорозпізнатисправжнійРеальністьвтратитивведітьфокусточка；книгаДругосортнийще ніволоссядоставитипризначитищовідповідно доключ",
+            "input_text 需要无障碍服务确认真实输入焦点；本次未发送任何按键",
         )
     }
 
@@ -360,7 +360,7 @@ internal class RootShellDeviceController(
         observation: ElementObservation?,
     ): String {
         if (text.length > MAX_REPLACE_TEXT_CHARS) {
-            return errorJson("TEXT_TOO_LONG", "replace_text більшістьбагатовідділенняутримувати $MAX_REPLACE_TEXT_CHARS індивідуальнийхарактерсимвол")
+            return errorJson("TEXT_TOO_LONG", "replace_text 最多支持 $MAX_REPLACE_TEXT_CHARS 个字符")
         }
         AgentAccessibilityService.current()?.let { service ->
             val snapshot = observation?.accessibilitySnapshot
@@ -371,7 +371,7 @@ internal class RootShellDeviceController(
             }
             return nodeActionJson("replace_text", result)
         }
-        return errorJson("ACCESSIBILITY_UNAVAILABLE", "replace_text потребахочутьпершепочатоквикористовувати Eta Agent немаєбар'єрперешкоджатиОдягобслуговування")
+        return errorJson("ACCESSIBILITY_UNAVAILABLE", "replace_text 需要先启用 Eta Agent 无障碍服务")
     }
 
     fun clearText(index: Int?, observation: ElementObservation?): String =
@@ -384,7 +384,7 @@ internal class RootShellDeviceController(
         val snapshot = observation.accessibilitySnapshot
         if (snapshot != null) {
             val service = AgentAccessibilityService.current()
-                ?: return errorJson("ACCESSIBILITY_UNAVAILABLE", "немаєбар'єрперешкоджатиОдягобслуговуваннявжеперерваВІДЧИНЕНО，будь ласкаВажкановийпереглянутиоглядатиекранекран")
+                ?: return errorJson("ACCESSIBILITY_UNAVAILABLE", "无障碍服务已断开，请重新观察屏幕")
             val result = service.clickNode(snapshot, index)
             if (result.ok) {
                 waitForUiSettle("tap")
@@ -394,7 +394,7 @@ internal class RootShellDeviceController(
         }
         if (!rootAvailable()) return rootRequired()
         val resolved = resolveUiAutomatorNode(observation, index)
-            ?: return errorJson("STALE_NODE", "немаєЗаконіснуютьколивпередмежалокшинатількиодинправильнорозпізнатиГоловазнакФестивальточка，будь ласкаВажкановийпереглянутиоглядатиекранекран")
+            ?: return errorJson("STALE_NODE", "无法在当前界面唯一确认目标节点，请重新观察屏幕")
         val node = resolved.node
         return tap(node.centerX, node.centerY).rewriteTool("tap_element")
     }
@@ -407,7 +407,7 @@ internal class RootShellDeviceController(
         val snapshot = observation.accessibilitySnapshot
         if (snapshot != null) {
             val service = AgentAccessibilityService.current()
-                ?: return errorJson("ACCESSIBILITY_UNAVAILABLE", "немаєбар'єрперешкоджатиОдягобслуговуваннявжеперерваВІДЧИНЕНО，будь ласкаВажкановийпереглянутиоглядатиекранекран")
+                ?: return errorJson("ACCESSIBILITY_UNAVAILABLE", "无障碍服务已断开，请重新观察屏幕")
             val result = service.longClickNode(snapshot, index, durationMs.toLong())
             if (result.ok) {
                 waitForUiSettle("long_press")
@@ -417,7 +417,7 @@ internal class RootShellDeviceController(
         }
         if (!rootAvailable()) return rootRequired()
         val resolved = resolveUiAutomatorNode(observation, index)
-            ?: return errorJson("STALE_NODE", "немаєЗаконіснуютьколивпередмежалокшинатількиодинправильнорозпізнатиГоловазнакФестивальточка，будь ласкаВажкановийпереглянутиоглядатиекранекран")
+            ?: return errorJson("STALE_NODE", "无法在当前界面唯一确认目标节点，请重新观察屏幕")
         val node = resolved.node
         return longPress(node.centerX, node.centerY, durationMs).rewriteTool("long_press_element")
     }
@@ -433,10 +433,10 @@ internal class RootShellDeviceController(
                 "scroll_element",
                 null,
                 "INVALID_ARGUMENT",
-                "direction тількивідділенняутримувати up/down/left/right",
+                "direction 仅支持 up/down/left/right",
             )
         val parsedAmount = ScrollAmount.parse(amount)
-            ?: return scrollErrorJson("scroll_element", parsed, "INVALID_ARGUMENT", "amount тількивідділенняутримувати small/page")
+            ?: return scrollErrorJson("scroll_element", parsed, "INVALID_ARGUMENT", "amount 仅支持 small/page")
         val snapshot = observation.accessibilitySnapshot
         if (snapshot != null) {
             val service = AgentAccessibilityService.current()
@@ -444,7 +444,7 @@ internal class RootShellDeviceController(
                     "scroll_element",
                     parsed,
                     "ACCESSIBILITY_UNAVAILABLE",
-                    "немаєбар'єрперешкоджатиОдягобслуговуваннявжеперерваВІДЧИНЕНО，будь ласкаВажкановийпереглянутиоглядатиекранекран",
+                    "无障碍服务已断开，请重新观察屏幕",
                 )
             return scrollActionJson(
                 tool = "scroll_element",
@@ -457,7 +457,7 @@ internal class RootShellDeviceController(
                 "scroll_element",
                 parsed,
                 "STALE_NODE",
-                "немаєЗаконіснуютьколивпередмежалокшинатількиодинправильнорозпізнатиролрухатисяГоловазнак，будь ласкаВажкановийпереглянутиоглядатиекранекран",
+                "无法在当前界面唯一确认滚动目标，请重新观察屏幕",
             )
         val node = resolved.node
         if (!node.scrollable) {
@@ -465,7 +465,7 @@ internal class RootShellDeviceController(
                 "scroll_element",
                 parsed,
                 "NOT_SCROLLABLE",
-                "звертатися доЗвичайноФестивальточканемаєможеролрухатися",
+                "指定节点不可滚动",
             )
         }
         return rootScroll(
@@ -528,7 +528,7 @@ internal class RootShellDeviceController(
                 "cmd statusbar expand-settings",
                 "press_key",
             ).let { JSONObject(it).put("button", normalized).toString() }
-            else -> return errorJson("INVALID_ARGUMENT", "button тількивідділенняутримувати BACK/HOME/ENTER/RECENTS/PASTE/NOTIFICATIONS/QUICK_SETTINGS")
+            else -> return errorJson("INVALID_ARGUMENT", "button 仅支持 BACK/HOME/ENTER/RECENTS/PASTE/NOTIFICATIONS/QUICK_SETTINGS")
         }
         return inputCommand("input keyevent $keyCode", "press_key")
     }
@@ -545,7 +545,7 @@ internal class RootShellDeviceController(
 
     fun waitForText(text: String, timeoutMs: Int, includeDesc: Boolean, matchMode: String): String {
         val needle = text.trim()
-        if (needle.isBlank()) return errorJson("INVALID_ARGUMENT", "text немаєздатнийдлянульовий")
+        if (needle.isBlank()) return errorJson("INVALID_ARGUMENT", "text 不能为空")
         val timeout = timeoutMs.coerceIn(500, 60_000)
         val deadline = System.currentTimeMillis() + timeout
         var attempts = 0
@@ -571,7 +571,7 @@ internal class RootShellDeviceController(
                     .put("tool", "wait_for_text")
                     .put("attempts", attempts)
                     .put("matched_node", matchedNode)
-                    .put("note", "чекатилікуватиперевіритиЗапитуйтенемаєзасіданняволоссятканинаЮаньбілийшвидкийВідповідно до；якпотребаФестивальточкарухатисяробити，будь ласкаВажкановиймелодіявикористовувати observe_screen")
+                    .put("note", "等待查询不会发布元素快照；如需节点动作，请重新调用 observe_screen")
                     .toString()
             }
             Thread.sleep(350)
@@ -580,14 +580,14 @@ internal class RootShellDeviceController(
             .put("ok", false)
             .put("tool", "wait_for_text")
             .put("code", "TIMEOUT")
-            .put("message", "чекатилікуватимистецтвакнигаобганятигодина：$needle")
+            .put("message", "等待文本超时：$needle")
             .put("attempts", attempts)
             .toString()
     }
 
     fun waitForPackage(packageName: String, timeoutMs: Int): String {
         val target = packageName.trim()
-        if (target.isBlank()) return errorJson("INVALID_ARGUMENT", "package_name немаєздатнийдлянульовий")
+        if (target.isBlank()) return errorJson("INVALID_ARGUMENT", "package_name 不能为空")
         val timeout = timeoutMs.coerceIn(500, 60_000)
         val deadline = System.currentTimeMillis() + timeout
         var attempts = 0
@@ -621,7 +621,7 @@ internal class RootShellDeviceController(
             .put("ok", false)
             .put("tool", "wait_for_package")
             .put("code", "TIMEOUT")
-            .put("message", "чекатилікувативідповідьвикористовувативпередвежаобганятигодина：$target")
+            .put("message", "等待应用前台超时：$target")
             .put("last_package", lastPackage)
             .put("attempts", attempts)
             .toString()
@@ -629,7 +629,7 @@ internal class RootShellDeviceController(
 
     fun clipboardSet(context: Context, text: String): String {
         if (text.length > MAX_CLIPBOARD_TEXT_CHARS) {
-            return errorJson("TEXT_TOO_LONG", "Вирізатипалкаплитамистецтвакнигабільшістьбагатовідділенняутримувати $MAX_CLIPBOARD_TEXT_CHARS індивідуальнийхарактерсимвол")
+            return errorJson("TEXT_TOO_LONG", "剪贴板文本最多支持 $MAX_CLIPBOARD_TEXT_CHARS 个字符")
         }
         val serviceResult = AgentAccessibilityService.current()?.copyToClipboard(text)
         val ok = serviceResult?.ok ?: runCatching {
@@ -646,7 +646,7 @@ internal class RootShellDeviceController(
                 .put("code", serviceResult?.code?.ifBlank { null } ?: "CLIPBOARD_WRITE_FAILED")
                 .put(
                     "message",
-                    serviceResult?.message?.ifBlank { null } ?: "НапишітьвведітьКраваткасистемаВирізатипалкаплитавтратитипоразка",
+                    serviceResult?.message?.ifBlank { null } ?: "写入系统剪贴板失败",
                 )
         }
         return json.toString()
@@ -674,14 +674,14 @@ internal class RootShellDeviceController(
         if (!result.ok) {
             json
                 .put("code", result.code)
-                .put("message", "Вирізатипалкаплитадлянульовий，абоколивпередвідповідьвикористовуватинемаєправильночитатиВиберітьВирізатипалкаплита")
+                .put("message", "剪贴板为空，或当前应用无权读取剪贴板")
         }
         return json.toString()
     }
 
     fun pasteText(text: String): String {
         if (text.length > MAX_CLIPBOARD_TEXT_CHARS) {
-            return errorJson("TEXT_TOO_LONG", "paste_text більшістьбагатовідділенняутримувати $MAX_CLIPBOARD_TEXT_CHARS індивідуальнийхарактерсимвол")
+            return errorJson("TEXT_TOO_LONG", "paste_text 最多支持 $MAX_CLIPBOARD_TEXT_CHARS 个字符")
         }
         AgentAccessibilityService.current()?.let { service ->
             val result = service.pasteText(text)
@@ -693,7 +693,7 @@ internal class RootShellDeviceController(
         }
         return errorJson(
             "ACCESSIBILITY_UNAVAILABLE",
-            "paste_text потребахочутьнемаєбар'єрперешкоджатиОдягобслуговуванняправильнорозпізнатисправжнійРеальністьвтратитивведітьфокусточка；книгаДругосортнийще нібудуватизмінитиВирізатипалкаплита",
+            "paste_text 需要无障碍服务确认真实输入焦点；本次未修改剪贴板",
         )
     }
 
@@ -702,7 +702,7 @@ internal class RootShellDeviceController(
         val accessibilityAction = when (normalized) {
             "notifications", "notification" -> "NOTIFICATIONS"
             "quick_settings", "quicksettings", "settings" -> "QUICK_SETTINGS"
-            else -> return errorJson("INVALID_ARGUMENT", "panel тількивідділенняутримувати notifications/quick_settings")
+            else -> return errorJson("INVALID_ARGUMENT", "panel 仅支持 notifications/quick_settings")
         }
         AgentAccessibilityService.current()?.let { service ->
             val actionResult = service.globalActionResult(accessibilityAction)
@@ -729,7 +729,7 @@ internal class RootShellDeviceController(
 
     private fun captureScreenshot(): ScreenCapture {
         val excludedPackages = screenshotExcludedPackages()
-        // Починаючи з Android 14, пріоритет надається скріншотам вікон за вікнами, за винятком плаваючого шару Eta; стара система зберігає лише резервний кореневий доступ, який відповідає контракту про виключення.
+        // Android 14 起优先逐窗口截图，排除 Eta 浮层；旧系统只保留满足排除合同的 Root 回退。
         val service = AgentAccessibilityService.current()
         val windowScreenshotSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
         if (service != null && windowScreenshotSupported) {
@@ -815,7 +815,7 @@ internal class RootShellDeviceController(
         logger.debug {
             "Agent device action=capture_screenshot outcome=fallback source=root"
         }
-        // Повернутися до кореневої скріншопки лише тоді, коли немає потреби виключати вікно входу; інакше він скоріше повернеться до відсутності зображення, ніж видасть спливаюче вікно помилки моделі.
+        // 无需排除入口窗口时才回退 root screencap；否则宁可返回无图，也不把错误浮窗交给模型。
         val result = runSuBytes("screencap -p", timeoutSeconds = 8)
         if (result.exitCode != 0 || result.output.isEmpty()) {
             logger.warn(
@@ -925,7 +925,7 @@ internal class RootShellDeviceController(
         if (!rootAvailable()) throw DeviceControlUnavailableException()
         val result = runSuText("wm size", timeoutSeconds = 5)
         return AndroidDisplaySizeParser.parse(result.output)
-            ?: error("немаєЗакончитатиВиберітьекранекранлінійкадюйм：${result.output.take(160)}")
+            ?: error("无法读取屏幕尺寸：${result.output.take(160)}")
     }
 
     private fun screenContentBounds(): Rect {
@@ -953,7 +953,7 @@ internal class RootShellDeviceController(
                 tool,
                 direction,
                 "INVALID_NODE_BOUNDS",
-                "ролрухатисярайондоменПасМаленькийабонемаєіснуютьекранекранВсередині",
+                "滚动区域过小或不在屏幕内",
             )
         val result = runSuText(
             "input swipe ${gesture.start.x} ${gesture.start.y} " +
@@ -1006,18 +1006,18 @@ internal class RootShellDeviceController(
                     .put("code", "ACTION_OUTCOME_UNKNOWN")
                     .put(
                         "message",
-                        "Root ролрухатисяжиттязробитиобганятигодина，рухатисяробитиможездатнийвжечерезВиконатидобреалебітзмінанемаєЗаконправильнорозпізнати；будь ласкапершеВажкановийпереглянутиоглядати",
+                        "Root 滚动命令超时，动作可能已经执行但位移无法确认；请先重新观察",
                     )
             } else if (evidence == ScrollEvidence.DIRECTION_MISMATCH) {
                 json
                     .put("code", "DIRECTION_MISMATCH")
-                    .put("message", "межалокшинаназустрічбудь ласкапроситиплощіназустрічзпротилежністьплощіназустрічзмінарухатися")
+                    .put("message", "界面向请求方向的反方向移动")
             } else {
                 json
                     .put("code", "ACTION_OUTCOME_UNKNOWN")
                     .put(
                         "message",
-                        "ролрухатисярукупотенціалвжеволоссяпоза，аленемаєЗаконправильнорозпізнатиплощіназустрічабобітзміна；будь ласкапершеВажкановийпереглянутиоглядати，заборонакінецьпрямозловитиВажкаспробувати",
+                        "滚动手势已发出，但无法确认方向或位移；请先重新观察，禁止直接重试",
                     )
             }
         }
@@ -1051,8 +1051,8 @@ internal class RootShellDeviceController(
     }
 
     /**
-     * Кореневе прокручування може підтвердити напрямок лише з єдиним стабільним вузлом, який існує до та після прокручування; довільних змін дерева недостатньо, щоб підтвердити прокручування.
-     * Переміщення вмісту екрана вгору означає, що позиція прокручування розташована вниз, тому знак зміщення вузла має бути змінений на зворотний у кінці.
+     * Root 滚动只能用滚动前后都唯一存在的稳定节点证明方向；任意树变化不足以证明滚动。
+     * 屏幕内容向上移动代表滚动位置向下，因此最后要反转节点位移符号。
      */
     private fun inferRootScrollDelta(
         beforeNodes: List<UiNode>,
@@ -1110,7 +1110,7 @@ internal class RootShellDeviceController(
             }
             ShellActionOutcomePolicy.Outcome.TIMED_OUT -> errorJson(
                 "ACTION_OUTCOME_UNKNOWN",
-                "Root рухатисяробитижиттязробитиобганятигодина，рухатисяробитиможездатнийвжечерезВиконатидобре；будь ласкапершеВажкановийпереглянутиоглядати，уникативідмовивсяВажкаскладніТримайтеробити",
+                "Root 动作命令超时，动作可能已经执行；请先重新观察，避免重复操作",
             )
             ShellActionOutcomePolicy.Outcome.FAILED ->
                 errorJson("COMMAND_FAILED", result.output.ifBlank { "exit=${result.exitCode}" })
@@ -1130,7 +1130,7 @@ internal class RootShellDeviceController(
     private fun validatePoint(x: Int, y: Int) {
         val (width, height) = screenSize()
         require(x in 0 until width && y in 0 until height) {
-            "сидітизнакобганятипозаекранекранвентилятороточують：($x,$y) not in ${width}x$height"
+            "坐标超出屏幕范围：($x,$y) not in ${width}x$height"
         }
     }
 
@@ -1227,7 +1227,7 @@ internal class RootShellDeviceController(
                 return ProcessBytesResult(
                     ShellActionOutcomePolicy.PROCESS_TIMEOUT_EXIT_CODE,
                     output.bytes(),
-                    "життязробитиВиконатидобреобганятигодина".toByteArray(),
+                    "命令执行超时".toByteArray(),
                 )
             }
             outputThread.join(500)
@@ -1242,7 +1242,7 @@ internal class RootShellDeviceController(
     }
 
     private fun finishProcess(process: Process) {
-        // Потік скасування та потік виконання можуть бути перероблені одночасно; тимчасове переривання під час очищення дозволяє уникнути негайного переривання команд завершення привілеїв.
+        // 取消线程与执行线程可能同时回收；清理期间暂存中断，避免特权终止命令立即中断。
         val interrupted = Thread.interrupted()
         try {
             synchronized(process) {
@@ -1264,10 +1264,10 @@ internal class RootShellDeviceController(
 
     private fun accessibilityUnavailable(): String = errorJson(
         "ACCESSIBILITY_UNAVAILABLE",
-        "Eta немаєбар'єрперешкоджатиОдягобслуговуванняще нінавітьзловити；будь ласкаВІДЧИНЕНОпочатокОдягобслуговуванняназадВажкановийпереглянутиоглядатиекранекран",
+        "Eta 无障碍服务未连接；请开启服务后重新观察屏幕",
     )
 
-    private fun rootRequired(): String = errorJson("ROOT_REQUIRED", "цеТримайтеробитипотребахочутьналаштуватиПриготуйте Root правильнообмеження")
+    private fun rootRequired(): String = errorJson("ROOT_REQUIRED", "此操作需要设备 Root 权限")
 
     private fun scrollErrorJson(
         tool: String,

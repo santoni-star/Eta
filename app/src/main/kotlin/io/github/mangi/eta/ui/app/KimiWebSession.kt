@@ -7,7 +7,7 @@ import io.github.mangi.eta.agent.terminal.LinuxExecutionBackend
 import io.github.mangi.eta.agent.terminal.TerminalEnvironment
 import kotlinx.coroutines.delay
 
-/** Межі транзакцій для запуску та повторного використання Kimi: перероблятимуться лише завдання, створені цього разу без відкриття браузера.*/
+/** Kimi 启动和复用的事务边界：只有本次创建且未打开浏览器的任务会被回收。 */
 internal class KimiWebSession(
     private val tasks: Tasks,
     private val openUrl: (String) -> Boolean,
@@ -54,7 +54,7 @@ internal class KimiWebSession(
     companion object {
         const val COMMAND = "kimi web --no-open"
         fun addressFromLogs(text: String): String? = WEB_URL_REGEX.find(text)?.value
-        // Набір символів маркера обмежений до URL-безпечного, щоб уникнути з’їдання хвоста послідовності ANSI в журналі.
+        // token 字符集收紧到 URL safe，避免把日志里的 ANSI 序列尾巴吃进来。
         private val WEB_URL_REGEX = Regex("""http://127\.0\.0\.1:\d+/#token=[A-Za-z0-9_-]+""")
     }
 }

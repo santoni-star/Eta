@@ -36,15 +36,15 @@ internal object GoogleAppHooks {
         val hooks = HookRegistrar(module, rootLogger, "GoogleApp")
         val logger = hooks.logger
         return hooks.install {
-            // Камуфляж моделі: замаскуйте його під Samsung S24 Ultra в процесі Google, щоб звільнити можливість пошуку по колу.
-            // Поле Build є побічним ефектом одноразового запису під час запуску та завжди виконується як базова залежність пошуку.
+            // 机型伪装：在 Google 进程内伪装为 Samsung S24 Ultra，以放开一圈即搜能力。
+            // Build 字段是启动时一次性写入的副作用，作为一圈即搜的底层依赖始终执行。
             setBuildField(logger, Build::class.java, "MANUFACTURER", ModuleConfig.SPOOF_MANUFACTURER)
             setBuildField(logger, Build::class.java, "BRAND", ModuleConfig.SPOOF_BRAND)
             setBuildField(logger, Build::class.java, "MODEL", ModuleConfig.SPOOF_MODEL)
             setBuildField(logger, Build::class.java, "PRODUCT", ModuleConfig.SPOOF_PRODUCT)
             setBuildField(logger, Build::class.java, "DEVICE", ModuleConfig.SPOOF_DEVICE)
 
-            // Екран блокування/відкритий екран для доповнення голосового введення: перемикач оцінюється миттєво у зворотному виклику перехоплення.
+            // 锁屏/亮屏补语音输入：开关在拦截回调里即时判断。
             hookFloatyVoiceCommand(hooks, classLoader)
         }
     }
@@ -81,7 +81,7 @@ internal object GoogleAppHooks {
             hooks.missing(
                 id = "google.floaty-on-resume",
                 description = "FloatyActivity.onResume(Google voice command)",
-                detail = "ще ніспробуйте знайтиприбути FloatyActivity/Activity.onResume()，СтрибокПас Gemini мовазвукремонткомпенсувати"
+                detail = "未找到 FloatyActivity/Activity.onResume()，跳过 Gemini 语音补偿"
             )
             return
         }
@@ -101,21 +101,21 @@ internal object GoogleAppHooks {
     }
 
     private fun scheduleVoiceCommand(activity: Activity, logger: ModuleLogger, fromKeyguard: Boolean) {
-        // Використовуйте LOCKSCREEN_VOICE_COMMAND, щоб заблокувати екран, і SCREEN_ON_VOICE_COMMAND, щоб увімкнути екран; якщо перемикач вимкнено, перевипуск не відбудеться.
+        // 锁屏走 LOCKSCREEN_VOICE_COMMAND，亮屏走 SCREEN_ON_VOICE_COMMAND；开关关闭则不补发。
         val prefKey = if (fromKeyguard) {
             Prefs.Keys.LOCKSCREEN_VOICE_COMMAND
         } else {
             Prefs.Keys.SCREEN_ON_VOICE_COMMAND
         }
         if (!Prefs.isEnabled(prefKey)) return
-        // Буде видалено лише дублікат onResume того самого екземпляра FloatyActivity; відкриття нового плаваючого вікна одразу після закриття не вплине.
+        // 只去重同一个 FloatyActivity 实例的重复 onResume；关闭后立刻新开浮窗不受影响。
         if (!markVoiceCommandAttempt(activity)) {
             return
         }
 
-        val scenario = if (fromKeyguard) "Замокекран" else "Яскравийекран"
+        val scenario = if (fromKeyguard) "锁屏" else "亮屏"
         Handler(Looper.getMainLooper()).postDelayed({
-            // Негайне завершення роботи: перемикач міг бути вимкнений користувачем, коли відкладене завдання було поставлено в чергу.
+            // 即时关闭：开关在延迟任务排队期间可能已被用户关闭。
             if (!Prefs.isEnabled(prefKey)) {
                 clearVoiceCommandAttempt(activity)
                 return@postDelayed
@@ -124,7 +124,7 @@ internal object GoogleAppHooks {
                 clearVoiceCommandAttempt(activity)
                 return@postDelayed
             }
-            // Якщо стан екрана блокування змінюється протягом періоду затримки, відмовтеся: гілку екрана блокування все одно має бути заблоковано під час перегляду, а гілку яскравого екрана все одно має бути розблоковано під час перегляду.
+            // 延迟期间锁屏状态发生变化则放弃：锁屏分支复查应仍锁屏，亮屏分支复查应仍解锁。
             if (activity.isKeyguardLocked() != fromKeyguard) {
                 clearVoiceCommandAttempt(activity)
                 return@postDelayed
@@ -136,11 +136,11 @@ internal object GoogleAppHooks {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                 )
-                logger.debug { "GSA: вжедля${scenario} Gemini плавативікноремонтволосся ACTION_VOICE_COMMAND" }
+                logger.debug { "GSA: 已为${scenario} Gemini 浮窗补发 ACTION_VOICE_COMMAND" }
             }.onFailure { throwable ->
                 clearVoiceCommandAttempt(activity)
                 logger.warnThrottled("gsa_floaty_voice_command_failed") {
-                    "GSA: ${scenario} Gemini плавативікноремонтволосся ACTION_VOICE_COMMAND втратитипоразка，" +
+                    "GSA: ${scenario} Gemini 浮窗补发 ACTION_VOICE_COMMAND 失败，" +
                         "type=${throwable.safeLogType()}"
                 }
             }
@@ -179,7 +179,7 @@ internal object GoogleAppHooks {
         val field = runCatching {
             clazz.getDeclaredField(fieldName).apply { isAccessible = true }
         }.getOrElse { throwable ->
-            logger.warn("GSA: спробуйте знайтинемаєприбути Build.$fieldName，type=${throwable.safeLogType()}")
+            logger.warn("GSA: 找不到 Build.$fieldName，type=${throwable.safeLogType()}")
             return
         }
 
@@ -187,7 +187,7 @@ internal object GoogleAppHooks {
             try {
                 field.set(null, value)
             } catch (_: IllegalAccessException) {
-                // Android 17 вимикає рефлексивний запис цих статичних кінцевих полів; API статичного поля є внутрішньо небезпечним.
+                // Android 17 禁止反射写入这些静态 final 字段；静态字段 API 位于内部 Unsafe。
                 val unsafeClass = Class.forName("jdk.internal.misc.Unsafe")
                 val theUnsafe = unsafeClass.getDeclaredField("theUnsafe").apply {
                     isAccessible = true
@@ -205,7 +205,7 @@ internal object GoogleAppHooks {
             }
             check(field.get(null) == value) { "build_field_write_not_applied" }
         } catch (exception: Exception) {
-            logger.warn("GSA: будуватизмінити Build.$fieldName втратитипоразка，type=${exception.safeLogType()}")
+            logger.warn("GSA: 修改 Build.$fieldName 失败，type=${exception.safeLogType()}")
         }
     }
 }

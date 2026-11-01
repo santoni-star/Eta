@@ -5,18 +5,18 @@ import io.github.mangi.eta.config.Prefs
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Конфігурація спільної папки: каталог на стороні Android [sourcePath] відображається в /workspace/mounts/[name] у середовищі Linux.*/
+/** 一条共享文件夹配置：Android 侧目录 [sourcePath] 在 Linux 环境中出现在 /workspace/mounts/[name]。 */
 internal data class SharedFolderMount(
     val name: String,
     val sourcePath: String,
 )
 
 /**
- * Постійність і перевірка конфігурації спільної папки.
+ * 共享文件夹配置的持久化与校验。
  *
- * Монтування не виконується глобально на Android: кожен сеанс Linux виконує зв’язане монтування на основі поточної конфігурації, коли встановлюється власний простір імен монтування.
- * Тому зміни конфігурації набувають чинності під час наступної команди/наступного сеансу, не залишаючи глобального стану, який потрібно очищати після видалення чи перезапуску.
- * Конфігурація зберігається в localAgent SharedPreferences (JSON), а шлях зчитується синхронно.
+ * 挂载不在 Android 全局执行：每个 Linux 会话在自己的 mount namespace 建立时按当前配置做 bind mount，
+ * 因此配置改动对下一条命令/下一个会话生效，不留需要卸载或重启后清理的全局状态。
+ * 配置存于 localAgent SharedPreferences（JSON），执行路径同步读取。
  */
 internal object SharedFolderMounts {
     const val PREFS_KEY = "linux_shared_mounts"
@@ -26,7 +26,7 @@ internal object SharedFolderMounts {
 
     private val NAME_PATTERN = Regex("[A-Za-z0-9._-]{1,48}")
 
-    /** Області обмеженого доступу до джерела: системне дерево ключів, сама робоча область (повністю видима в середовищі) та /.*/
+    /** 挂载源禁区：系统关键树、workspace 自身（环境里本就完整可见）与 /。 */
     private val FORBIDDEN_ROOTS = listOf(
         "/",
         "/proc",
@@ -63,7 +63,7 @@ internal object SharedFolderMounts {
         return runCatching { prefs.edit().putString(PREFS_KEY, encode(mounts)).commit() }.getOrDefault(false)
     }
 
-    /** Лексична нормалізація: символічні посилання не аналізуються, а форма шляху, вибрана користувачем, зберігається (/sdcard не переписується).*/
+    /** 词法归一化：不解析符号链接，保留用户选择时的路径形态（/sdcard 不被改写）。 */
     fun normalizeSourcePath(raw: String): String? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty() || !trimmed.startsWith("/") || '\n' in trimmed || '\r' in trimmed) return null
@@ -100,7 +100,7 @@ internal object SharedFolderMounts {
         return null
     }
 
-    /** Вивести ім'я монтування за замовчуванням з базового імені вихідного каталогу; вироджуються на спільний доступ, коли символи, що не належать до ASCII, видаляються та порожні.*/
+    /** 从源目录 basename 推导默认挂载名；非 ASCII 字符剔除后为空时退化为 share。 */
     fun defaultName(sourcePath: String): String {
         val base = sourcePath.trimEnd('/').substringAfterLast('/').trim()
         val candidate = base.filter { char ->
@@ -122,7 +122,7 @@ internal object SharedFolderMounts {
         return array.toString()
     }
 
-    /** Якщо декодування не вдається або введення є незаконним, введення буде пропущено; якщо весь запис пошкоджено, буде повернено порожній список.*/
+    /** 解码失败或条目不合法时跳过该条目；整体损坏返回空列表。 */
     fun decode(json: String): List<SharedFolderMount> {
         if (json.isBlank()) return emptyList()
         val array = runCatching { JSONArray(json) }.getOrNull() ?: return emptyList()

@@ -53,7 +53,7 @@ internal object CommunityCatalogRepository {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            // Каталоги, запаковані разом із файлом APK, усе одно можна прочитати, якщо кеш відсутній або пошкоджений.
+            // 缓存缺失或损坏时仍可读取随 APK 打包的目录。
         }
         CommunityCatalogParser.parse(
             raw = appContext.assets.open(SNAPSHOT_ASSET).use { asset ->
@@ -71,16 +71,16 @@ internal object CommunityCatalogRepository {
                 .header("User-Agent", "Eta-Model-Catalog (+https://github.com/Mangi-11/Eta)")
                 .get()
                 .build()
-            // Запити каталогу не читають і не пересилають будь-які збережені ключі API служби моделі.
+            // 目录请求不读取也不转发任何已保存的模型服务 API Key。
             val call = httpClient.newCall(request)
             val cancellation = currentCoroutineContext().job.invokeOnCompletion { cause ->
                 if (cause is CancellationException) call.cancel()
             }
             val raw = try {
                 call.execute().use { response ->
-                    if (!response.isSuccessful) error("ГоловазаписНавітьновийвтратитипоразка：HTTP ${response.code}")
+                    if (!response.isSuccessful) error("目录更新失败：HTTP ${response.code}")
                     if (!response.header("Content-Type").orEmpty().startsWith("application/json", ignoreCase = true)) {
-                        error("ГоловазаписНавітьновийвтратитипоразка：кільцевідповідьсіткаРежимнемаєтак JSON")
+                        error("目录更新失败：响应格式不是 JSON")
                     }
                     response.body.byteStream().use { it.readUtf8Limited() }
                 }
@@ -94,7 +94,7 @@ internal object CommunityCatalogRepository {
                     fetchedAt = System.currentTimeMillis(),
                 )
             } catch (failure: Exception) {
-                throw IllegalStateException("Головазаписномервідповідно досіткаРежимнемаєефект", failure)
+                throw IllegalStateException("目录数据格式无效", failure)
             }
             val file = AtomicFile(cacheFile(context.applicationContext))
             val output = file.startWrite()
@@ -114,9 +114,9 @@ internal object CommunityCatalogRepository {
     }
 
     fun newProvider(selection: CommunityCatalogProvider, modelIds: Set<String>): ProviderSetting {
-        require(modelIds.isNotEmpty()) { "будь ласкадомаловибративибратиодиніндивідуальнийцвільтипу" }
+        require(modelIds.isNotEmpty()) { "请至少选择一个模型" }
         val models = selection.models.filter { it.modelId in modelIds }
-        require(models.size == modelIds.size) { "вибратисерединазцвільтипувженемаєіснуютьГоловазаписсередина，будь ласкаВажкановийвибративибрати" }
+        require(models.size == modelIds.size) { "选中的模型已不在目录中，请重新选择" }
         return CustomProviderSetting(
             id = UUID.randomUUID().toString(),
             name = selection.name,
@@ -150,7 +150,7 @@ internal object CommunityCatalogRepository {
         while (true) {
             val count = read(buffer)
             if (count < 0) break
-            if (output.size() + count > MAX_JSON_BYTES) error("цвільтипуГоловазаписобганятипозавеликийМаленькийобмеженнясистема")
+            if (output.size() + count > MAX_JSON_BYTES) error("模型目录超出大小限制")
             output.write(buffer, 0, count)
         }
         return output.toString(Charsets.UTF_8.name())

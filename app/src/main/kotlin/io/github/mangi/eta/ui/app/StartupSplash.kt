@@ -20,7 +20,7 @@ private class StartupSplash(
 
     fun install() {
         activity.lifecycle.addObserver(this)
-        // Перший кадр дозволяється лише після завершення асинхронного читання конфігурації зовнішнього вигляду, щоб запобігти тому, що екран запуску системи спочатку повертається до порожнього вікна.
+        // 外观配置异步读取完成后才允许首帧，避免系统启动画面先退到空白窗口。
         content.viewTreeObserver.addOnPreDrawListener(this)
     }
 

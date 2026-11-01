@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Життєвий цикл і буферизація подій підписок інтерфейсу; усі методи викликаються в основному потоці, а факти виконання все ще зберігаються в середовищі виконання.*/
+/** UI 订阅的生命周期和事件缓冲；所有方法在主线程调用，执行事实仍由 Runtime 持有。 */
 internal class AgentRunStore(
     private val scope: CoroutineScope,
     private val onEvent: (String, AgentEvent) -> Unit,

@@ -88,7 +88,7 @@ internal fun openSpeechSettings(context: Context) {
     )
 }
 
-/** Припинення аудіозавдання, коли сторінка стає невидимою або знищена.*/
+/** 页面不可见或销毁时终止音频任务。 */
 @Composable
 internal fun SpeechLifecycle(onStop: () -> Unit) {
     val owner = LocalLifecycleOwner.current
@@ -127,7 +127,7 @@ internal fun rememberSpeechPermission(onGranted: () -> Unit): () -> Unit {
     }
 }
 
-/** Вхід для диктування поля введення відповідає уніфікованому операційному розміру поля введення; натисніть під час запису, щоб завершити розпізнавання та вставити текст.*/
+/** 输入栏听写入口，沿用输入栏统一的操作尺寸；录音中点击完成识别并插入文字。 */
 @Composable
 internal fun SpeechDictationButton(
     controller: SpeechInputController,
@@ -158,7 +158,7 @@ internal fun SpeechDictationButton(
     }
 }
 
-/** Рядок стану диктування над полем введення: показує рівень і завершення/скасування під час запису, помилка призводить до завантаження, налаштування або закриття виходу.*/
+/** 输入栏上方的听写状态条：录音中显示电平与完成/取消，错误给出下载、设置或关闭出口。 */
 @Composable
 internal fun SpeechInputFeedback(controller: SpeechInputController) {
     val state by controller.state.collectAsState()
@@ -226,8 +226,8 @@ internal fun SpeechInputFeedback(controller: SpeechInputController) {
 }
 
 /**
- * Форма сигналу рівня запису. Кінець запису повідомляє RMS приблизно 5 разів на секунду. Тут інтерполяція огинаючої виконується кадр за кадром: швидке зростання, повільне спадання.
- * Стрибайте та стежте за рукою під час розмови та плавно відводьте її під час паузи. Рівні та конверти зчитуються лише під час фази малювання, а цикли кадрів не викликають реорганізацію.
+ * 录音电平波形。录音端约 5 次/秒上报 RMS，这里逐帧做包络插值：上升快、回落慢，
+ * 说话时跳动跟手，停顿时平滑收回。电平与包络只在绘制阶段读取，帧循环不触发重组。
  */
 @Composable
 private fun SpeechLevelBars(level: () -> Float) {
@@ -239,7 +239,7 @@ private fun SpeechLevelBars(level: () -> Float) {
     }
     Canvas(modifier = Modifier.size(width = 22.dp, height = 16.dp)) {
         frame
-        // RMS має приблизний логарифмічний зв’язок зі слухом, і очевидні коливання можна побачити, навіть якщо ви тихо говорите після вилучення квадратного кореня.
+        // RMS 与听感近似对数关系，开方后小声说话也能看到明显起伏。
         val input = sqrt(level().coerceIn(0f, 1f))
         val barWidth = 2.5.dp.toPx()
         val gap = (size.width - barWidth * envelope.size) / (envelope.size - 1)
@@ -282,8 +282,8 @@ internal val LocalSpeechPlayback = staticCompositionLocalOf<SpeechPlaybackContro
 internal val LocalSpeechPlaybackEnabled = compositionLocalOf { false }
 
 /**
- * Автоматичне читання на сторінці чату: після того, як серія відповідей буде транслюватися на цій сторінці та нормально завершиться, остаточну відповідь цього раунду буде зачитано вголос.
- * На цій сторінці відображаються лише відповіді, згенеровані трансляцією. Перемикання сеансів, відкриття історії або зупинка, а також невдалі раунди не компенсують показання.
+ * 聊天页自动朗读：一轮回答在本页流式生成并正常结束后，朗读这一轮的最终回答。
+ * 只认在本页看到过流式生成的回答，切换会话、打开历史或停止、失败的回合都不会补读。
  */
 @Composable
 internal fun SpeechAutoReadAloud(messages: List<AgentChatMessageUi>, isStreaming: Boolean) {
@@ -294,7 +294,7 @@ internal fun SpeechAutoReadAloud(messages: List<AgentChatMessageUi>, isStreaming
     val currentMessages by rememberUpdatedState(messages)
     LaunchedEffect(messages) {
         messages.lastOrNull { it is AgentMessageUi && it.isStreaming }?.let { watchedId = it.id }
-        // Спостережуваної відповіді немає в поточному списку, що вказує на те, що її переключено на іншу розмову.
+        // 被观察的回答不在当前列表里，说明已经切到别的会话。
         if (watchedId != null && messages.none { it.id == watchedId }) watchedId = null
     }
     LaunchedEffect(isStreaming) {
@@ -311,7 +311,7 @@ internal fun SpeechAutoReadAloud(messages: List<AgentChatMessageUi>, isStreaming
         }
         if (!interrupted && answer.content.isNotBlank()) controller.speak(answer.id, answer.content)
     }
-    // Вимкнення автоматичного читання розцінюється як «зупинка читання», і поточне читання буде зупинено.
+    // 关闭自动朗读视同“别再读了”，正在进行的朗读一并停止。
     var wasEnabled by remember { mutableStateOf(enabled) }
     LaunchedEffect(enabled) {
         if (wasEnabled && !enabled) controller.stop()
@@ -320,8 +320,8 @@ internal fun SpeechAutoReadAloud(messages: List<AgentChatMessageUi>, isStreaming
 }
 
 /**
- * Контролер читання існує зі сторінкою чату; коли послуга трансляції не налаштована, вхід для читання повністю приховано.
- * Продовжуйте читати, коли ви відходите на задній план або блокуєте екран (служба відтворення на передньому плані підтримується протягом періоду розмови) і не зупиниться, доки ви не залишите сторінку чату.
+ * 朗读控制器随聊天页存在；未配置播报服务时朗读入口整体隐藏。
+ * 退到后台或锁屏时继续朗读（出声期间由前台播放服务保活），离开聊天页才停止。
  */
 @Composable
 internal fun SpeechPlaybackHost(content: @Composable () -> Unit) {
@@ -358,7 +358,7 @@ internal fun SpeechPlaybackErrors(controller: SpeechPlaybackController) {
     }
 }
 
-/** Запис для читання вголос має той самий набір розмірів і послаблених кольорів, що й операція суміжного повідомлення, і перехід відтворення зупиняється.*/
+/** 朗读入口与相邻的消息操作共享同一套尺寸与弱化配色，播放中转为停止。 */
 @Composable
 internal fun SpeechReadAloudButton(messageId: String, text: String) {
     val controller = LocalSpeechPlayback.current ?: return

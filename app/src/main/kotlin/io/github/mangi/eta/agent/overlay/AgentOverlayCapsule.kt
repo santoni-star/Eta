@@ -75,9 +75,9 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Верхня капсула статусу: у закритому стані відображається лише одне речення поточного кроку. Натисніть, щоб розгорнути, щоб додати, призупинити та зупинити.
- * Позиція фіксується в центрі під рядком стану та не зміщується разом із позицією клацання агента, щоб уникнути накладення на цільовий елемент керування.
- * Текст статусу ковзає вгору та зникає, коли семантика змінюється, а потоковий текст не потрапляє в капсулу.
+ * 顶部状态胶囊：收起时只显示一句当前步骤，点击展开补充、暂停与停止。
+ * 位置固定在状态栏下方居中，不随 Agent 的点击位置移动，避免和目标控件重叠。
+ * 状态文字只在语义变化时以上滑淡入切换，流式正文不进入胶囊。
  */
 @Composable
 internal fun AgentOverlayCapsule(
@@ -106,7 +106,7 @@ internal fun AgentOverlayCapsule(
         if (!enabled) supplementText = ""
     }
 
-    // Відкладіть клавіатуру, а потім перемкніть фокус вікна, щоб запобігти збою або збереженню методу введення, коли вікно втрачає фокус.
+    // 收起键盘后再切换窗口焦点，避免输入法在窗口失焦瞬间闪退或残留。
     fun leaveSupplementMode(then: () -> Unit = {}) {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
@@ -121,7 +121,7 @@ internal fun AgentOverlayCapsule(
         if (!expanded && supplementMode) leaveSupplementMode()
     }
 
-    // Звільніть місце для жестів агента: швидко рухайтеся вгору та закривайте невелике згасання під час виходу, використовуйте пружину, щоб відступити під час повернення, лише змінюйте шар малювання, не запускаючи переформатування.
+    // 为 Agent 手势让路：离开时快速上移收小淡出，回来时用弹簧落回，只改绘制层不触发重排。
     val clearance by animateFloatAsState(
         targetValue = if (yielded) 1f else 0f,
         animationSpec = if (yielded) {
@@ -134,7 +134,7 @@ internal fun AgentOverlayCapsule(
     val accent by animateColorAsState(overlayPhaseAccent(state.phase), tween(240), label = "capsule_accent")
     val statusText = state.status.localizedText()
     val expandDescription = stringResource(R.string.overlay_capsule_toggle, statusText)
-    // Хід розширення керує лише прозорістю та зміщенням шару малювання і не бере участі у вимірюванні; контрольна зона використовує AnimatedVisibility і вимірюється лише один раз на обох кінцях.
+    // 展开进度只驱动绘制层的透明度与位移，不参与测量；控制区用 AnimatedVisibility 只在两端各测一次。
     val expansion by animateFloatAsState(
         targetValue = if (expanded) 1f else 0f,
         animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow),
@@ -154,7 +154,7 @@ internal fun AgentOverlayCapsule(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
                     .width(CapsuleWidth)
                     .graphicsLayer {
-                        // Він трохи відскакує при натисканні та зберігає початковий розмір після розширення; змінюється лише шар малювання, а повторне макетування не запускається.
+                        // 点击时轻微回弹，展开后保持原尺寸；只改绘制层，不触发重新布局。
                         val press = 1f - 0.03f * (1f - expansion) * expansion * 4f
                         val shrink = 1f - 0.08f * clearance
                         scaleX = press * shrink
@@ -267,7 +267,7 @@ internal fun AgentOverlayCapsule(
     }
 }
 
-/** Це обертова дугоподібна світлова точка під час бігу, статичне порожнисте кільце під час паузи та суцільна точка, коли він закінчується; він зберігає лише кадрову анімацію під час роботи.*/
+/** 运行中是旋转的弧形光点，暂停为静止空心环，结束为实心点；只在运行时持有帧动画。 */
 @Composable
 private fun PhaseIndicator(phase: AgentOverlayPhase, accent: Color) {
     val size = 14.dp
@@ -320,8 +320,8 @@ private fun PhaseIndicator(phase: AgentOverlayPhase, accent: Color) {
 }
 
 /**
- *Подумайте про останнє речення: один рядок, обріжте старий вміст зліва, залишайте останні слова завжди видимими.
- * Потоковий приріст змінює лише текст, без жодної послівної анімації; поява та зникнення ліній розмиваються та зникають на постійній висоті, щоб уникнути стрибків капсули вгору та вниз.
+ * 思考尾句：单行、从左侧裁掉旧内容，让最新的字始终可见。
+ * 流式增量只改文字，不做逐字动画；行的出现与消失用高度不变的淡入淡出，避免胶囊上下跳动。
  */
 @Composable
 private fun ThoughtLine(thought: String) {
@@ -335,7 +335,7 @@ private fun ThoughtLine(thought: String) {
         fontSize = 11.sp,
         lineHeight = 14.sp,
         maxLines = 1,
-        // Пропустіть початок: збережіть останні міркування в кінці та рухайтеся вперед, як прокручування субтитрів.
+        // 起始端省略：保留尾部最新的推理，像滚动字幕一样向前推进。
         overflow = TextOverflow.StartEllipsis,
         modifier = Modifier
             .padding(top = 1.dp)

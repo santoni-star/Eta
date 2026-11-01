@@ -7,7 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
-/** Кожен рядок обмежений, а загальна довжина документа не обмежена; уникнення повної історії, що займає один рядок CursorWindow.*/
+/** 每行有界，文档总长不限；避免完整历史占用单个 CursorWindow 行。 */
 @Entity(tableName = "agent_text_chunks", primaryKeys = ["owner_table", "owner_id", "field", "chunk_index"])
 internal data class AgentTextChunkEntity(
     @ColumnInfo(name = "owner_table") val ownerTable: String,
@@ -17,7 +17,7 @@ internal data class AgentTextChunkEntity(
     val content: String,
 )
 
-/** Бізнес-DAO записує основний запис і фрагменти в одній транзакції Room, не відкриваючи посилання на сховище рівня домену.*/
+/** 由业务 DAO 在同一 Room 事务内写入主记录与分块，不暴露存储引用给领域层。 */
 internal interface ChunkedTextDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTextChunk(chunk: AgentTextChunkEntity)
@@ -37,7 +37,7 @@ internal interface ChunkedTextDao {
         var count = 0
         var offset = 0
         while (offset < text.length) {
-            // Не розбивайте сурогатні пари UTF-16 на два ТЕКСТИ SQLite.
+            // 不把 UTF-16 代理对拆到两个 SQLite TEXT 中。
             var end = minOf(offset + CHUNK_CHARS, text.length)
             if (end < text.length && text[end - 1].isHighSurrogate()) end--
             insertTextChunk(AgentTextChunkEntity(table, owner, field, count++, text.substring(offset, end)))

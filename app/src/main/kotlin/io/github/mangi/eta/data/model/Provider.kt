@@ -168,7 +168,7 @@ internal val ProviderSetting.typeLabel: String
 
 internal val ProviderSetting.displayApiKeySummary: String
     get() = when {
-        apiKey.isBlank() -> "ще нізаповнитиНапишіть"
+        apiKey.isBlank() -> "未填写"
         apiKey.length <= 8 -> "*".repeat(apiKey.length)
         else -> "${apiKey.take(4)}${"*".repeat(apiKey.length - 8)}${apiKey.takeLast(4)}"
     }
@@ -207,7 +207,7 @@ internal fun ProviderSetting.withApiKey(apiKey: String): ProviderSetting =
 
 internal data class ProviderModel(val provider: ProviderSetting, val model: Model)
 
-/** Вважається доступним, коли ввімкнено і постачальника послуг, і модель; прив'язка сеансу, селектор і надсилання поділяють це рішення.*/
+/** 服务商与模型都启用时才视为可用；会话绑定、选择器与发送共用这一判定。 */
 internal fun List<ProviderSetting>.enabledModel(modelId: String?): ProviderModel? {
     modelId ?: return null
     for (provider in this) {

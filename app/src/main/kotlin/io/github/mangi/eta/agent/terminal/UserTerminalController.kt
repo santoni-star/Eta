@@ -4,15 +4,15 @@ import io.github.mangi.eta.core.AgentLogger
 import kotlin.concurrent.thread
 
 /**
- * Контролер сеансу для ручного терміналу користувача: співіснують кілька резидентних сеансів оболонки, а змінні cwd і середовища кожного сеансу зберігаються командами.
+ * 用户手动终端的会话控制器：多个常驻 shell 会话并存，每个会话的 cwd 与环境变量跨命令保持。
  *
- * Ієрархічно незалежний від орієнтованого на модель [RootShellTerminalController]:
- * - Немає тайм-ауту виконання - користувач сам вирішує, коли команда закінчується ("стоп" завершує відповідний сеанс);
- * - Вихід проходить через зворотний виклик потокового потоку onDelta без використання контракту JSON і стратегії скорочення інструменту моделі;
- * - Життєвий цикл належить до стану інтерфейсу користувача на рівні додатка і не переробляється за один раз.
+ * 与面向模型的 [RootShellTerminalController] 分层独立：
+ * - 无执行超时——命令何时结束由用户决定（“停止”终止对应会话）；
+ * - 输出经 onDelta 流式回调，不走模型工具的 JSON 合同与截断策略；
+ * - 生命周期归属 App 级 UI 状态，不随单次 run 回收。
  *
- * Запуск процесу, ідентифікація власника та повторне використання завершення дерева процесів [ShellProcessSupervisor]; фоновий підпроцес, запущений у сеансі
- * Зберігається під час сеансу та очищається програмою запуску, коли сеанс виходить, відповідно до семантики терміналу AI.
+ * 进程启动、所有权识别与进程树终止复用 [ShellProcessSupervisor]；会话内启动的后台子进程
+ * 随会话存活，会话退出时由 launcher 清场，与 AI 终端语义一致。
  */
 internal class UserTerminalController(
     private val logger: AgentLogger,
@@ -43,7 +43,7 @@ internal class UserTerminalController(
         data class Failed(val code: String, val message: String) : OpenResult
     }
 
-    /** Якщо exitCode дорівнює нулю, це означає, що сеанс перервано (зупинено або процес припиняє роботу), і команда не повертає код виходу нормально.*/
+    /** exitCode 为 null 表示会话中断（停止或进程死亡），命令没有正常返回退出码。 */
     data class ExecResult(
         val exitCode: Int?,
         val cwd: String,
@@ -77,7 +77,7 @@ internal class UserTerminalController(
         sessions[sessionId]?.let { !it.closed && it.process.isAlive } == true
     }
 
-    /** Створити новий сеанс; існуючі сесії залишаються живими. ідентичність зарезервовано для зниження версії та тестування в середовищах без root-прав.*/
+    /** 新建会话；已有会话保持存活。identity 预留给无 root 环境的降级与测试。 */
     fun openSession(
         environment: TerminalEnvironment,
         cwd: String? = null,
@@ -90,19 +90,19 @@ internal class UserTerminalController(
         synchronized(sessionLock) {
             pruneDeadSessionsLocked()
             if (sessions.size >= MAX_SESSIONS) {
-                return OpenResult.Failed("SESSION_LIMIT_REACHED", "засіданняговоритиномеркількістьвжедосяжністьначальникаобмеження")
+                return OpenResult.Failed("SESSION_LIMIT_REACHED", "会话数量已达上限")
             }
             if (selectedIdentity != "root" && selectedIdentity != "user") {
-                return OpenResult.Failed("INVALID_ARGUMENT", "identity тількивідділенняутримувати root/user")
+                return OpenResult.Failed("INVALID_ARGUMENT", "identity 仅支持 root/user")
             }
             if (environment.isLinux && selectedIdentity != "root" && LinuxEnvironmentPaths.backendOf(environmentRootfsPath) != LinuxExecutionBackend.PROOT) {
-                return OpenResult.Failed("LINUX_ENVIRONMENT_REQUIRES_ROOT", "Linux працюватиІнструменткільцетериторіїтількивідділенняутримувати root identity")
+                return OpenResult.Failed("LINUX_ENVIRONMENT_REQUIRES_ROOT", "Linux 工具环境仅支持 root identity")
             }
-            if (selectedIdentity == "root" && !rootAvailable()) return OpenResult.Failed("ROOT_REQUIRED", "Root навчатиправильнонемаєможевикористовувати")
+            if (selectedIdentity == "root" && !rootAvailable()) return OpenResult.Failed("ROOT_REQUIRED", "Root 授权不可用")
             if (environment.isLinux &&
                 !LinuxEnvironmentPaths.rootfsReady(environmentRootfsPath)
             ) {
-                return OpenResult.Failed("LINUX_ENVIRONMENT_NOT_READY", "Linux працюватиІнструменткільцетериторіїдосіще нівстановитиупаковка")
+                return OpenResult.Failed("LINUX_ENVIRONMENT_NOT_READY", "Linux 工具环境尚未安装")
             }
             val safeCwd = cwd?.takeIf { it.isNotBlank() } ?: if (environment.isLinux) LINUX_DEFAULT_CWD else TerminalRuntime.workspace(selectedIdentity)
             val process = processSupervisor.startShellProcess(
@@ -116,7 +116,7 @@ internal class UserTerminalController(
                 } else {
                     emptyList()
                 },
-            ) ?: return OpenResult.Failed("PROCESS_START_FAILED", "немаєЗаконпочатокрухатисякінецькінецьВведітьПроцедура")
+            ) ?: return OpenResult.Failed("PROCESS_START_FAILED", "无法启动终端进程")
             val newSession = Session(
                 identity = selectedIdentity,
                 environment = environment,
@@ -140,14 +140,14 @@ internal class UserTerminalController(
             }
             if (!processSupervisor.transferActiveProcess(process) { sessions[sessionId] = newSession }) {
                 processSupervisor.terminateProcessTree(process)
-                return OpenResult.Failed("TERMINAL_CLOSED", "кінецькінецьКОНТРОЛЬсистемапристрійвжезакритизакрити")
+                return OpenResult.Failed("TERMINAL_CLOSED", "终端控制器已关闭")
             }
 
             val setup = buildString {
                 if (environment == TerminalEnvironment.ANDROID && safeCwd == TerminalRuntime.workspace(selectedIdentity)) {
                     append("mkdir -p ${shellQuote(safeCwd)} && ")
                 }
-                // Інсталятор інструментів користувача часто записує PATH у профіль; резидентний сеанс не є оболонкою входу, тому він явно завершується тут.
+                // 用户工具的安装器常把 PATH 写进 profile；常驻会话不是 login shell，这里显式补齐。
                 append("[ -f /etc/profile ] && . /etc/profile; ")
                 append("[ -f \"${'$'}HOME/.profile\" ] && . \"${'$'}HOME/.profile\"; ")
                 append("cd ${shellQuote(safeCwd)} && export TERM=dumb NO_COLOR=1")
@@ -156,7 +156,7 @@ internal class UserTerminalController(
             if (setupResult.exitCode != 0 || setupResult.timedOut) {
                 closeSessionLocked(sessionId)
                 logger.warn("User terminal action=open outcome=failed environment=${environment.wireName}")
-                return OpenResult.Failed("SESSION_OPEN_FAILED", "кінецькінецьзасіданняговоритиранопочатокзмінитивтратитипоразка")
+                return OpenResult.Failed("SESSION_OPEN_FAILED", "终端会话初始化失败")
             }
             newSession.cwd = setupResult.cwd ?: safeCwd
             newSession.stdout.clear()
@@ -167,8 +167,8 @@ internal class UserTerminalController(
     }
 
     /**
-     * Виконайте команду в зазначеному резидентному сеансі та передайте потік результату зворотного виклику. Заблокуйте поточний потік, абонент повинен використовувати його в потоці вводу-виводу.
-     * Без тайм-ауту; sessionClosed=true повертається, коли користувач зупиняється або оболонка вмирає (наприклад, виконується вихід).
+     * 在指定常驻会话中执行命令并流式回调输出。阻塞当前线程，调用方需在 IO 线程使用。
+     * 无超时；用户停止或 shell 死亡（如执行 exit）时返回 sessionClosed=true。
      */
     fun exec(sessionId: String, command: String, onDelta: (text: String, isStderr: Boolean) -> Unit): ExecResult {
         val trimmed = command.trim()
@@ -214,7 +214,7 @@ internal class UserTerminalController(
         )
     }
 
-    /** Завершити вказаний сеанс і його групу процесів; абонент повторно відкриває openSession перед наступним виконанням сеансу.*/
+    /** 终止指定会话及其进程组；该会话的后续 exec 前由调用方重新 openSession。 */
     fun stopSession(sessionId: String) {
         synchronized(sessionLock) {
             sessions[sessionId]?.stopRequested = true
@@ -223,8 +223,8 @@ internal class UserTerminalController(
     }
 
     /**
-     * Додайте вхідні дані до stdin під час виконання сеансу (імітуючи введення на реальному терміналі), який може бути прочитаний процесом переднього плану та наступними командами оболонки.
-     * Повернути false, щоб вказати, що сеанс більше не доступний.
+     * 会话运行期间向 stdin 追加输入（模拟真实终端的键入），前台进程与后续 shell 命令都能读到。
+     * 返回 false 表示会话已不可用。
      */
     fun writeInput(sessionId: String, text: String): Boolean {
         val current = synchronized(sessionLock) { sessions[sessionId] } ?: return false
@@ -256,7 +256,7 @@ internal class UserTerminalController(
         processSupervisor.unregisterProcess(current.process)
     }
 
-    /** Повторно використовуйте слоти завершених сеансів, щоб запобігти заповненню ліміту паралельних сеансів.*/
+    /** 回收已退出的会话槽位，避免死会话占用并发上限。 */
     private fun pruneDeadSessionsLocked() {
         val deadIds = sessions.filterValues { it.closed || !it.process.isAlive }.keys.toList()
         deadIds.forEach { closeSessionLocked(it) }
@@ -291,7 +291,7 @@ internal class UserTerminalController(
                 )
             }
             val marker = SessionStatusProtocol.newMarker()
-            // Протокол єдиного логічного рядка: status printf не вводить стандартний вхід, а інтерактивні команди читають стандартний вхід без позначок.
+            // 单逻辑行协议：状态 printf 不进 stdin，交互式命令读 stdin 不会吃掉标记。
             val commandBlock = SessionStatusProtocol.commandLine(marker, command) + "\n"
             runCatching {
                 synchronized(session.stdinLock) {
@@ -309,9 +309,9 @@ internal class UserTerminalController(
             while (true) {
                 val stdoutNow = session.stdout.text()
                 val stderrNow = session.stderr.text()
-                // Спочатку визначте рядок стану, а потім надішліть приріст: після того, як рядок стану прийде повністю (включно з кінцевим новим рядком), він більше не є «незакінченим рядком».
-                // Якщо інкремент видається першим, увесь рядок маркера буде надіслано до інтерфейсу користувача. При цьому рядок стану має закінчуватися символом нового рядка,
-                // Уникайте розбору скороченого cwd на піврядка.
+                // 先判状态行再发增量：状态行完整到达后（含结尾换行）不再是"尾部未完成行"，
+                // 若先发出增量会把 marker 整行推给 UI。同时要求状态行以换行结束，
+                // 避免按半行解析出截断的 cwd。
                 val markerStart = stdoutNow.indexOf("\n$marker:")
                 val markerLineEnd = if (markerStart >= 0) stdoutNow.indexOf('\n', markerStart + 1) else -1
                 val status = if (markerLineEnd >= 0) {
@@ -336,7 +336,7 @@ internal class UserTerminalController(
                     return InternalResult(status.exitCode, newCwd, timedOut = false, sessionClosed = false)
                 }
                 if (session.closed || !session.process.isAlive) {
-                    // Сеанс завершено: вихідні дані, що залишилися, видаляються без фільтрування рядка стану.
+                    // 会话已结束：残余输出原样冲出，不做状态行过滤。
                     if (onDelta != null) {
                         if (stdoutNow.length > stdoutOffset) onDelta(stdoutNow.substring(stdoutOffset), false)
                         if (stderrNow.length > stderrOffset) onDelta(stderrNow.substring(stderrOffset), true)
@@ -359,8 +359,8 @@ internal class UserTerminalController(
     }
 
     /**
-     * Незакінчений рядок у кінці може бути фрагментом рядка стану (маркер випадково обрізається після опитування 50 мс),
-     * Утримуйте його, поки він не буде завершений, щоб уникнути блимання маркера для користувача.
+     * 尾部未完成行可能是状态行残片（marker 按 50ms 轮询随机截断到达），
+     * 先扣住等完整，避免把 marker 闪现给用户。
      */
     private fun emitStdoutDelta(
         text: String,
@@ -384,7 +384,7 @@ internal class UserTerminalController(
         return offset
     }
 
-    /** Рядок стану надійшов: змивається лише текст перед рядком маркера, а порожнє місце в кінці обрізано.*/
+    /** 状态行已到达：只冲出 marker 行之前的正文，末尾空白裁掉。 */
     private fun flushFinalStdout(
         text: String,
         offset: Int,
@@ -409,7 +409,7 @@ internal class UserTerminalController(
     ) {
         val execLock = Any()
 
-        /** Запис командного рядка exec і запис введених користувачем даних під час виконання мають однакове блокування, щоб уникнути чергування байтів.*/
+        /** exec 的命令行写入与运行期的用户输入写入共用同一把锁，避免字节交错。 */
         val stdinLock = Any()
 
         @Volatile

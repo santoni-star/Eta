@@ -27,16 +27,16 @@ internal object GeminiModelCatalog {
 
     fun parsePage(body: String): Page {
         val root = try {
-            json.parseToJsonElement(body) as? JsonObject ?: error("Gemini цвільтипуГоловазаписсіткаРежимнемаєефект")
+            json.parseToJsonElement(body) as? JsonObject ?: error("Gemini 模型目录格式无效")
         } catch (_: SerializationException) {
-            error("Gemini цвільтипуГоловазаписнемаєтакматиефектз JSON")
+            error("Gemini 模型目录不是有效的 JSON")
         }
-        require(root["error"] == null || root["error"] == JsonNull) { "Gemini поверненняповерненнязрозумівцвільтипуГоловазаписнеправильнопомилка" }
-        val entries = (root["models"] as? JsonArray) ?: error("Gemini цвільтипуГоловазаписвідсутністьмало models Списокповерхні")
+        require(root["error"] == null || root["error"] == JsonNull) { "Gemini 返回了模型目录错误" }
+        val entries = (root["models"] as? JsonArray) ?: error("Gemini 模型目录缺少 models 列表")
         val models = entries.mapNotNull { entry ->
-            val row = (entry as? JsonObject) ?: error("Gemini цвільтипуГоловазаписСумкаМіститьнемаєефектцвільтипупункт")
+            val row = (entry as? JsonObject) ?: error("Gemini 模型目录包含无效模型项")
             val modelId = row.string("name")?.trim()?.removePrefix("models/")
-                ?.takeIf(String::isNotBlank) ?: error("Gemini цвільтипуГоловазаписвідсутністьмалоцвільтипуназвасказати")
+                ?.takeIf(String::isNotBlank) ?: error("Gemini 模型目录缺少模型名称")
             val methods = row.stringList("supportedGenerationMethods").orEmpty()
             if (methods.isNotEmpty() && "generateContent" !in methods && "interactions" !in methods) {
                 return@mapNotNull null
@@ -58,7 +58,7 @@ internal object GeminiModelCatalog {
             )
         }
         val token = root["nextPageToken"]?.let { value ->
-            require(value is JsonPrimitive && value.isString) { "Gemini цвільтипуГоловазаписточкаСторінказробитикарткасіткаРежимнемаєефект" }
+            require(value is JsonPrimitive && value.isString) { "Gemini 模型目录分页令牌格式无效" }
             value.content.takeIf(String::isNotBlank)
         }
         return Page(models, token)
@@ -93,11 +93,11 @@ internal object GeminiModelCatalog {
                 .build()
             val body = execute(request, remainingBytes)
             remainingBytes -= body.toByteArray(Charsets.UTF_8).size
-            require(remainingBytes >= 0) { "ОдягобслуговуваннябізнесцвільтипуГоловазаписобганятиПасвеликийМаленькийобмеженнясистема" }
+            require(remainingBytes >= 0) { "服务商模型目录超过大小限制" }
             val page = parsePage(body)
             page.models.forEach { model -> models.putIfAbsent(model.modelId.lowercase(), model) }
             val token = page.nextPageToken
-            require(token == null || seenTokens.add(token)) { "Gemini цвільтипуГоловазаписповерненняповерненняВажкаскладніточкаСторінказробитикартка" }
+            require(token == null || seenTokens.add(token)) { "Gemini 模型目录返回重复分页令牌" }
             nextPageToken = token
         } while (nextPageToken != null)
         return OfficialModelCatalog.enrich(provider, models.values.toList()).map { model ->

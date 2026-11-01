@@ -72,10 +72,10 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Намалюйте проаналізований [MarkdownDocument].
+ * 绘制一份已解析的 [MarkdownDocument]。
  *
- * Кожен блок використовує зсув вихідного коду як комбінаційний ключ; незмінені блоки є одним і тим же екземпляром, а період комбінування пропускається безпосередньо. вхідні
- * [розкрити] Коли текстові блоки відображаються дослівно: набір все одно завершується, а просування між кадрами лише робить малюнок недійсним.
+ * 每个块以源码偏移作为组合 key；未变化的块是同一个实例，组合期直接跳过。传入
+ * [reveal] 时文本块接入逐字显现：排版仍然一次完成，帧间推进只让绘制失效。
  */
 @Composable
 internal fun MarkdownContent(
@@ -96,7 +96,7 @@ private class MarkdownRenderScope(
     fun muted() = MarkdownRenderScope(style.muted(), reveal)
 }
 
-/** Рівень вкладеного списку впливає лише на гліф маркера, який передається за допомогою CompositionLocal. Компоненти блоку не потрібно пересилати шар за шаром.*/
+/** 嵌套列表的层级只影响 marker 字形，用 CompositionLocal 传递，块组件不必逐层转发。 */
 private val LocalListDepth = compositionLocalOf { 0 }
 
 @Composable
@@ -158,13 +158,13 @@ private fun MarkdownText(
     softWrap: Boolean = true,
 ) {
     val reveal = scope.reveal
-    // Порожні клітинки не містять тексту для відображення та не займають ключ координатора відображення.
+    // 空单元格没有可显现的文字，也不占用显现协调器的 key。
     if (reveal == null || block.text.isEmpty()) {
         Text(text = block.text, style = style, softWrap = softWrap, modifier = modifier)
         return
     }
     val revealState = rememberSmoothTextRevealState(block.revealKey, reveal)
-    // Візуалізуйте обрізки, коли вони змінюють межі кадру за графемою, і вимкніть вирівнювання пікселів, щоб уникнути тремтіння на краях кадрування.
+    // 显现裁剪按字素边界逐帧变化，关闭像素对齐可避免裁剪边缘抖动。
     val animatedStyle = remember(style) { style.copy(textMotion = TextMotion.Animated) }
     Text(
         text = block.text,
@@ -175,7 +175,7 @@ private fun MarkdownText(
     )
 }
 
-// ──Кодовий блок────────────────────────────────────────────────────────────
+// ── 代码块 ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun MarkdownCodeBlock(block: MarkdownCode, scope: MarkdownRenderScope) {
@@ -201,7 +201,7 @@ private fun MarkdownCodeBlock(block: MarkdownCode, scope: MarkdownRenderScope) {
             )
             CopyButton(text = block.text.text, tint = style.secondaryColor)
         }
-        // Код не переноситься, довгі рядки прокручуються горизонтально, а відступи та вирівнювання зберігаються.
+        // 代码不折行，长行横向滚动，保留缩进与对齐。
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -242,7 +242,7 @@ private fun CopyButton(text: String, tint: Color) {
     }
 }
 
-// ──Цитати та поради───────────────────────────────────────────────────────
+// ── 引用与提示 ──────────────────────────────────────────────────────────
 
 @Composable
 private fun MarkdownQuoteBlock(block: MarkdownQuote, scope: MarkdownRenderScope) {
@@ -327,7 +327,7 @@ private fun MarkdownAlertKind.accentColor(): Color = when (this) {
 
 private val AlertImportantColor = Color(0xFF8B5CF6)
 
-// ── Список ────────────────────────────────────────────────────────────
+// ── 列表 ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun MarkdownListBlock(block: MarkdownList, scope: MarkdownRenderScope) {
@@ -337,7 +337,7 @@ private fun MarkdownListBlock(block: MarkdownList, scope: MarkdownRenderScope) {
         block.loose -> if (answer) 10.dp else 8.dp
         else -> if (answer) 4.dp else 2.dp
     }
-    // Серійний номер має бути таким же широким, як найдовший номер у списку, а лівий край кожного тексту має бути вирівняний.
+    // 序号按本列表最长的数字预留宽度，各项正文左边缘对齐。
     val markerWidth = if (block.ordered) {
         val digits = (block.items.lastOrNull()?.number ?: 1).toString().length
         (digits * 9 + 8).dp
@@ -376,7 +376,7 @@ private fun RowScope.ListMarker(
 ) {
     val style = scope.style
     val reveal = scope.reveal
-    // Прочитайте хід відображення в graphicsLayer: коли блок починає з’являтися, він оновлює лише шар маркерів і не запускає реорганізацію.
+    // 在 graphicsLayer 内读取显现进度：块开始显现只让 marker 图层更新，不触发重组。
     val visibility = Modifier.graphicsLayer {
         alpha = if (listMarkerVisible(reveal != null, item.markerRevealKey, reveal?.started?.value)) 1f else 0f
     }
@@ -413,8 +413,8 @@ private fun RowScope.ListMarker(
 }
 
 /**
- * У заповненому тексті маркер з’являється разом із першим текстом елемента; порожні елементи без тексту залишаються прихованими протягом періоду відображення.
- * Уникайте спливаючих крапок спочатку.
+ * 流式正文里 marker 与该项第一段文字同时出现；没有文字的空项在显现期间保持隐藏，
+ * 避免先冒出孤立的圆点。
  */
 internal fun listMarkerVisible(
     revealActive: Boolean,
@@ -424,11 +424,11 @@ internal fun listMarkerVisible(
 
 private val BULLETS = listOf("•", "◦", "▪")
 
-// ── Таблиця ────────────────────────────────────────────────────────────
+// ── 表格 ────────────────────────────────────────────────────────────────
 
 /**
- * Ширина стовпця адаптується відповідно до вмісту: кожен стовпець приймає природну ширину найширшої комірки та обмежує її розумним діапазоном; коли загальна ширина недостатня, вона пропорційна
- * Заповніть доступну ширину та прокрутіть горизонтально, якщо її буде перевищено. Лінії сітки та колір тла заголовка лічильника малюються відповідно до результатів вимірювань на етапі малювання.
+ * 列宽按内容自适应：每列取最宽单元格的自然宽度并限制在合理区间；总宽不足时按比例
+ * 撑满可用宽度，超出时整体横向滚动。网格线与表头底色在绘制阶段按测量结果画出。
  */
 @Composable
 private fun MarkdownTableBlock(block: MarkdownTable, scope: MarkdownRenderScope) {
@@ -479,7 +479,7 @@ private fun MarkdownTableBlock(block: MarkdownTable, scope: MarkdownRenderScope)
                                 block = cell,
                                 style = if (rowIndex == 0) headerStyles[column] else bodyStyles[column],
                                 scope = scope,
-                                // Комірки вимірюються за фіксованою шириною і не потребують заповнення; fill заважає запитам внутрішнього розміру щодо ширини стовпців.
+                                // 单元格以固定宽度测量，不需要 fill；fill 会干扰列宽的固有尺寸查询。
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                             )
                         }
@@ -532,7 +532,7 @@ private fun MarkdownTableBlock(block: MarkdownTable, scope: MarkdownRenderScope)
     }
 }
 
-/** Результати вимірювань використовуються для малювання сітки на етапі малювання; вони лише читаються під час малювання, а запис не спричинить реорганізації.*/
+/** 测量结果供绘制阶段画网格；只在绘制中读取，写入不会引起重组。 */
 @Immutable
 private data class TableGrid(val columnWidths: List<Int>, val rowHeights: List<Int>) {
     companion object {

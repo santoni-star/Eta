@@ -55,7 +55,7 @@ internal class AgentMemoryException(
     cause: Throwable? = null,
 ) : IllegalStateException(message, cause)
 
-/** Обмежене, атомарне зберігання файлів одного MEMORY.md.*/
+/** 单一 MEMORY.md 的有界、原子文件存储。 */
 internal class AgentMemoryStore(
     rootDir: File,
 ) {
@@ -115,14 +115,14 @@ internal class AgentMemoryStore(
         } catch (throwable: IOException) {
             throw AgentMemoryException(
                 code = "MEMORY_READ_FAILED",
-                message = "немаєЗакончитатиВиберітьзапам'ятативідкликатимистецтваштук",
+                message = "无法读取记忆文件",
                 cause = throwable,
             )
         }
         if (bytes.size > MAX_FILE_BYTES) {
             throw AgentMemoryException(
                 code = "MEMORY_TOO_LARGE",
-                message = "запам'ятативідкликатимистецтваштукобганятиПас 1 MiB встановитиПовнийначальникаобмеження",
+                message = "记忆文件超过 1 MiB 安全上限",
             )
         }
         val content = bytes.toString(Charsets.UTF_8)
@@ -134,13 +134,13 @@ internal class AgentMemoryStore(
         if (bytes.size > MAX_FILE_BYTES) {
             throw AgentMemoryException(
                 code = "MEMORY_TOO_LARGE",
-                message = "запам'ятативідкликатимистецтваштукнемаєздатнийобганятиПас 1 MiB UTF-8 характерФестиваль",
+                message = "记忆文件不能超过 1 MiB UTF-8 字节",
             )
         }
         if (!memoryDir.exists() && !memoryDir.mkdirs() && !memoryDir.isDirectory) {
             throw AgentMemoryException(
                 code = "MEMORY_WRITE_FAILED",
-                message = "немаєЗаконстворитивстановитизапам'ятативідкликатиГоловазапис",
+                message = "无法创建记忆目录",
             )
         }
         val output = try {
@@ -148,7 +148,7 @@ internal class AgentMemoryStore(
         } catch (throwable: IOException) {
             throw AgentMemoryException(
                 code = "MEMORY_WRITE_FAILED",
-                message = "немаєЗаконВІДЧИНЕНОпочатокНапишітьвведітьзапам'ятативідкликатимистецтваштук",
+                message = "无法开始写入记忆文件",
                 cause = throwable,
             )
         }
@@ -159,7 +159,7 @@ internal class AgentMemoryStore(
             atomicFile.failWrite(output)
             throw AgentMemoryException(
                 code = "MEMORY_WRITE_FAILED",
-                message = "немаєЗаконзберегтижитизапам'ятативідкликатимистецтваштук",
+                message = "无法保存记忆文件",
                 cause = throwable,
             )
         }
@@ -177,7 +177,7 @@ internal class AgentMemoryStore(
         ) {
             throw AgentMemoryException(
                 code = "MEMORY_RANGE_INVALID",
-                message = "дляЗмінадобревентилятороточуютьнемаєефект；будь ласкаВажкановийчитатиВиберітьзапам'ятативідкликатиназадЗновуспробувати",
+                message = "替换行范围无效；请重新读取记忆后再试",
             )
         }
         val replacement = mutation.content.memoryLines()

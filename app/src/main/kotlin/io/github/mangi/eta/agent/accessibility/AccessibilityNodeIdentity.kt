@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.accessibility
 
-/** Відбиток ідентичності вузла, який можна перевірити в JVM; viewId не є унікальним ідентифікатором для елемента списку.*/
+/** 可在 JVM 中验证的节点身份指纹；viewId 不是列表项唯一标识。 */
 internal data class AccessibilityNodeIdentity(
     val uniqueId: String,
     val windowId: Int,
@@ -21,7 +21,7 @@ internal data class AccessibilityNodeIdentity(
         if (password != refreshed.password) return false
         if (uniqueId != refreshed.uniqueId) return false
         if (viewId.isNotBlank() && viewId != refreshed.viewId) return false
-        // uniqueId лише доводить, що це той самий віртуальний вузол, але не доводить, що він все ще виражає семантику дії під час спостереження моделі.
+        // uniqueId 只证明还是同一个虚拟节点，不证明它仍表达模型观察时的动作语义。
         if (text != refreshed.text) return false
         if (description != refreshed.description) return false
         return true
@@ -29,8 +29,8 @@ internal data class AccessibilityNodeIdentity(
 }
 
 /**
- * Після зміни вмісту вікна можна продовжувати використовувати лише ідентифікаційні дані, які є справді стабільними та доведено унікальними в межах діапазону спостереження.
- * Обрізані знімки не доводять того, що відбитки тексту/опису не дублюються в решті вікна.
+ * 窗口内容变化后，只有真正稳定且在观察范围内可证明唯一的身份才能继续使用。
+ * 截断快照无法证明 text/desc 指纹在窗口其余部分不存在重复项。
  */
 internal object AccessibilityIdentityFreshnessPolicy {
     fun canBypassContentChange(

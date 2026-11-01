@@ -3,17 +3,17 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Введення тексту, очікування та схема інструментів роботи системи.*/
+/** 文本输入、等待与系统操作工具 schema。 */
 internal object AgentTextSystemToolCatalog {
     fun appendTo(tools: JSONArray) {
         tools
             .put(
                 AgentToolSchema.function(
                     name = "type_text",
-                    description = "назустрічвтратитивведітькоробкаНапишітьвведітьмистецтвакнига，вузолфруктизасіданнячитатиповерненняшколатест。мовчазнийрозпізнати mode=replace пучоквсеіндивідуальнийвтратитивведітькоробкадляЗмінадля text，text длянульовийПрямо заразяснонульовий；" +
-                        "mode=append існуютьколивпередсвітлознаквВставкавведіть。звертатися доЗвичайно index годинаНапишітьвведітьСлід editable Фестивальточка，немаєповиненпершеточкаудар；немаєзвертатися доЗвичайногодинаНапишітьвведітьколивпередвтратитивведітьфокусточка。" +
-                        "submit=true Напишітьвведітьназадвідповідно довтратитивведітьЗаконповерненняавтомобіль，використовуватинапошукОтже、волоссядоставити；вузолфрукти submitted=false годинапояснитияскравиймистецтвакнигавжеНапишітьвведітьалеще нінестиплатити，змінитидляточкаударволоссядоставитивідповідно докнопку，немаєхочутьВажкаскладнівтратитивведіть。" +
-                        "серединамистецтва、emoji、довгомистецтвакнигавсіпрямозловитипропусквведіть，немаєпотребапозичатидопомогтиВирізатипалкаплита。",
+                    description = "向输入框写入文本，结果会读回校验。默认 mode=replace 把整个输入框替换为 text，text 为空即清空；" +
+                        "mode=append 在当前光标处插入。指定 index 时写入该 editable 节点，不必先点击；不指定时写入当前输入焦点。" +
+                        "submit=true 写入后按输入法回车，用于搜索、发送；结果 submitted=false 时说明文本已写入但未提交，改为点击发送按钮，不要重复输入。" +
+                        "中文、emoji、长文本都直接传入，无需借助剪贴板。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -25,25 +25,25 @@ internal object AgentTextSystemToolCatalog {
                                     JSONObject()
                                         .put("type", "string")
                                         .put("enum", JSONArray().put("replace").put("append"))
-                                        .put("description", "replace всетілодляЗміна（мовчазнийрозпізнати），append існуютьсвітлознаквВставкавведіть。"),
+                                        .put("description", "replace 整体替换（默认），append 在光标处插入。"),
                                 )
                                 .put(
                                     "index",
                                     JSONObject()
                                         .put("type", "integer")
-                                        .put("description", "можевибрати，editable Фестивальточка index；тільки replace можевикористовувати，повиненОбов'язковоте самегодинапропусквведітьте самеодинДругосортнийпереглянутиоглядатиз observation_id。"),
+                                        .put("description", "可选，editable 节点 index；仅 replace 可用，必须同时传入同一次观察的 observation_id。"),
                                 )
                                 .put(
                                     "observation_id",
                                     JSONObject()
                                         .put("type", "string")
-                                        .put("description", "звертатися доЗвичайно index годинаповиненпропуск，і index приходьоскільките самеодинДругосортнийбільшістьзакритизпереглянутиоглядати。"),
+                                        .put("description", "指定 index 时必传，与 index 来自同一次最近的观察。"),
                                 )
                                 .put(
                                     "submit",
                                     JSONObject()
                                         .put("type", "boolean")
-                                        .put("description", "Напишітьвведітьназадвідповідно довтратитивведітьЗаконповерненняавтомобільнестиплатити，мовчазнийрозпізнати false。"),
+                                        .put("description", "写入后按输入法回车提交，默认 false。"),
                                 )
                         )
                         .put("required", JSONArray().put("text"))
@@ -52,7 +52,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "set_clipboard",
-                    description = "пучокмистецтвакнигаНапишітьвведітьКраваткасистемаВирізатипалкаплита。підходитькомбайндозволяютьПриготуйтепалкапалкадовгомистецтвакнига、серединамистецтва、emoji абоспеціальніспеціальніхарактерсимвол。",
+                    description = "把文本写入系统剪贴板。适合准备粘贴长文本、中文、emoji 或特殊字符。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -69,7 +69,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "get_clipboard",
-                    description = "читатиВиберітьКраваткасистемаВирізатипалкаплитамистецтвакнига。Android версіякнигаабоназадвежаобмеженнясистемаможездатнийкерівництводочитатиВиберітьвтратитипоразка。",
+                    description = "读取系统剪贴板文本。Android 版本或后台限制可能导致读取失败。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put("properties", JSONObject())
@@ -78,7 +78,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "press_key",
-                    description = "відповідно доКраваткасистемавідповідно доключабоПовнийбюрорухатисяробити。BACK/HOME/RECENTS/NOTIFICATIONS/QUICK_SETTINGS відміннопершеПрогулянканемаєбар'єрперешкоджатиПовнийбюрорухатисяробити；ENTER відміннопершеПрогулянкавтратитивведітьЗаконповерненняавтомобіль。",
+                    description = "按系统按键或全局动作。BACK/HOME/RECENTS/NOTIFICATIONS/QUICK_SETTINGS 优先走无障碍全局动作；ENTER 优先走输入法回车。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -107,7 +107,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "wait",
-                    description = "чекатилікуватиодинчастинагодинаміж，нехайрухатисяживопис、чистиймережідодатинавантаженняабоСторінкалокшинаСтрибокзмінитизакінченостати。немаєхочутьвикористовуватицепоколіннядля wait_for_text/wait_for_package зможетестсертифікатчекатилікувати。",
+                    description = "等待一段时间，让动画、网络加载或页面跳转完成。不要用它代替 wait_for_text/wait_for_package 的可验证等待。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -117,7 +117,7 @@ internal object AgentTextSystemToolCatalog {
                                     "duration_ms",
                                     JSONObject()
                                         .put("type", "integer")
-                                        .put("description", "чекатилікуватигодинадовго，100 прибути 30000，мовчазнийрозпізнати 1000。")
+                                        .put("description", "等待时长，100 到 30000，默认 1000。")
                                 )
                         )
                 )
@@ -125,7 +125,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "wait_for_text",
-                    description = "чекатилікуватиколивпередекранекранпозазараззвертатися доЗвичайномистецтвакнигаабослідописати，підходитькомбайнточкаударназадправильнорозпізнатиСторінкалокшинавжеприбутидосяжність、Списокповерхнідодатинавантаженнязакінченостати、бомбавікнопозазараз。",
+                    description = "等待当前屏幕出现指定文本或描述，适合点击后确认页面已到达、列表加载完成、弹窗出现。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -136,20 +136,20 @@ internal object AgentTextSystemToolCatalog {
                                     "timeout_ms",
                                     JSONObject()
                                         .put("type", "integer")
-                                        .put("description", "більшістьдовгочекатилікуватигодинаміж，500 прибути 60000，мовчазнийрозпізнати 10000。")
+                                        .put("description", "最长等待时间，500 到 60000，默认 10000。")
                                 )
                                 .put(
                                     "include_desc",
                                     JSONObject()
                                         .put("type", "boolean")
-                                        .put("description", "такнемаєматчматч content-desc，мовчазнийрозпізнати true。")
+                                        .put("description", "是否匹配 content-desc，默认 true。")
                                 )
                                 .put(
                                     "match",
                                     JSONObject()
                                         .put("type", "string")
                                         .put("enum", JSONArray().put("contains").put("exact").put("prefix").put("regex"))
-                                        .put("description", "матчматчплощіРежим，мовчазнийрозпізнати contains。")
+                                        .put("description", "匹配方式，默认 contains。")
                                 )
                         )
                         .put("required", JSONArray().put("text"))
@@ -158,7 +158,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "wait_for_package",
-                    description = "чекатилікуватизвертатися доЗвичайно Android package прибутивпередвежа，підходитькомбайн launch_app/open_uri назадправильнорозпізнатиГоловазнаквідповідьвикористовувативжебитиВІДЧИНЕНО。",
+                    description = "等待指定 Android package 到前台，适合 launch_app/open_uri 后确认目标应用已打开。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(
@@ -169,7 +169,7 @@ internal object AgentTextSystemToolCatalog {
                                     "timeout_ms",
                                     JSONObject()
                                         .put("type", "integer")
-                                        .put("description", "більшістьдовгочекатилікуватигодинаміж，500 прибути 60000，мовчазнийрозпізнати 10000。")
+                                        .put("description", "最长等待时间，500 到 60000，默认 10000。")
                                 )
                         )
                         .put("required", JSONArray().put("package_name"))
@@ -178,7 +178,7 @@ internal object AgentTextSystemToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "open_system_panel",
-                    description = "битиВІДЧИНЕНОПасзнатиколонкаабошвидкийчеськаналаштувативстановитилокшинаплита。",
+                    description = "打开通知栏或快捷设置面板。",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(

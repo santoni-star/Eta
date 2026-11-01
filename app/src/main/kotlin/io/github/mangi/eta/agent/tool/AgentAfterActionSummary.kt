@@ -6,8 +6,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Проекція моделі, що спостерігається після дії: спочатку дайте висновок (чи змінився інтерфейс, чи потрібно перемикати програми чи вікна), а потім надайте новий список вузлів.
- * Визначення змін порівнює лише видиму семантику вузлів (текст, опис, ім’я класу, view_id, позицію) і не покладається на мітки часу чи кадри анімації.
+ * 动作后观察的模型投影：先给结论（界面是否变化、是否切换应用或窗口），再给新的节点列表。
+ * 变化判定只比较节点的可见语义（文本、描述、类名、view_id、位置），不依赖时间戳或动画帧。
  */
 internal object AgentAfterActionSummary {
     fun build(before: ElementObservation?, after: ElementObservation): JSONObject {
@@ -22,15 +22,15 @@ internal object AgentAfterActionSummary {
             .put("ui_nodes", JSONArray().also { array -> after.nodes.forEach { array.put(it.compactJson()) } })
             .put(
                 "note",
-                if (changed) "заначальникадлярухатисяробитиназадзновиймежалокшина，можепрямозловитивикористовуватиСлід observation_id слідуватиПродовженняТримайтеробити；потребахочутьНавітьбагатоФестивальточкаабовирізатималюнокгодинаЗновумелодіявикористовувати observe_screen"
-                else "межалокшинабезматиможедивЗміназмінити，рухатисяробитиможездатнийще нінародивсяефект；будь ласкаЗмінаГоловазнакабоплощіРежим，немаєхочутьОригіналЗразокВажкаскладні",
+                if (changed) "以上为动作后的新界面，可直接用该 observation_id 继续操作；需要更多节点或截图时再调用 observe_screen"
+                else "界面没有可见变化，动作可能未生效；请换目标或方式，不要原样重复",
             )
     }
 
     private fun signature(nodes: List<UiNode>): List<String> =
         nodes.map { "${it.className}|${it.viewId}|${it.text}|${it.desc}|${it.bounds.toShortString()}" }
 
-    /** Спрощені поля: пропускайте логічні значення та назви пакетів зі значеннями за замовчуванням false, щоб зменшити накладні витрати маркерів на спостереження на кожному кроці.*/
+    /** 精简字段：省略默认值为 false 的布尔与包名，降低每步附带观察的 token 开销。 */
     private fun UiNode.compactJson(): JSONObject = JSONObject()
         .put("index", index)
         .apply {

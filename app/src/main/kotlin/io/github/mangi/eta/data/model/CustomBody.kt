@@ -4,9 +4,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * Спеціальні поля тіла запиту на рівні постачальника або моделі.
+ * Provider 或模型级别的自定义请求体字段。
  *
- * Мережевий рівень буде рекурсивно об’єднано в остаточний запит JSON, а рівень моделі охоплює рівень постачальника.
+ * 网络层会递归合并到最终请求 JSON 中，模型级覆盖 Provider 级。
  */
 @Serializable
 data class CustomBody(

@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 
-/** Прапори виставок, прапори висновків і декларації протоколів у каталозі Grok не залежать від загального каталогу моделей OpenAI.*/
+/** Grok 目录中的展示标识、推理标识和协议声明独立于通用 OpenAI 模型目录。 */
 internal object GrokModelCatalog {
     fun parse(
         entries: JsonArray,
@@ -21,7 +21,7 @@ internal object GrokModelCatalog {
         var unsupported = 0
         var visible = 0
         val models = entries.mapIndexedNotNull { index, element ->
-            val item = element.jsonObjectOrNull() ?: error("Grok цвільтипуГоловазаписСумкаМіститьнемаєефектцвільтипупункт")
+            val item = element.jsonObjectOrNull() ?: error("Grok 模型目录包含无效模型项")
             val meta = item["_meta"]?.jsonObjectOrNull()
             if ((item.boolean("hidden") ?: meta?.boolean("hidden")) == true) return@mapIndexedNotNull null
             visible++
@@ -34,7 +34,7 @@ internal object GrokModelCatalog {
             }
             val id = item.nonBlankString("model", "modelId", "id")
                 ?: meta?.nonBlankString("model", "modelId")
-                ?: error("Grok цвільтипуГоловазаписвідсутністьмалоцвільтипузнакзнання")
+                ?: error("Grok 模型目录缺少模型标识")
             val normalized = JsonObject(item + ("id" to JsonPrimitive(id)))
             val base = decode(normalized)
             val reasoning = item.grokReasoningCapabilities(meta)
@@ -49,7 +49,7 @@ internal object GrokModelCatalog {
         }
         if (unsupported > 0) onUnsupportedProtocols(unsupported)
         require(visible == 0 || unsupported != visible) {
-            "коливпередпорядокчитатинавітьзловитинемаєзробитивикористовуватиГоловазаписзвертатися доЗвичайнозцвільтипуоб'єднанняобговорити，немаєЗаконкерівництвовведітьцедеякіцвільтипу"
+            "当前订阅连接不使用目录指定的模型协议，无法导入这些模型"
         }
         return models
     }

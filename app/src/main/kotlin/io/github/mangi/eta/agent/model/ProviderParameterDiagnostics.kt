@@ -2,9 +2,9 @@ package io.github.mangi.eta.agent.model
 
 import org.json.JSONObject
 
-/** Обмежена діагностика параметрів на стороні сервера, не містить класифікації помилок або стратегії повторних спроб.*/
+/** 有界的服务端参数诊断，不承载失败分类或重试策略。 */
 internal object ProviderParameterDiagnostics {
-    /** Проектується лише перелік протоколів і відомі позиції полів, а повідомлення/опис на стороні сервера може повторювати вміст запиту.*/
+    /** 只投影协议枚举和已知字段位置，服务端 message/description 可能回显请求内容。 */
     fun describe(error: JSONObject?): String? {
         if (error == null) return null
         val codes = listOf("status", "code", "type").map(error::optString)
@@ -21,7 +21,7 @@ internal object ProviderParameterDiagnostics {
             }
             if (fields.size >= 3) break
         }
-        return (codes.take(1) + fields.take(3).map { "характерчастина $it" }).joinToString("；").ifEmpty { null }
+        return (codes.take(1) + fields.take(3).map { "字段 $it" }).joinToString("；").ifEmpty { null }
     }
 
     private fun safeParameterPath(raw: String): String? {
@@ -29,7 +29,7 @@ internal object ProviderParameterDiagnostics {
         val segments = raw.split('.')
         if (segments.first().substringBefore('[') !in requestParameterRoots) return null
         return segments.joinToString(".") { segment ->
-            if (segment.substringBefore('[') in publicParameterNames) segment else "<оскількиЗвичайноправеднийхарактерчастина>"
+            if (segment.substringBefore('[') in publicParameterNames) segment else "<自定义字段>"
         }
     }
 

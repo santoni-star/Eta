@@ -25,8 +25,8 @@ import io.github.mangi.eta.ui.navigation.AppRoute
 import kotlinx.coroutines.launch
 
 /**
- * Огляд налаштувань голосу: розпізнавання та трансляція мають незалежні підсторінки (прогнозування та ковзання забезпечуються miuix-nav),
- * Перемикач тут безпосередньо читає та записує постійну конфігурацію, не залучаючи чернетку облікових даних.
+ * 语音设置总览：识别与播报各有独立子页面（预测性返回与滑动返回由 miuix-nav 提供），
+ * 这里的开关直接读写持久化配置，不涉及凭据草稿。
  */
 @Composable
 internal fun SpeechSettingsScreen(onBack: () -> Unit, onNavigate: (AppRoute) -> Unit) {

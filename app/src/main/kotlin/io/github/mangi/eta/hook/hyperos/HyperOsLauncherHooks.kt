@@ -13,7 +13,7 @@ internal object HyperOsLauncherHooks {
     fun install(module: XposedModule, logger: ModuleLogger, loader: ClassLoader): HookInstallation {
         val hooks = HookRegistrar(module, logger, "HyperOsLauncher")
         return hooks.install {
-            // На одному робочому столі може зберігатися кілька версій допоміжних класів; встановіть лише один доступний запис, щоб уникнути повторного запуску вкладених викликів.
+            // 同一桌面可能保留多个版本的辅助类；只安装一个可用入口，避免嵌套调用重复触发。
             if (installGestureManager(hooks, loader)) return@install
             if (installOmni(hooks, loader)) return@install
             if (installEventHelper(hooks, loader)) return@install
@@ -29,7 +29,7 @@ internal object HyperOsLauncherHooks {
         if (method?.returnType != Void.TYPE || getInstance == null ||
             !Modifier.isStatic(getInstance.modifiers) || !Context::class.java.isAssignableFrom(getInstance.returnType)
         ) {
-            hooks.missing("hyperos.gesture-manager", "NavStubGestureEventManager.handleLongPressEvent", "HyperOS: рукупотенціалтрубкапричинапристрійвведітьротабо Application.getInstance немаєматчматч")
+            hooks.missing("hyperos.gesture-manager", "NavStubGestureEventManager.handleLongPressEvent", "HyperOS: 手势管理器入口或 Application.getInstance 不匹配")
             return false
         }
         return hooks.intercept("hyperos.gesture-manager", method, "NavStubGestureEventManager.handleLongPressEvent") { chain ->
@@ -45,7 +45,7 @@ internal object HyperOsLauncherHooks {
             HookSupport.findMethod(it, "invokeOmni", Context::class.java, Int::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!)
         }
         if (method == null || method.returnType !in setOf(Void.TYPE, Boolean::class.javaPrimitiveType)) {
-            hooks.missing("hyperos.invoke-omni", "CircleToSearchHelper.invokeOmni", "HyperOS: invokeOmni знакназванемаєматчматч")
+            hooks.missing("hyperos.invoke-omni", "CircleToSearchHelper.invokeOmni", "HyperOS: invokeOmni 签名不匹配")
             return false
         }
         return hooks.intercept("hyperos.invoke-omni", method, "CircleToSearchHelper.invokeOmni") { chain ->
@@ -60,7 +60,7 @@ internal object HyperOsLauncherHooks {
         val method = type?.let { HookSupport.findMethod(it, "onLongPress", MotionEvent::class.java) }
         val context = type?.let { HookSupport.findField(it, "mContext") }
         if (method?.returnType != Void.TYPE || context == null || !Context::class.java.isAssignableFrom(context.type)) {
-            hooks.missing("hyperos.navbar-event", "NavBarEventHelper.onLongPress", "HyperOS: керівництвовітрилосмужкарічштуквведітьротабо mContext немаєматчматч")
+            hooks.missing("hyperos.navbar-event", "NavBarEventHelper.onLongPress", "HyperOS: 导航条事件入口或 mContext 不匹配")
             return false
         }
         return hooks.intercept("hyperos.navbar-event", method, "NavBarEventHelper.onLongPress") { chain ->

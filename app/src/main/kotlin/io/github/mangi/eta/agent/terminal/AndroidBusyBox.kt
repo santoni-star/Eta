@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.terminal
 
-/** Кореневу BusyBox можна виявити лише в процесі su, а процес програми зазвичай не має дозволу на проходження /data/adb.*/
+/** Root 侧 BusyBox 只能在 su 进程中探测，App 进程通常无权遍历 /data/adb。 */
 internal object AndroidBusyBox {
     private val candidates = listOf(
         "/data/adb/magisk/busybox",
@@ -11,7 +11,7 @@ internal object AndroidBusyBox {
     )
 
     fun discoveryScript(variable: String = "eta_busybox"): String {
-        require(variable.matches(Regex("[a-z_][a-z0-9_]*"))) { "немаєЗакон Shell Змінакількістьназва" }
+        require(variable.matches(Regex("[a-z_][a-z0-9_]*"))) { "非法 Shell 变量名" }
         val quotedCandidates = candidates.joinToString(" ") { shellQuote(it) }
         return "$variable=''; " +
             "for eta_candidate in $quotedCandidates; do " +

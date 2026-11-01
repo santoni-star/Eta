@@ -90,7 +90,7 @@ fun AgentSkillsScreen(
                     },
                     startAction = {
                         if (state.isImporting) {
-                            // Стан завантаження має таку ж ширину, що і значок, а заголовок не стрибає горизонтально під час перемикання.
+                            // 加载态与图标同宽，切换时标题不横向跳动。
                             Box(
                                 modifier = Modifier.size(EtaPreferenceDefaults.IconSize),
                                 contentAlignment = Alignment.Center,

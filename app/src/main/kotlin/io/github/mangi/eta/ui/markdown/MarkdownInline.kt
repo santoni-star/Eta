@@ -22,8 +22,8 @@ import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.LinkMap
 
 /**
- * Частина вбудованого стилю, яка змінюється разом із темою. Він визначає це під час створення AnnotatedString за лаштунками,
- * Отже, як частину аналізу вхідних даних: перемикання тем призведе до недійсності та відновлення кешу, замість того, щоб змінювати колір сегмент за сегментом у міру малювання.
+ * 行内样式里随主题变化的部分。它在后台构建 AnnotatedString 时就要确定，
+ * 因此作为解析输入的一部分：主题切换会让缓存失效并重建，而不是在绘制时逐段改色。
  */
 @Immutable
 internal data class MarkdownInlineStyle(
@@ -36,10 +36,10 @@ internal data class MarkdownInlineStyle(
 }
 
 /**
- * Перетворення набору вбудованих вузлів у AnnotatedString.
+ * 把一组行内节点转换为 AnnotatedString。
  *
- * Обробляти лише вбудований синтаксис GFM, який фактично відображається в чаті; нерозпізнані листи виводяться як вихідний код, щоб гарантувати відсутність вмісту
- * не зникне з повітря через відсутність гілок рендерингу (через це були втрачені цілі математичні формули).
+ * 只处理聊天里实际出现的 GFM 行内语法；未识别的叶子按源码原样输出，确保任何内容
+ * 都不会因为缺少渲染分支而凭空消失（数学公式就曾因此整段丢失）。
  */
 internal class MarkdownInlineBuilder(
     private val source: String,
@@ -53,10 +53,10 @@ internal class MarkdownInlineBuilder(
         return builder.toAnnotatedString().trimTrailingWhitespace()
     }
 
-    /** Відступ і префікс посилання (`>`) після м'яких розривів рядків належать до структури блоку, а не до основного тексту.*/
+    /** 软换行后的缩进与引用前缀（`>`）属于块结构，不属于正文。 */
     private class LineState {
         var atLineStart = true
-        /** EOL відразу після жорсткого нового рядка (два пробіли або зворотні скісні риски в кінці рядка) було виведено жорстким символом нового рядка.*/
+        /** 硬换行（行尾两空格或反斜杠）后紧跟的 EOL 已经由硬换行输出过。 */
         var afterHardBreak = false
     }
 
@@ -66,8 +66,8 @@ internal class MarkdownInlineBuilder(
             return
         }
         if (type == MarkdownTokenTypes.EOL || type == MarkdownTokenTypes.HARD_LINE_BREAK) {
-            // Один розрив рядка у вихідних даних чату майже завжди відповідає автору; перенесення на пробіли за допомогою CommonMark буде
-            // Вставлення додаткових пробілів між китайськими ієрогліфами також призведе до навмисного розділення вмісту моделі на один абзац.
+            // 聊天输出里的单个换行几乎总是作者想要的换行；按 CommonMark 折成空格会
+            // 在中文之间插入多余空白，也会让模型刻意分行的内容挤成一段。
             if (!(type == MarkdownTokenTypes.EOL && state.afterHardBreak)) append('\n')
             state.afterHardBreak = type == MarkdownTokenTypes.HARD_LINE_BREAK
             state.atLineStart = true
@@ -122,13 +122,13 @@ internal class MarkdownInlineBuilder(
     }
 
     /**
-     * Виведення вмісту за списком однорідних вузлів. `** зазвичай виділяється жирним шрифтом у вихідних даних моделі. **Продовження нижче` Цей тип написання: відповідно до CommonMark
-     * Правило обмежування: коли роздільник розміщений між пунктуацією CJK і текстом, він не створює наголосу, і аналізатор залишить один
-     * Позначення EMPH/TILDE. Сцена чату обробляється, як написано: створіть вільну пару однорідних вузлів на тому самому рівні та вимагайте лише
-     * Вміст безпосередньо після маркера не є порожнім; маркери, які не відповідають правильному тексту, все одно виводяться як оригінальний текст без втрати символів.
+     * 按兄弟节点列表输出内容。模型输出里常见 `**加粗。**接下文` 这类写法：按 CommonMark 的
+     * flanking 规则，分隔符夹在 CJK 标点与文字之间时不构成强调，解析器会留下落单的
+     * EMPH/TILDE 记号。聊天场景按书写意图处理：对同一级兄弟节点做一次宽松配对，只要求
+     * 紧贴记号的内容不是空白；配不上对的记号仍按原文输出，不丢字符。
      */
     private fun AnnotatedString.Builder.appendNodes(nodes: List<ASTNode>, parent: ASTNode?, state: LineState) {
-        // Коли вже є юридично підкресленим дочірнім вузлом, маркер є справжнім роздільником, відфільтрованим isDelimiterOf і не бере участі у вільному зіставленні.
+        // 已是合法强调的子节点时，记号是真正的分隔符，由 isDelimiterOf 过滤，不参与宽松配对。
         val pairs = if (parent?.type in REAL_EMPHASIS_TYPES) emptyMap() else pairLooseInline(nodes)
         var index = 0
         while (index < nodes.size) {
@@ -147,13 +147,13 @@ internal class MarkdownInlineBuilder(
         }
     }
 
-    /** Пара інтервалів однорідних вузлів, які переосмислюються як стилі; два кінцевих лексеми самі по собі не виводять текст.*/
+    /** 一对被重新解释为样式的兄弟节点区间；两端记号自身不输出文本。 */
     private class PairedInline(
         val contentStart: Int,
         val contentEnd: Int,
         val nextIndex: Int,
         val style: SpanStyle,
-        /** Колір фону стилю вбудованого коду має бути розділений пробілами перед і після нього, і він не з’єднується з гліфами.*/
+        /** 行内代码风格的底色需要前后空格撑开，不贴着字形。 */
         val padSpaces: Boolean = false,
     )
 
@@ -178,7 +178,7 @@ internal class MarkdownInlineBuilder(
             var end = index
             while (end + 1 < nodes.size && nodes[end + 1].type == nodes[index].type) end += 1
             val length = end - index + 1
-            // `*`/`**` поєднуються як курсив/жирний шрифт відповідно, `~~` поєднуються як закреслені; один `~` є звичайним у шляхах і не є парним.
+            // `*`/`**` 分别配对为斜体/粗体，`~~` 配对为删除线；单个 `~` 常见于路径，不配对。
             val eligible = if (char == '*') length <= 2 else length == 2
             if (eligible) runs += Run(index, char, length)
             index = end + 1
@@ -220,7 +220,7 @@ internal class MarkdownInlineBuilder(
         return pairs
     }
 
-    /** `<kbd>` — це єдиний вбудований HTML-код, який зазвичай можна побачити у вихідних даних чату: у поєднанні вміст відображається у стилі вбудованого коду.*/
+    /** `<kbd>` 是唯一在聊天输出里常见的行内 HTML：配对后按行内代码样式显示内容。 */
     private fun pairKbdTags(nodes: List<ASTNode>): Map<Int, PairedInline> {
         val open = ArrayDeque<Int>()
         val pairs = mutableMapOf<Int, PairedInline>()
@@ -258,7 +258,7 @@ internal class MarkdownInlineBuilder(
                 background = style.codeBackground,
             ),
         ) {
-            // Пробіли половинної ширини перед і після запобігають прилипанню кольору фону до шрифту, і він читається як незалежний фрагмент коду.
+            // 前后半角空格让底色不贴着字形，读起来像一个独立的代码片段。
             append(' ')
             append(code)
             append(' ')
@@ -281,7 +281,7 @@ internal class MarkdownInlineBuilder(
     ) {
         val destination = labelNode?.let { links?.getLinkInfo(it.text()) }?.destination?.toString()
         if (destination == null) {
-            // Якщо відповідного визначення немає, це просто звичайний текст у квадратних дужках і залишається як є.
+            // 没有对应定义时它只是带方括号的普通文字，原样保留。
             append(decodeMarkdownText(node.text()))
             return
         }
@@ -321,7 +321,7 @@ internal class MarkdownInlineBuilder(
         if (safeUrl == null) append(raw) else withLink(linkAnnotation(safeUrl)) { append(raw) }
     }
 
-    /** Чат не завантажує віддалені зображення: використовуйте альтернативний текст як активні посилання, вміст не буде втрачено, і мережеві запити не створюватимуться.*/
+    /** 聊天不加载远程图片：以替代文字作为可点开的链接，内容不丢失也不产生网络请求。 */
     private fun AnnotatedString.Builder.appendImage(node: ASTNode, state: LineState) {
         val link = node.child(MarkdownElementTypes.INLINE_LINK)
         val alt = link?.child(MarkdownElementTypes.LINK_TEXT)?.text()?.removeSurrounding("[", "]").orEmpty()
@@ -352,7 +352,7 @@ internal class MarkdownInlineBuilder(
         if (children.size < 2) return ""
         val inner = source.substring(children.first().endOffset, children.last().startOffset)
             .replace('\n', ' ')
-        // CommonMark: якщо в обох кінцях є пробіли, а вміст не складається лише з пробілів, видаліть по одному з кожного кінця та використовуйте його для обгортання зворотних галочок.
+        // CommonMark：两端各有一个空格且内容不全是空格时各去掉一个，用于包裹反引号。
         return if (inner.length >= 2 && inner.first() == ' ' && inner.last() == ' ' && inner.isNotBlank()) {
             inner.substring(1, inner.length - 1)
         } else {
@@ -379,7 +379,7 @@ internal class MarkdownInlineBuilder(
         val KBD_OPEN = Regex("""<kbd\s*>""", RegexOption.IGNORE_CASE)
         val KBD_CLOSE = Regex("""</kbd\s*>""", RegexOption.IGNORE_CASE)
 
-        /** Дочірні елементи EMPH/TILDE цих вузлів є реальними розділювачами, які були спожиті та не беруть участь у розслабленому сполученні.*/
+        /** 这些节点的 EMPH/TILDE 子节点是已被消费的真正分隔符，不参与宽松配对。 */
         val REAL_EMPHASIS_TYPES = setOf(
             MarkdownElementTypes.STRONG,
             MarkdownElementTypes.EMPH,
@@ -390,7 +390,7 @@ internal class MarkdownInlineBuilder(
 
 internal fun ASTNode.child(type: IElementType): ASTNode? = children.firstOrNull { it.type == type }
 
-/** Дозволені лише чіткі та безпечні протоколи; інші схеми відображаються як звичайний текст і не відкриваються системою.*/
+/** 只放行明确安全的协议；其他 scheme 作为普通文字显示，不交给系统打开。 */
 internal fun safeLinkUrl(url: String): String? {
     val trimmed = url.trim()
     val scheme = trimmed.substringBefore(':', missingDelimiterValue = "").lowercase()
@@ -400,8 +400,8 @@ internal fun safeLinkUrl(url: String): String? {
 private val SAFE_LINK_SCHEMES = setOf("http", "https", "mailto")
 
 /**
- * Обробляти екранування зворотної похилої риски CommonMark за допомогою об’єктів HTML. Синтаксичний аналізатор зберігає їх у листі TEXT,
- * Потрібно відновити перед рендерингом; конвертер, наданий бібліотекою, виводить екранований текст HTML, який не підходить для прямого відображення.
+ * 处理 CommonMark 反斜杠转义与 HTML 实体。解析器把它们保留在 TEXT 叶子里，
+ * 需要渲染前还原；库自带的转换器输出的是 HTML 转义文本，不适合直接显示。
  */
 internal fun decodeMarkdownText(text: String): String {
     if ('\\' !in text && '&' !in text) return text
@@ -463,7 +463,7 @@ private fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
     return if (end == length) this else subSequence(0, end)
 }
 
-/** Існує лише одна точка входу під час побудови вбудованого тексту, що забезпечує узгодженість правил абзаців, заголовків і клітинок таблиці.*/
+/** 构建行内文本时只有这一个入口，保证段落、标题与表格单元格的规则一致。 */
 internal fun inlineText(
     nodes: List<ASTNode>,
     source: String,

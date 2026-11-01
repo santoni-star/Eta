@@ -28,7 +28,7 @@ internal data class WebPageContentPage(
 
 internal class WebPageContentException(val code: String, message: String) : IllegalArgumentException(message)
 
-/** Обробляти лише текст, отриманий абонентом; Розбір HTML не ініціює запити та не виконує сценарії.*/
+/** 只处理调用方已经取得的文本；HTML 解析不发起请求或执行脚本。 */
 internal object WebPageContent {
     const val MAX_INPUT_CHARS = 512_000
     const val MAX_CONTENT_CHARS = 200_000
@@ -53,7 +53,7 @@ internal object WebPageContent {
             mime == "text/markdown" || mime == "text/x-markdown" -> "markdown"
             mime == "application/json" || mime.startsWith("application/") && mime.endsWith("+json") -> "json"
             mime.startsWith("text/") -> "text"
-            else -> throw WebPageContentException("UNSUPPORTED_CONTENT_TYPE", "цеВсерединіДозволитивидтипунемаєвідділенняутримуватимистецтвакнигапростомистецтварозв'язатианалізувати")
+            else -> throw WebPageContentException("UNSUPPORTED_CONTENT_TYPE", "此内容类型不支持文本正文解析")
         }
         val reasons = mutableListOf<String>()
         if (sourceTruncated) reasons += "source_limit"
@@ -76,14 +76,14 @@ internal object WebPageContent {
 
     fun page(document: WebPageDocument, offsetChars: Int = 0, maxChars: Int = MAX_PAGE_CHARS): WebPageContentPage {
         if (offsetChars !in 0..document.content.length || maxChars <= 0) {
-            throw WebPageContentException("INVALID_CONTENT_RANGE", "простомистецтваточкаСторінкавентилятороточуютьнемаєефект")
+            throw WebPageContentException("INVALID_CONTENT_RANGE", "正文分页范围无效")
         }
         if (offsetChars > 0 && offsetChars < document.content.length &&
             document.content[offsetChars].isLowSurrogate() && document.content[offsetChars - 1].isHighSurrogate()
-        ) throw WebPageContentException("INVALID_CONTENT_OFFSET", "простомистецтватурзнакбітна Unicode характерсимволсерединаміж，будь ласказробитивикористовуватиначальникаДругосортний next_offset_chars")
+        ) throw WebPageContentException("INVALID_CONTENT_OFFSET", "正文游标位于 Unicode 字符中间，请使用上次 next_offset_chars")
         val end = completeCharacterEnd(document.content, (offsetChars.toLong() + maxChars.coerceAtMost(MAX_PAGE_CHARS)).coerceAtMost(document.content.length.toLong()).toInt())
         if (end == offsetChars && offsetChars < document.content.length) {
-            throw WebPageContentException("CONTENT_PAGE_TOO_SMALL", "точкаСторінканачальникаобмеженнянемаєстопазаповерненняповерненняодиніндивідуальнийзакінченовсе Unicode характерсимвол")
+            throw WebPageContentException("CONTENT_PAGE_TOO_SMALL", "分页上限不足以返回一个完整 Unicode 字符")
         }
         return WebPageContentPage(offsetChars, end, document.content.length, document.content.substring(offsetChars, end),
             end < document.content.length, document.truncated)

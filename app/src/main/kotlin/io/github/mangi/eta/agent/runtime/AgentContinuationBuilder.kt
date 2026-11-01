@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.runtime
 import io.github.mangi.eta.agent.model.AgentModelClient
 import java.util.UUID
 
-/** Створюйте наступні ходи користувача, які завершили запуск, із повною дельта-транскриптом.*/
+/** 用完整增量 transcript 构造已完成 run 的后续用户回合。 */
 internal object AgentContinuationBuilder {
     fun build(
         request: AgentRuntimeWire.RunRequest,
@@ -12,7 +12,7 @@ internal object AgentContinuationBuilder {
         newRunId: String = "run-${UUID.randomUUID()}",
         createdAt: Long = System.currentTimeMillis(),
     ): AgentRuntimeWire.RunRequest {
-        require(request.operation == AgentRuntimeWire.OP_CHAT) { "СлідтранспортдобренемаєтакможеслідуватиПродовженнязправильноговоритиповерненнякомбайн" }
+        require(request.operation == AgentRuntimeWire.OP_CHAT) { "该运行不是可继续的对话回合" }
         val uiPayload = request.handoff?.takeIf { it.source == AgentRuntimeWire.AGENT_UI_HANDOFF_SOURCE }
             ?.let { AgentUiHandoffPayload.from(it.payload) }
         val baseHistory = response.contextSnapshot?.messages ?: (request.history +

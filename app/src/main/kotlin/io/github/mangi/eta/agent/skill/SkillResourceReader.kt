@@ -13,7 +13,7 @@ data class SkillResourceLimits(
     val maxPathDepth: Int = 16,
 )
 
-/** Перелік і читання обмежених текстових ресурсів UTF-8 у встановленому кореневому каталозі Skill.*/
+/** 在已安装 Skill 根目录内列出和读取有界 UTF-8 文本资源。 */
 class SkillResourceReader internal constructor(
     skillsRoot: File,
     private val limits: SkillResourceLimits = SkillResourceLimits(),
@@ -34,7 +34,7 @@ class SkillResourceReader internal constructor(
         val skillRoot = validateSkillRoot(entry)
             ?: return failure(
                 SkillResourceErrorCode.INVALID_SKILL_ROOT,
-                "Skill коріньГоловазаписнемаєіснуютьвідповідьвикористовуватиприватниймати Skills ГоловазаписВсередині",
+                "Skill 根目录不在应用私有 Skills 目录内",
             )
         val start = if (relativeDirectory.isNullOrBlank() || relativeDirectory == ".") {
             skillRoot
@@ -42,22 +42,22 @@ class SkillResourceReader internal constructor(
             val segments = validateResourcePath(relativeDirectory)
                 ?: return failure(
                     SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                    "КапіталджерелоГоловазаписповиненОбов'язковотак Skill ВсерединізвстановитиПовнийВзаємноправильнодорогашлях",
+                    "资源目录必须是 Skill 内的安全相对路径",
                 )
             if (hasSymbolicLinkComponent(skillRoot, segments)) {
                 return failure(
                     SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                    "Skill КапіталджерелодорогашляхСумкаМіститьнемаєдозволяютьтравнязсимволНомерланцюгзловити",
+                    "Skill 资源路径包含不允许的符号链接",
                 )
             }
             resolveInside(skillRoot, segments)
                 ?: return failure(
                     SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                    "КапіталджерелоГоловазаписобганятипоза Skill коріньГоловазапис",
+                    "资源目录超出 Skill 根目录",
                 )
         }
         if (!start.isDirectory || Files.isSymbolicLink(start.toPath())) {
-            return failure(SkillResourceErrorCode.RESOURCE_NOT_FOUND, "КапіталджерелоГоловазаписнемаєжитиіснують")
+            return failure(SkillResourceErrorCode.RESOURCE_NOT_FOUND, "资源目录不存在")
         }
 
         val resources = mutableListOf<SkillResourceInfo>()
@@ -66,12 +66,12 @@ class SkillResourceReader internal constructor(
         while (pending.isNotEmpty()) {
             val directory = pending.removeFirst()
             val children = directory.listFiles()?.sortedBy { it.name }
-                ?: return failure(SkillResourceErrorCode.IO_ERROR, "немаєЗакончитатиВиберіть Skill КапіталджерелоГоловазапис")
+                ?: return failure(SkillResourceErrorCode.IO_ERROR, "无法读取 Skill 资源目录")
             for (child in children) {
                 if (Files.isSymbolicLink(child.toPath())) {
                     return failure(
                         SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                        "Skill КапіталджерелосерединаСумкаМіститьнемаєдозволяютьтравнязсимволНомерланцюгзловити",
+                        "Skill 资源中包含不允许的符号链接",
                     )
                 }
                 val relative = child.relativeTo(skillRoot).invariantSeparatorsPath
@@ -79,7 +79,7 @@ class SkillResourceReader internal constructor(
                 if (depth > limits.maxPathDepth) {
                     return failure(
                         SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                        "Skill КапіталджерелодорогашляхшаркласобганятиПас ${limits.maxPathDepth} шар",
+                        "Skill 资源路径层级超过 ${limits.maxPathDepth} 层",
                     )
                 }
                 when {
@@ -89,7 +89,7 @@ class SkillResourceReader internal constructor(
                         if (resources.size > limits.maxResources) {
                             return failure(
                                 SkillResourceErrorCode.TOO_MANY_RESOURCES,
-                                "Skill КапіталджерелономеробганятиПас ${limits.maxResources} індивідуальний",
+                                "Skill 资源数超过 ${limits.maxResources} 个",
                             )
                         }
                     }
@@ -113,40 +113,40 @@ class SkillResourceReader internal constructor(
         val skillRoot = validateSkillRoot(entry)
             ?: return readFailure(
                 SkillResourceErrorCode.INVALID_SKILL_ROOT,
-                "Skill коріньГоловазаписнемаєіснуютьвідповідьвикористовуватиприватниймати Skills ГоловазаписВсередині",
+                "Skill 根目录不在应用私有 Skills 目录内",
             )
         val segments = validateResourcePath(relativePath)
             ?: return readFailure(
                 SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                "КапіталджерелодорогашляхповиненОбов'язковотак Skill ВсерединізвстановитиПовнийВзаємноправильнодорогашлях",
+                "资源路径必须是 Skill 内的安全相对路径",
             )
         val target = resolveInside(skillRoot, segments)
             ?: return readFailure(
                 SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                "Капіталджерелодорогашляхобганятипоза Skill коріньГоловазапис",
+                "资源路径超出 Skill 根目录",
             )
         if (!target.isFile || Files.isSymbolicLink(target.toPath())) {
-            return readFailure(SkillResourceErrorCode.RESOURCE_NOT_FOUND, "Skill Капіталджерелонемаєжитиіснують")
+            return readFailure(SkillResourceErrorCode.RESOURCE_NOT_FOUND, "Skill 资源不存在")
         }
         if (hasSymbolicLinkComponent(skillRoot, segments)) {
             return readFailure(
                 SkillResourceErrorCode.INVALID_RELATIVE_PATH,
-                "Skill КапіталджерелодорогашляхСумкаМіститьнемаєдозволяютьтравнязсимволНомерланцюгзловити",
+                "Skill 资源路径包含不允许的符号链接",
             )
         }
         if (target.length() > limits.maxTextBytes) {
             return readFailure(
                 SkillResourceErrorCode.RESOURCE_TOO_LARGE,
-                "Skill мистецтвакнигаКапіталджерелообганятиПас ${limits.maxTextBytes} характерФестивальобмеженнясистема",
+                "Skill 文本资源超过 ${limits.maxTextBytes} 字节限制",
             )
         }
         val text = try {
             readStrictUtf8(target, limits.maxTextBytes)
         } catch (_: Exception) {
-            return readFailure(SkillResourceErrorCode.IO_ERROR, "читатиВиберіть Skill Капіталджереловтратитипоразка")
+            return readFailure(SkillResourceErrorCode.IO_ERROR, "读取 Skill 资源失败")
         } ?: return readFailure(
             SkillResourceErrorCode.BINARY_RESOURCE,
-            "СлідКапіталджерелонемаєтакможевстановитиПовнийчитатиВиберітьз UTF-8 мистецтвакнига",
+            "该资源不是可安全读取的 UTF-8 文本",
         )
         return SkillResourceReadResult.Success(
             relativePath = segments.joinToString("/"),
@@ -203,7 +203,7 @@ class SkillResourceReader internal constructor(
         SkillResourceReadResult.Failure(SkillResourceError(code, message))
 }
 
-/** Суворе декодування UTF-8; переповнення, NUL або контрольні символи, крім нового рядка/повернення каретки/табуляції, розглядаються як нетекстові.*/
+/** 严格 UTF-8 解码；超限、NUL 或除换行/回车/制表符外的控制字符均视为非文本。 */
 internal fun readStrictUtf8(file: File, maxBytes: Long): String? {
     if (file.length() > maxBytes) return null
     val bytes = file.inputStream().use { input ->

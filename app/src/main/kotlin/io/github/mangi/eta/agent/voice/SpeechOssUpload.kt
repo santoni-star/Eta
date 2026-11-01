@@ -15,7 +15,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 
-/** Журнали розміщуються на диску перед завантаженням; об’єкти, які потрібно видалити, все ще можна отримати, якщо процес зупинено або результат завантаження невідомий.*/
+/** 日志先于上传落盘；进程被杀或上传结果不明时仍能找回待删除对象。 */
 internal class SpeechOssUpload(
     context: Context,
     private val send: suspend (okhttp3.Request) -> Unit = { request -> SpeechHttp.read(request) { Unit } },
@@ -76,10 +76,10 @@ internal class SpeechOssUpload(
 
     private fun remember(entry: String) = synchronized(LOCK) {
         val pending = preferences.getStringSet("pending", emptySet())!!.toMutableSet()
-        if (pending.size >= 100) throw SpeechFailure(SpeechErrorCode.STORAGE, "лікуватияснопричиназаписзвукпорівнятибагато，будь ласкаперевіритиперевірити OSS видалитивидалитиправильнообмеженняназадВажкапочаток Eta")
+        if (pending.size >= 100) throw SpeechFailure(SpeechErrorCode.STORAGE, "待清理录音较多，请检查 OSS 删除权限后重启 Eta")
         pending += entry
         if (!preferences.edit().putStringSet("pending", pending).commit()) {
-            throw SpeechFailure(SpeechErrorCode.STORAGE, "немаєЗаконзапам'ятатизаписзаписзвукяснопричиналистінтерес")
+            throw SpeechFailure(SpeechErrorCode.STORAGE, "无法记录录音清理信息")
         }
         active += entry
     }

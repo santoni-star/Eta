@@ -36,7 +36,7 @@ import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Маршрутизація виконання загальних можливостей пристрою; Кореневі скрипти фіксовано генеруються відповідними виконавцями.*/
+/** 常用设备能力的执行路由；Root 脚本由对应执行器固定生成。 */
 internal class AgentStructuredDeviceTools(
     private val context: Context,
     private val logger: AgentLogger,
@@ -84,7 +84,7 @@ internal class AgentStructuredDeviceTools(
                         return sensitive(
                             indexed
                                 .put("fallback_reason", native.optString("code"))
-                                .put("notice", "Оригіналпочатокзручнийзнакприходьджерелотимчасовонемаєможечитати，поверненняповерненнякалендарісторіїОтжепривести，немаєздатнийвідповідно доцеправильнорозпізнатибільшістьновийформустан")
+                                .put("notice", "原始便签来源暂不可读，返回历史索引，不能据此确认最新状态")
                                 .toString()
                         )
                     }
@@ -133,7 +133,7 @@ internal class AgentStructuredDeviceTools(
                                 .also {
                                     if (state == null)
                                         it.put("code", "STATE_UNAVAILABLE")
-                                            .put("message", "немаєЗаконправильнорозпізнатиколивпередВІДЧИНЕНОзакритиформустан")
+                                            .put("message", "无法确认当前开关状态")
                                 }
                                 .toString()
                         )
@@ -172,7 +172,7 @@ internal class AgentStructuredDeviceTools(
                     else -> null
                 }
         } catch (failure: PhoneOperationFailure) {
-            sensitive(PhoneOperation.failure(failure.code, failure.message ?: "женьшеньномернемаєефект").toString())
+            sensitive(PhoneOperation.failure(failure.code, failure.message ?: "参数无效").toString())
         }
     }
 
@@ -184,12 +184,12 @@ internal class AgentStructuredDeviceTools(
                 JSONObject()
                     .put("ok", false)
                     .put("code", "ROOT_REQUIRED")
-                    .put("message", "Краваткасистемазапам'ятативідкликатиприходьджерелопотребахочутьналаштуватиПриготуйте Root правильнообмеження；досіможеперевіритиЗапитуйтевженавчатиправильнозПасзнатикалендарісторії")
+                    .put("message", "系统记忆来源需要设备 Root 权限；仍可查询已授权的通知历史")
             } else if (!colorOs()) {
                 JSONObject()
                     .put("ok", false)
                     .put("code", "DEVICE_UNSUPPORTED")
-                    .put("message", "ценалаштуватиПриготуйтенемаєвідділенняутримуватиКраваткасистемазапам'ятативідкликатиприходьджерело；досіможеперевіритиЗапитуйтевженавчатиправильнозПасзнатикалендарісторії")
+                    .put("message", "此设备不支持系统记忆来源；仍可查询已授权的通知历史")
             } else
                 runCatching {
                     JSONObject(colorOsMemoryTools.searchOrders(args).content)
@@ -234,7 +234,7 @@ internal class AgentStructuredDeviceTools(
                 JSONObject()
                     .put("ok", false)
                     .put("code", "NOTIFICATION_HISTORY_ACCESS_REQUIRED")
-                    .put("message", "навчатидатиПасзнатизробитивикористовуватиправильноназадможевідновийПасзнатисерединазнанняне требапорядокодинформустан")
+                    .put("message", "授予通知使用权后可从新通知中识别订单状态")
             }
         return AgentModelClient.ToolResult(
             content =
@@ -344,11 +344,11 @@ internal class AgentStructuredDeviceTools(
             return JSONObject()
                 .put("ok", false)
                 .put("code", "DIRECT_CLOCK_ACTION_FAILED")
-                .put("message", "Краваткасистемаще ніправильнорозпізнатипрямозловитистворитивстановити，вжебитиВІДЧИНЕНОгодинадзвоникСторінкалокшина，будь ласканехайвикористовуватипобутовізакінченостатиправильнорозпізнати")
+                .put("message", "系统未确认直接创建，已打开时钟页面，请让用户完成确认")
                 .put("tool", tool)
                 .put("mode", "ui_fallback")
         }
-        return JSONObject(error("CLOCK_UNAVAILABLE", "безматиможевпричинаСлідбудь ласкапроситизгодинадзвониквідповідьвикористовувати"))
+        return JSONObject(error("CLOCK_UNAVAILABLE", "没有可处理该请求的时钟应用"))
     }
 
     private fun deviceStatus(): String {
@@ -439,7 +439,7 @@ internal class AgentStructuredDeviceTools(
                 "next" -> KeyEvent.KEYCODE_MEDIA_NEXT
                 "previous" -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
                 "stop" -> KeyEvent.KEYCODE_MEDIA_STOP
-                else -> return error("INVALID_ARGUMENT", "немаєвідділенняутримуватизЗМІтілорухатисяробити")
+                else -> return error("INVALID_ARGUMENT", "不支持的媒体动作")
             }
         val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
@@ -455,7 +455,7 @@ internal class AgentStructuredDeviceTools(
         val namespace = args.getString("namespace").lowercase(Locale.ROOT)
         val key = args.getString("key")
         if (!DeviceToolContract.validSetting(namespace, key))
-            return error("INVALID_ARGUMENT", "налаштувативстановитижиттяназванульовийміжабоключсіткаРежимнемаєефект")
+            return error("INVALID_ARGUMENT", "设置命名空间或键格式无效")
         var publicReadFailure: String? = null
         val publicValue =
             try {
@@ -473,7 +473,7 @@ internal class AgentStructuredDeviceTools(
                 null
             }
         if (publicReadFailure != null && !rootAvailable()) {
-            return error(publicReadFailure, "КраваткасистеманемаєдозволяютьтравнячитатиВиберітьценалаштувативстановити，абоналаштувативстановитиОдягобслуговуваннятимчасовонемаєможевикористовувати")
+            return error(publicReadFailure, "系统不允许读取此设置，或设置服务暂不可用")
         }
         val rootValue =
             if (publicValue == null && rootAvailable())
@@ -482,11 +482,11 @@ internal class AgentStructuredDeviceTools(
                 )
             else null
         if (publicReadFailure != null && rootValue?.ok != true) {
-            return error(publicReadFailure, "КраваткасистеманемаєдозволяютьтравнячитатиВиберітьценалаштувативстановити，абоналаштувативстановитиОдягобслуговуваннятимчасовонемаєможевикористовувати")
+            return error(publicReadFailure, "系统不允许读取此设置，或设置服务暂不可用")
         }
         if (rootValue != null && !rootValue.ok) return rootError(rootValue)
         if (rootValue?.truncated == true)
-            return error("SETTING_VALUE_TRUNCATED", "налаштувативстановитизначенняобганятиПасчитатиВиберітьначальникаобмеження，немаєЗаконповерненняповерненнязакінченовсезначення")
+            return error("SETTING_VALUE_TRUNCATED", "设置值超过读取上限，无法返回完整值")
         val value =
             publicValue
                 ?: rootValue
@@ -552,7 +552,7 @@ internal class AgentStructuredDeviceTools(
         val dataSizes = parseLongArrayLine(result.stdout, "App Data Sizes:")
         val cacheSizes = parseLongArrayLine(result.stdout, "Cache Sizes:")
         if (packages == null || appSizes == null || dataSizes == null || cacheSizes == null) {
-            return error("STORAGE_STATS_UNAVAILABLE", "Краваткасистемаще ніповерненняповерненняможерозв'язатианалізуватизвідповідьвикористовуватижитизберігатисистемарозраховувати")
+            return error("STORAGE_STATS_UNAVAILABLE", "系统未返回可解析的应用存储统计")
         }
         val items =
             (0 until packages.length())
@@ -666,11 +666,11 @@ internal class AgentStructuredDeviceTools(
 
     private fun listenerNotifications(packageFilter: String, limit: Int): String {
         if (!AgentNotificationHistoryService.isEnabled(context)) {
-            return error("NOTIFICATION_ACCESS_REQUIRED", "будь ласкапершеіснуютьправильнообмеженняздоровийЗдоровийСторінканавчатидати Eta Пасзнатизробитивикористовуватиправильно")
+            return error("NOTIFICATION_ACCESS_REQUIRED", "请先在权限健康页授予 Eta 通知使用权")
         }
         val notifications =
             AgentNotificationHistoryService.currentNotifications()
-                ?: return error("NOTIFICATION_LISTENER_UNAVAILABLE", "ПасзнатиОдягобслуговуваннядосіще нінавітьзловити，будь ласкатрохиназадВажкаспробувати")
+                ?: return error("NOTIFICATION_LISTENER_UNAVAILABLE", "通知服务尚未连接，请稍后重试")
         val items = JSONArray()
         notifications
             .asSequence()
@@ -755,7 +755,7 @@ internal class AgentStructuredDeviceTools(
                 result.timedOut -> "ROOT_COMMAND_TIMEOUT"
                 else -> "ROOT_COMMAND_FAILED"
             }
-        return error(code, "Root КраваткасистемазловитиротВиконатидобревтратитипоразка（exit=${result.exitCode}）")
+        return error(code, "Root 系统接口执行失败（exit=${result.exitCode}）")
     }
 
     private fun parseJsonArrayLine(source: String, prefix: String): JSONArray? =
@@ -787,7 +787,7 @@ internal class AgentStructuredDeviceTools(
             "thu" -> Calendar.THURSDAY
             "fri" -> Calendar.FRIDAY
             "sat" -> Calendar.SATURDAY
-            else -> throw IllegalArgumentException("немаєвідділенняутримуватизВажкаскладніденьОчікуйте")
+            else -> throw IllegalArgumentException("不支持的重复日期")
         }
 
     private fun String.decodeXml(): String =
@@ -824,18 +824,18 @@ internal class AgentStructuredDeviceTools(
     private companion object {
         val ORDER_KEYWORDS =
             listOf(
-                "порядокодин",
-                "назовніПродати",
-                "Виберітьїжа",
-                "матчдоставити",
-                "їздитируку",
-                "доставитидосяжність",
-                "бізнесдодому",
-                "швидкийпередати",
-                "автомобільквиток",
-                "машинаквиток",
-                "лікермагазин",
-                "електроенергіяфільмквиток",
+                "订单",
+                "外卖",
+                "取餐",
+                "配送",
+                "骑手",
+                "送达",
+                "商家",
+                "快递",
+                "车票",
+                "机票",
+                "酒店",
+                "电影票",
             )
         const val COLOROS_CLOCK_PACKAGE = "com.coloros.alarmclock"
         val NETWORK_BLOCK = Regex("<Network>.*?</Network>", setOf(RegexOption.DOT_MATCHES_ALL))
@@ -848,7 +848,7 @@ internal class AgentStructuredDeviceTools(
         val OTP = Regex("""(?<!\d)(\d{4,8})(?!\d)""")
         val OTP_CONTEXT =
             Regex(
-                """тестсертифікаткод|школатесткод|рухатисястанкод|правильнорозпізнатикод|одинДругосортнийсексщільнийкод|verification\s*code|one[- ]time\s*(?:code|password)|\botp\b""",
+                """验证码|校验码|动态码|确认码|一次性密码|verification\s*code|one[- ]time\s*(?:code|password)|\botp\b""",
                 RegexOption.IGNORE_CASE,
             )
         val WIFI_STATUS_SSID = Regex("""\bSSID:\s*([^,\r\n]+)""")

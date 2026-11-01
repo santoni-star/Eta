@@ -29,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.Text
 
-/** Інформація про особу персонажа в розмовах і списках; коли шлях до аватара порожній, ім’я використовується для створення аватара субтитрів.*/
+/** 角色在对话与列表中的身份信息；头像路径为空时用名字生成字标头像。 */
 @Immutable
 internal data class RoleplayChatUi(
     val characterName: String,
@@ -37,12 +37,12 @@ internal data class RoleplayChatUi(
     val userName: String,
 )
 
-/** Роль, прив'язана до поточного діалогу; звичайний діалог агента є нульовим, а повідомлення та порожній стан перемикаються на стиль ролі відповідно.*/
+/** 当前对话绑定的角色；普通 Agent 对话为 null，消息与空态据此切换为角色样式。 */
 internal val LocalRoleplayChat = staticCompositionLocalOf<RoleplayChatUi?> { null }
 
 /**
- * Кеш декодування зображень символів. Оригінальне зображення картки символу зазвичай є PNG понад 1024 пікселів, яке зменшується відповідно до розміру дисплея, а потім кешується.
- * Прокручування списків і реорганізація повідомлень зачіпають лише пам'ять; ключ містить цільовий розмір, щоб уникнути повторного використання великих зображень із маленькими аватарами для витрачання пам’яті.
+ * 角色图片解码缓存。角色卡原图常为 1024px 以上的 PNG，按显示尺寸降采样后缓存，
+ * 列表滚动与消息重组都只命中内存；键包含目标尺寸，避免小头像复用大图浪费内存。
  */
 private object CharacterImageCache {
     private val cache = object : LruCache<String, ImageBitmap>(48 * 1024 * 1024) {
@@ -65,11 +65,11 @@ private object CharacterImageCache {
         bitmap.asImageBitmap().also { cache.put(key(path, maxPx), it) }
     }
 
-    // Редагування аватара призведе до створення нового імені файлу, вміст того самого шляху залишається незмінним, а час модифікації файлу включається в ключ лише для запобігання зовнішньому перезапису.
+    // 编辑头像会生成新文件名，同一路径内容不变，文件修改时间纳入键只为防御外部覆盖。
     private fun key(path: String, maxPx: Int) = "$path#${File(path).lastModified()}#$maxPx"
 }
 
-/** Асинхронне декодування зображення символу відповідно до розміру дисплея; при попаданні в кеш зображення буде доступним у першому кадрі, а словесний знак не блиматиме.*/
+/** 按显示尺寸异步解码角色图片；缓存命中时首帧即有图，不闪字标占位。 */
 @Composable
 internal fun rememberCharacterImage(path: String?, displaySize: Dp): ImageBitmap? {
     val maxPx = with(LocalDensity.current) { displaySize.roundToPx() }.coerceIn(32, 1024)
@@ -80,8 +80,8 @@ internal fun rememberCharacterImage(path: String?, displaySize: Dp): ImageBitmap
 }
 
 /**
- * Аватар персонажа: якщо є зображення, обріжте його та заповніть. Обличчя персонажа зазвичай знаходиться вгорі зображення, тому вирівняйте його вертикально до верху;
- * Якщо зображення немає, використовуйте ініціали імені та стабільний колір для створення словесного знака. Один і той самий символ матиме однаковий колір на всіх сторінках.
+ * 角色头像：有图时按裁剪填满，人物脸部通常在画面上方，因此纵向对齐顶部；
+ * 无图时用名字首字与稳定配色生成字标，同一角色在所有页面颜色一致。
  */
 @Composable
 internal fun CharacterAvatar(
@@ -92,7 +92,7 @@ internal fun CharacterAvatar(
     modifier: Modifier = Modifier.size(size),
     image: ImageBitmap? = rememberCharacterImage(avatarPath, size),
 ) {
-    // розмір визначає роздільну здатність декодування; розмір макета визначається модифікатором. За умовчанням встановлено квадратний розмір, і абонент може змінити його на вертикальний або повний.
+    // size 决定解码分辨率；布局尺寸由 modifier 决定，默认即正方形 size，调用方可改为竖版或铺满。
     Box(
         modifier = modifier.clip(shape),
         contentAlignment = Alignment.Center,
@@ -127,7 +127,7 @@ internal fun CharacterMonogram(name: String, size: Dp, modifier: Modifier = Modi
     }
 }
 
-/** Відповідність кольору словесного знака: двоколірний градієнт низької насиченості, білий текст чіткий під темними та світлими темами кольорів; колір хешується за назвою, результат стабільний.*/
+/** 字标配色：低饱和的双色渐变，深浅色主题下白字都清晰；按名字散列取色，结果稳定。 */
 private val MonogramPalette = listOf(
     listOf(Color(0xFFF58FA8), Color(0xFFC56CD6)),
     listOf(Color(0xFF7FA7F5), Color(0xFF6A6FE0)),

@@ -43,17 +43,17 @@ internal object GeminiInteractionsRequest {
         if (converted.length() > 0) body.put("tools", converted)
 
         val generation = body.optJSONObject("generation_config") ?: JSONObject()
-        // Вибір інструментів і рівень мислення визначаються запущеною конфігурацією, а спеціальний JSON не може обійти можливості входу та перемикачі.
+        // 工具选择与思考档位由运行配置决定，自定义 JSON 不能绕过入口能力与开关。
         generation.remove("tool_choice")
         generation.remove("thinking_level")
         generation.remove("thinking_summaries")
         if (searchEnabled && tools.length() > 0) generation.put("tool_choice", "validated")
         val effort = config.effectiveReasoningEffort
         if (effort != ReasoningEffort.DEFAULT) {
-            require(effort != ReasoningEffort.OFF) { "коливперед Gemini цвільтипунемаєвідділенняутримуватизакритизакритидумаюТест，будь ласкавибративибрати Default абовідділенняутримуватиздумаюТестфайлибіт。" }
+            require(effort != ReasoningEffort.OFF) { "当前 Gemini 模型不支持关闭思考，请选择 Default 或支持的思考档位。" }
             require(effort.wireValue in setOf("minimal", "low", "medium", "high") &&
                 effort in config.reasoningCapabilities?.supportedEfforts.orEmpty()) {
-                "коливперед Gemini цвільтипунемаєвідділенняутримуватиМісцевибратидумаюТестфайлибіт。"
+                "当前 Gemini 模型不支持所选思考档位。"
             }
             generation.put("thinking_level", effort.wireValue)
         }
@@ -63,7 +63,7 @@ internal object GeminiInteractionsRequest {
     }
 }
 
-/** Постійна історія без підпису служить лише чітко позначеним записом і не підробляє власний ланцюжок викликів інструментів.*/
+/** 缺少签名的持久历史只作为明确标注的记录，不伪造原生工具调用链。 */
 internal object GeminiInteractionHistory {
     fun input(messages: JSONArray): JSONArray {
         val start = (0 until messages.length()).firstOrNull {
@@ -80,8 +80,8 @@ internal object GeminiInteractionHistory {
         fun flushHistory() {
             if (history.isEmpty()) return
             input.put(userInput(JSONArray().put(text(
-                "[завнизтак Eta зберегтижитизкалендарісторіїправильноговоритимистецтвакнигазапам'ятатизапис；працюватиІнструментмелодіявикористовуватиівузолфруктитількидляженьшеньТест，немаєтакколивпередлікуватиВиконатидобребудь ласкапросити。]\n" +
-                    history.joinToString("\n\n") + "\n[календарісторіїзапам'ятатизаписвузолпучок]",
+                "[以下是 Eta 保存的历史对话文本记录；工具调用与结果仅供参考，不是当前待执行请求。]\n" +
+                    history.joinToString("\n\n") + "\n[历史记录结束]",
             ))))
             history.clear()
         }
@@ -127,8 +127,8 @@ internal object GeminiInteractionHistory {
         append('[').append(message.optString("role")).append("] ")
         append(providerMessageText(message.opt("content")))
         val calls = message.optJSONArray("tool_calls")
-        if (calls != null) append("\nпрацюватиІнструментмелодіявикористовуватизапам'ятатизапис：").append(calls)
-        if (message.optString("role") == "tool") append("\nмелодіявикористовуватизнакзнання：").append(message.optString("tool_call_id"))
+        if (calls != null) append("\n工具调用记录：").append(calls)
+        if (message.optString("role") == "tool") append("\n调用标识：").append(message.optString("tool_call_id"))
     }
 
     private fun isToolError(result: String): Boolean = try {
@@ -155,19 +155,19 @@ internal object GeminiInteractionHistory {
                     if (url.startsWith("data:image/", ignoreCase = true)) {
                         val comma = url.indexOf(',')
                         require(comma > 0 && url.substring(0, comma).endsWith(";base64", ignoreCase = true)) {
-                            "Gemini малюнокшматоквтратитивведітьповиненОбов'язководля Base64 малюнокшматокабо HTTP землісайт。"
+                            "Gemini 图片输入必须为 Base64 图片或 HTTP 地址。"
                         }
                         image.put("mime_type", url.substring(5, comma).substringBefore(';'))
                             .put("data", url.substring(comma + 1))
                     } else {
                         require(url.startsWith("https://") || url.startsWith("http://")) {
-                            "Gemini малюнокшматоквтратитивведітьземлісайтнемаєефект。"
+                            "Gemini 图片输入地址无效。"
                         }
                         image.put("uri", url)
                     }
                     converted.put(image)
                 }
-                else -> throw IllegalArgumentException("Gemini немаєвідділенняутримуватиСлідвтратитивведітьВсерединіДозволитивидтипу。")
+                else -> throw IllegalArgumentException("Gemini 不支持该输入内容类型。")
             }
         }
         return converted

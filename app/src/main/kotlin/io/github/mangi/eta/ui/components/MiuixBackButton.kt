@@ -10,7 +10,7 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 
 /**
- * Уніфікуйте кнопку повернення на додатковій сторінці, зберігаючи піктограму, семантику та напрямок RTL відповідно до області натискання.
+ * 二级页面统一返回按钮，保持图标、语义、RTL 方向与点击区域一致。
  */
 @Composable
 fun MiuixBackButton(

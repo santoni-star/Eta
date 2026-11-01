@@ -10,7 +10,7 @@ import android.speech.RecognitionService
 import android.speech.SpeechRecognizer
 
 /**
- * Роль Android Assistant вимагає декларації служб ідентифікації. Системні виклики делегуються зовнішньому ASR; плаваючі вікна безпосередньо використовують той самий запис аналізу служби, щоб уникнути зворотного виклику.
+ * Android 助理角色要求声明识别服务。系统调用委托给外部 ASR；浮窗直接使用同一服务解析入口，避免回调自身。
  */
 class EtaRecognitionService : RecognitionService() {
     private val mainHandler = Handler(Looper.getMainLooper())

@@ -3,10 +3,10 @@ package io.github.mangi.eta.data.model
 import kotlinx.serialization.Serializable
 
 /**
- * Спеціальний заголовок HTTP на рівні постачальника або моделі.
+ * Provider 或模型级别的自定义 HTTP Header。
  *
- * Примітка: небезпечні заголовки, такі як host/content-length/connection/transfer-encoding
- * Буде відфільтровано на мережевому рівні, щоб запобігти пошкодженню протоколу HTTP.
+ * 注意：host / content-length / connection / transfer-encoding 等危险 header
+ * 会在网络层被过滤，防止破坏 HTTP 协议。
  */
 @Serializable
 data class CustomHeader(

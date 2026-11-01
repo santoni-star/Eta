@@ -27,11 +27,11 @@ internal object SpeechHttp {
 
     suspend fun json(request: Request): JSONObject = read(request) { response ->
         val source = response.body.source()
-        if (source.request(MAX_JSON_BYTES + 1)) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "мовазвукОдягобслуговуваннякільцевідповідьПасвеликий")
+        if (source.request(MAX_JSON_BYTES + 1)) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "语音服务响应过大")
         JSONObject(source.readUtf8())
     }
 
-    /** Весь цикл споживання відповідей знаходиться в межах захисту зворотного виклику скасування, щоб уникнути лише скасування встановлення з’єднання, але залишити заблоковані читання.*/
+    /** 消费响应的整个周期都在取消回调保护内，避免只取消建连却遗留阻塞读。 */
     suspend fun <T> read(request: Request, consume: (Response) -> T): T = suspendCancellableCoroutine { continuation ->
         val call = client.newCall(request)
         continuation.invokeOnCancellation { call.cancel() }
@@ -58,9 +58,9 @@ internal object SpeechHttp {
     fun checkStatus(status: Int) {
         if (status in 200..299) return
         throw when (status) {
-            401, 403 -> SpeechFailure(SpeechErrorCode.AUTHENTICATION, "мовазвукОдягобслуговуваннярозпізнатисертифікатвтратитипоразка，будь ласкаперевіритиперевіритизавідповідно доіОдягобслуговуванняправильнообмеження")
-            429 -> SpeechFailure(SpeechErrorCode.RATE_LIMITED, "мовазвукОдягобслуговуваннябудь ласкапроситиПасначастотаТрадиційний，будь ласкатрохиназадВажкаспробувати")
-            else -> SpeechFailure(SpeechErrorCode.SERVER, "мовазвукОдягобслуговуваннябудь ласкапроситивтратитипоразка（HTTP $status）")
+            401, 403 -> SpeechFailure(SpeechErrorCode.AUTHENTICATION, "语音服务认证失败，请检查凭据和服务权限")
+            429 -> SpeechFailure(SpeechErrorCode.RATE_LIMITED, "语音服务请求过于频繁，请稍后重试")
+            else -> SpeechFailure(SpeechErrorCode.SERVER, "语音服务请求失败（HTTP $status）")
         }
     }
 

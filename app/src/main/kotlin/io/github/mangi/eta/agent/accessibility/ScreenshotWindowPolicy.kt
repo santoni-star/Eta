@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.accessibility
 
-/** Фільтрація вікна знімка екрана має відповідати тому, що бачить модель, вікну, яке фактично отримує дотики.*/
+/** 截图窗口筛选必须保持“模型看到的”和实际接收触摸的窗口一致。 */
 internal object ScreenshotWindowPolicy {
     enum class Decision {
         CAPTURE,

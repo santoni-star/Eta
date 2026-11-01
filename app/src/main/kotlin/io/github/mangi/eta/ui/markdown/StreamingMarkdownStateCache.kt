@@ -2,7 +2,7 @@ package io.github.mangi.eta.ui.markdown
 
 import androidx.compose.runtime.mutableStateMapOf
 
-/** Потоковий стан зберігається лише для входу; документи, які закінчилися та не збираються, передаються в обмежений статичний кеш.*/
+/** 流式状态只跨条目挂载保留；已结束且脱离组合的文档交给有界静态缓存。 */
 internal class StreamingMarkdownStateCache {
     private val retainedStates = mutableStateMapOf<String, StreamingMarkdownState>()
     val states: Map<String, StreamingMarkdownState> get() = retainedStates

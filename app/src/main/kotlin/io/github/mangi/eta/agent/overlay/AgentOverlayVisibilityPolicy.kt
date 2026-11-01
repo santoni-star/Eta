@@ -5,7 +5,7 @@ import io.github.mangi.eta.agent.runtime.AgentRuntimeWire
 import io.github.mangi.eta.agent.runtime.GuiControlStatus
 import io.github.mangi.eta.agent.tool.AgentToolRequirements
 
-/** Плаваюче вікно відповідає лише фактичним правам роботи мобільного телефону; модель генерує параметри інструменту, що не означає, що стійкою реєстрації можна керувати.*/
+/** 浮窗只跟随实际手机操作权；模型正在生成工具参数不表示已经可以操作前台。 */
 internal object AgentOverlayVisibilityPolicy {
     fun shouldRevealFor(event: AgentEvent): Boolean = when (event) {
         is AgentEvent.GuiControlChanged -> event.status == GuiControlStatus.Acquired
@@ -30,8 +30,8 @@ internal object AgentOverlayVisibilityPolicy {
         requiresEntrySurfaceDismissal(event.name) && event.success != false
 
     /**
-     * Завдання, ініційовані на власній сторінці чату додатка, більше не будуть накладатися системними плаваючими вікнами або картками результатів, коли користувач все ще перебуває на передньому плані Eta.
-     * Уникайте блокування потоку бесіди, яка вже показує поточний процес, або кнопки «Назад до Eta», яка вказує на поточну сторінку.
+     * App 自身聊天页发起的任务，当用户仍停留在 Eta 前台时不再叠加系统浮窗或结果卡片，
+     * 避免遮挡已经在展示实时过程的对话流，或出现指向当前页面的“回到 Eta”按钮。
      */
     internal fun shouldSuppressOverlayInEtaUi(
         handoffSource: String?,

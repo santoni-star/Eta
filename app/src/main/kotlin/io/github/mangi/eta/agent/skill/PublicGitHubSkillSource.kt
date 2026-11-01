@@ -44,12 +44,12 @@ internal class GitHubSkillSourceException(
     cause: Throwable? = null,
 ) : IOException(message, cause)
 
-/** Проаналізуйте URL-адресу сховища GitHub або дерева/блобів, надану користувачем. Сайти-дзеркала, облікові дані та спеціальні порти не приймаються.*/
+/** 解析用户提供的 GitHub 仓库或 tree/blob URL，不接受镜像站、凭据与自定义端口。 */
 internal object GitHubSkillRepositoryParser {
     fun parse(value: String): GitHubSkillRepository {
         val input = value.trim()
-        if (input.isBlank()) invalid("GitHub складБібліотеканемаєздатнийдлянульовий")
-        if (input.length > MAX_SOURCE_LENGTH) invalid("GitHub складБібліотеказемлісайтПасдовго")
+        if (input.isBlank()) invalid("GitHub 仓库不能为空")
+        if (input.length > MAX_SOURCE_LENGTH) invalid("GitHub 仓库地址过长")
         return if (input.contains("://")) parseUrl(input) else parseSlug(input)
     }
 
@@ -62,10 +62,10 @@ internal object GitHubSkillRepositoryParser {
         val normalizedRef = explicitRef?.trim()?.takeIf { it.isNotEmpty() }?.let(::normalizeRef)
         val normalizedPath = explicitPath?.let(::normalizeRelativePath)
         if (parsed.ref != null && normalizedRef != null && parsed.ref != normalizedRef) {
-            invalid("URL серединаз ref і ref женьшеньномернемаєодиндо")
+            invalid("URL 中的 ref 与 ref 参数不一致")
         }
         if (parsed.path != null && normalizedPath != null && parsed.path != normalizedPath) {
-            invalid("URL серединаздорогашляхі path женьшеньномернемаєодиндо")
+            invalid("URL 中的路径与 path 参数不一致")
         }
         return parsed.copy(
             ref = normalizedRef ?: parsed.ref,
@@ -84,11 +84,11 @@ internal object GitHubSkillRepositoryParser {
             '\\' in normalized ||
             normalized.any { it.isISOControl() }
         ) {
-            invalid("Skill дорогашляхповиненОбов'язковотакскладБібліотекаВсерединізВзаємноправильнодорогашлях")
+            invalid("Skill 路径必须是仓库内的相对路径")
         }
         val segments = normalized.trimEnd('/').split('/')
         if (segments.any { it.isBlank() || it == "." || it == ".." }) {
-            invalid("Skill дорогашляхСумкаМіститьнемаєефектшматокчастина")
+            invalid("Skill 路径包含无效片段")
         }
         return segments.joinToString("/")
     }
@@ -104,34 +104,34 @@ internal object GitHubSkillRepositoryParser {
             "@{" in normalized ||
             segments.any { it == "." || it == ".." || it.endsWith(".lock") }
         ) {
-            invalid("GitHub ref немаєефект")
+            invalid("GitHub ref 无效")
         }
         return normalized
     }
 
     private fun parseUrl(input: String): GitHubSkillRepository {
         val uri = runCatching { URI(input) }
-            .getOrElse { invalid("GitHub URL немаєефект") }
+            .getOrElse { invalid("GitHub URL 无效") }
         if (!uri.scheme.equals("https", ignoreCase = true)) {
-            invalid("тількивідділенняутримувати HTTPS GitHub URL")
+            invalid("仅支持 HTTPS GitHub URL")
         }
         val host = uri.host?.lowercase(Locale.ROOT)
         if (host !in ALLOWED_GITHUB_HOSTS || uri.rawUserInfo != null || uri.port != -1) {
-            invalid("тількивідділенняутримувати github.com чоловічийпоширенийскладБібліотека URL")
+            invalid("仅支持 github.com 公共仓库 URL")
         }
         if (uri.rawQuery != null || uri.rawFragment != null) {
-            invalid("GitHub URL немаєздатнийСумкаМіститьперевіритиЗапитуйтеженьшеньномерабошматокчастина")
+            invalid("GitHub URL 不能包含查询参数或片段")
         }
         if ("//" in uri.path.orEmpty() || '\\' in uri.path.orEmpty()) {
-            invalid("GitHub URL дорогашляхнемаєефект")
+            invalid("GitHub URL 路径无效")
         }
         val segments = uri.path.orEmpty().trim('/').split('/').filter(String::isNotBlank)
-        if (segments.size < 2) invalid("GitHub URL відсутністьмало owner/repository")
+        if (segments.size < 2) invalid("GitHub URL 缺少 owner/repository")
         val owner = validateOwner(segments[0])
         val repository = validateRepository(segments[1].removeSuffix(".git"))
         if (segments.size == 2) return GitHubSkillRepository(owner, repository)
         if (segments[2] !in setOf("tree", "blob") || segments.size < 4) {
-            invalid("тількивідділенняутримувати GitHub складБібліотека、tree або blob URL")
+            invalid("仅支持 GitHub 仓库、tree 或 blob URL")
         }
         val ref = normalizeRef(segments[3])
         var path = segments.drop(4).joinToString("/").takeIf { it.isNotBlank() }
@@ -144,7 +144,7 @@ internal object GitHubSkillRepositoryParser {
 
     private fun parseSlug(input: String): GitHubSkillRepository {
         val segments = input.removeSuffix(".git").split('/')
-        if (segments.size != 2) invalid("складБібліотекавідповідьдля owner/repository або github.com URL")
+        if (segments.size != 2) invalid("仓库应为 owner/repository 或 github.com URL")
         return GitHubSkillRepository(
             owner = validateOwner(segments[0]),
             repository = validateRepository(segments[1]),
@@ -152,13 +152,13 @@ internal object GitHubSkillRepositoryParser {
     }
 
     private fun validateOwner(value: String): String {
-        if (!OWNER_PATTERN.matches(value)) invalid("GitHub owner немаєефект")
+        if (!OWNER_PATTERN.matches(value)) invalid("GitHub owner 无效")
         return value
     }
 
     private fun validateRepository(value: String): String {
         if (!REPOSITORY_PATTERN.matches(value) || value == "." || value == "..") {
-            invalid("GitHub repository немаєефект")
+            invalid("GitHub repository 无效")
         }
         return value
     }
@@ -176,10 +176,10 @@ internal object GitHubSkillRepositoryParser {
 }
 
 /**
- * Загальнодоступне джерело GitHub Skill.
+ * 公共 GitHub Skill 来源。
  *
- * Виявлення кандидатів через дерево API GitHub; інсталяційний архів закріплено для фіксації SHA та завантажено з коду. Клієнт не має
- * Токен, не слідуйте за переспрямуваннями та встановлюйте окремі жорсткі обмеження для відповідей JSON і ZIP.
+ * 候选通过 GitHub API tree 发现；安装归档固定到 commit SHA 后从 codeload 下载。客户端不带
+ * Token、不跟随重定向，并对 JSON 与 ZIP 响应分别设置硬上限。
  */
 internal class PublicGitHubSkillSource(
     cacheRoot: File,
@@ -221,7 +221,7 @@ internal class PublicGitHubSkillSource(
         if (tree.optBoolean("truncated", false)) {
             throw GitHubSkillSourceException(
                 "REPOSITORY_TREE_TOO_LARGE",
-                "складБібліотекаГоловазаписПасвеликий，GitHub ще ніповерненняповерненнязакінченовсевузолфрукти；будь ласканестидляяскравийправильноз Skill дорогашлях",
+                "仓库目录过大，GitHub 未返回完整结果；请提供明确的 Skill 路径",
             )
         }
         val prefix = repository.path?.takeUnless { it == "." }?.trimEnd('/')
@@ -248,7 +248,7 @@ internal class PublicGitHubSkillSource(
                 if (size > MAX_CANDIDATES) {
                     throw GitHubSkillSourceException(
                         "TOO_MANY_SKILL_CANDIDATES",
-                        "чекативибрати Skill обганятиПас $MAX_CANDIDATES індивідуальний，будь ласкаскорочуватисяМаленькийскладБібліотекадорогашлях",
+                        "候选 Skill 超过 $MAX_CANDIDATES 个，请缩小仓库路径",
                     )
                 }
             }
@@ -272,7 +272,7 @@ internal class PublicGitHubSkillSource(
         ) {
             throw GitHubSkillSourceException(
                 "GITHUB_COMMIT_MISMATCH",
-                "GitHub поверненняповерненняз commit івжеперевіритиперевіритиверсіякниганемаєодиндо",
+                "GitHub 返回的 commit 与已检查版本不一致",
             )
         }
         val commitSha = ref.takeIf(COMMIT_SHA_PATTERN::matches) ?: resolvedCommitSha
@@ -310,7 +310,7 @@ internal class PublicGitHubSkillSource(
             ?.let(GitHubSkillRepositoryParser::normalizeRef)
             ?: throw GitHubSkillSourceException(
                 "INVALID_GITHUB_RESPONSE",
-                "GitHub ще ніповерненняповерненнямовчазнийрозпізнатиточкавідділення",
+                "GitHub 未返回默认分支",
             )
     }
 
@@ -327,7 +327,7 @@ internal class PublicGitHubSkillSource(
         if (sha == null || treeSha == null) {
             throw GitHubSkillSourceException(
                 "INVALID_GITHUB_RESPONSE",
-                "GitHub ще ніповерненняповерненняматиефект commit/tree SHA",
+                "GitHub 未返回有效 commit/tree SHA",
             )
         }
         return CommitPointer(sha = sha, treeSha = treeSha)
@@ -355,7 +355,7 @@ internal class PublicGitHubSkillSource(
             .getOrElse { throwable ->
                 throw GitHubSkillSourceException(
                     "INVALID_GITHUB_RESPONSE",
-                    "GitHub поверненняповерненнязрозумівнемаєефект JSON",
+                    "GitHub 返回了无效 JSON",
                     throwable,
                 )
             }
@@ -401,7 +401,7 @@ internal class PublicGitHubSkillSource(
                 if (response.isRedirect) {
                     throw GitHubSkillSourceException(
                         "GITHUB_REDIRECT_REJECTED",
-                        "GitHub внизнавантаженняволоссянародивсяВажкаЗвичайноназустріч，вжевідхилитиАбсолютновідвідатизапитатищовінхостмашина",
+                        "GitHub 下载发生重定向，已拒绝访问其他主机",
                     )
                 }
                 if (!response.isSuccessful) {
@@ -411,9 +411,9 @@ internal class PublicGitHubSkillSource(
                         else -> "GITHUB_REQUEST_FAILED"
                     }
                     val message = when (code) {
-                        "GITHUB_RATE_LIMITED" -> "GitHub будь ласкапроситизаобмеження，будь ласкатрохиназадВажкаспробувати"
-                        "GITHUB_NOT_FOUND" -> "ще ніспробуйте знайтиприбутичоловічийВІДЧИНЕНО GitHub складБібліотека、ref абодорогашлях"
-                        else -> "GitHub будь ласкапроситивтратитипоразка（HTTP ${response.code}）"
+                        "GITHUB_RATE_LIMITED" -> "GitHub 请求受限，请稍后重试"
+                        "GITHUB_NOT_FOUND" -> "未找到公开 GitHub 仓库、ref 或路径"
+                        else -> "GitHub 请求失败（HTTP ${response.code}）"
                     }
                     throw GitHubSkillSourceException(code, message)
                 }
@@ -424,7 +424,7 @@ internal class PublicGitHubSkillSource(
         } catch (failure: IOException) {
             throw GitHubSkillSourceException(
                 code = if (closed.get()) "GITHUB_REQUEST_CANCELLED" else "GITHUB_NETWORK_ERROR",
-                message = if (closed.get()) "GitHub будь ласкапроситивжеВиберітьвидалити" else "немаєЗаконвідвідатизапитати GitHub чоловічийпоширенийскладБібліотека",
+                message = if (closed.get()) "GitHub 请求已取消" else "无法访问 GitHub 公共仓库",
                 cause = failure,
             )
         } finally {
@@ -454,7 +454,7 @@ internal class PublicGitHubSkillSource(
 
     private fun ensureOpen() {
         if (closed.get()) {
-            throw GitHubSkillSourceException("GITHUB_REQUEST_CANCELLED", "GitHub будь ласкапроситивжеВиберітьвидалити")
+            throw GitHubSkillSourceException("GITHUB_REQUEST_CANCELLED", "GitHub 请求已取消")
         }
     }
 
@@ -462,12 +462,12 @@ internal class PublicGitHubSkillSource(
         val path = cacheDirectory.toPath()
         if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
             if (Files.isSymbolicLink(path) || !Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-                throw GitHubSkillSourceException("CACHE_UNAVAILABLE", "Skill внизнавантаженняповільнийжитиГоловазаписнемаєвстановитиПовний")
+                throw GitHubSkillSourceException("CACHE_UNAVAILABLE", "Skill 下载缓存目录不安全")
             }
             return
         }
         if (!cacheDirectory.mkdirs() || Files.isSymbolicLink(path)) {
-            throw GitHubSkillSourceException("CACHE_UNAVAILABLE", "немаєЗаконстворитивстановити Skill внизнавантаженняповільнийжити")
+            throw GitHubSkillSourceException("CACHE_UNAVAILABLE", "无法创建 Skill 下载缓存")
         }
     }
 
@@ -485,12 +485,12 @@ internal class PublicGitHubSkillSource(
     }
 
     private fun responseTooLarge(): Nothing =
-        throw GitHubSkillSourceException("GITHUB_RESPONSE_TOO_LARGE", "GitHub кільцевідповідьобганятиПасвстановитиПовнийначальникаобмеження")
+        throw GitHubSkillSourceException("GITHUB_RESPONSE_TOO_LARGE", "GitHub 响应超过安全上限")
 
     private fun archiveTooLarge(): Nothing =
         throw GitHubSkillSourceException(
             "GITHUB_ARCHIVE_TOO_LARGE",
-            "GitHub складБібліотекаповерненняфайлиобганятиПас ${MAX_ARCHIVE_BYTES / 1024 / 1024} MiB начальникаобмеження",
+            "GitHub 仓库归档超过 ${MAX_ARCHIVE_BYTES / 1024 / 1024} MiB 上限",
         )
 
     internal data class DownloadedGitHubArchive(

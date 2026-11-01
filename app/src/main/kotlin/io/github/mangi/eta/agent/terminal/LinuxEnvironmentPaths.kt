@@ -4,7 +4,7 @@ import android.content.Context
 import io.github.mangi.eta.data.repository.LinuxEnvironmentSettingsRepository
 import java.io.File
 
-/** Визначення компонування диска та готовності спільно для двох rootfs Linux.*/
+/** 两个 Linux rootfs 共用的磁盘布局和就绪判定。 */
 internal object LinuxEnvironmentPaths {
     const val READY_MARKER = ".eta-environment-ready"
 

@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import io.github.mangi.eta.agent.runtime.AgentEvent
 import io.github.mangi.eta.agent.runtime.AgentRunController
 
-/** Повторює лише запити об’ємної моделі; журнал не фіксується або локальні інструменти не виконуються до повернення повної відповіді.*/
+/** 重试只包围模型请求；完整响应返回前不提交历史或执行本地工具。 */
 internal class AgentModelRetry(
     private val waitBeforeRetry: (AgentRunController, Long) -> Unit = { controller, delay ->
         controller.awaitRetryDelay(delay)
@@ -49,7 +49,7 @@ internal class AgentModelRetry(
                 if (retries == MAX_RETRIES) {
                     throw AgentModelFailure(
                         classified.code, false,
-                        "${classified.message} вжеВажкаспробувати $MAX_RETRIES Другосортнийдосіще нівідновитискладні，вжезберегтиТримайтецевпередзакінченостатизпрацюватиІнструментвузолфрукти。",
+                        "${classified.message} 已重试 $MAX_RETRIES 次仍未恢复，已保留此前完成的工具结果。",
                         classified,
                     )
                 }
@@ -58,7 +58,7 @@ internal class AgentModelRetry(
                 onEvent(AgentEvent.ModelRetryScheduled(round, retries, MAX_RETRIES, delayMs.toInt(), classified.code))
                 waitBeforeRetry(controller, delayMs)
                 controller.throwIfCancelled()
-                // Відображення зберігає невдалі спроби, і лише успішні спроби приймаються в контексті моделі та остаточному підсумку відображення.
+                // 展示保留失败尝试，模型上下文与最终思考摘要只接纳成功尝试。
                 discardAttemptReasoning()
                 round += 1
             }

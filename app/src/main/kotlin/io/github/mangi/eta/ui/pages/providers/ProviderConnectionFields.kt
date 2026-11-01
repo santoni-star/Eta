@@ -67,8 +67,8 @@ internal fun ProviderConnectionFields(
     if (accountMode != null) {
         EtaPreferenceDivider(hasLeading = false)
         EtaWindowSpinnerPreference(
-            title = "розпізнатисертифікатплощіРежим",
-            items = listOf(DropdownItem(text = "API Key"), DropdownItem(text = "рахунокНомердошказапис")),
+            title = "认证方式",
+            items = listOf(DropdownItem(text = "API Key"), DropdownItem(text = "账号登录")),
             selectedIndex = if (oauth) 1 else 0,
             enabled = enabled,
             onSelectedIndexChange = { index ->

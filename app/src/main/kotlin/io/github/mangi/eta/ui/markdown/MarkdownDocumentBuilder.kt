@@ -9,11 +9,11 @@ import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.LinkMap
 
 /**
- * Перетворення GFM AST на [MarkdownDocument].
+ * 把 GFM AST 转成 [MarkdownDocument]。
  *
- * При безперервному створенні в одному сеансі незмінні блоки верхнього рівня фрагмента вихідного коду безпосередньо повторно використовують останній екземпляр: змінюється лише потоковий вихід
- * Для хвостового блоку попередні абзаци, таблиці та блоки коду не будуть повторно генерувати AnnotatedString, а період комбінування буде таким самим завдяки примірнику.
- * і пропущено. Весь кеш стає недійсним, коли змінюється вбудований стиль або таблиця посилань (перемикання теми, завершення кінцевого стану посилань посилань).
+ * 同一会话内连续构建时，源码切片未变的顶层块直接复用上一次的实例：流式输出只改动
+ * 尾部块，前面的段落、表格与代码块既不重新生成 AnnotatedString，组合期也因实例相同
+ * 而跳过。行内样式或链接表变化（主题切换、终态补齐引用链接）时缓存整体失效。
  */
 internal class MarkdownDocumentBuilder {
     private var cache = emptyMap<Int, CachedBlock>()
@@ -76,7 +76,7 @@ private class BlockConverter(
         MarkdownElementTypes.ORDERED_LIST -> list(node, ordered = true)
         GFMElementTypes.TABLE -> table(node)
         MarkdownTokenTypes.HORIZONTAL_RULE -> MarkdownRule(node.startOffset)
-        // Непідтримувані блоки (блоки HTML тощо) відображаються як є: краще, щоб розмітка була відкритою, ніж щоб вміст зникав у повітрі.
+        // 未支持的块（HTML 块等）按原文显示：宁可露出标记，也不能让内容凭空消失。
         else -> raw(node)
     }
 
@@ -103,8 +103,8 @@ private class BlockConverter(
     }
 
     /**
-     * Огороджувальний вміст складається з чергування CODE_FENCE_CONTENT і EOL; відступ у списках або посиланнях є незалежним
-     * Вузол WHITE_SPACE, який належить до зовнішньої структури та пропускається під час зрощування.
+     * 围栏内容由 CODE_FENCE_CONTENT 与 EOL 交替组成；列表或引用里的缩进是独立的
+     * WHITE_SPACE 节点，属于外层结构，拼接时跳过。
      */
     private fun codeFence(node: ASTNode): MarkdownBlock {
         val language = node.child(MarkdownTokenTypes.FENCE_LANG)
@@ -184,7 +184,7 @@ private class BlockConverter(
             .firstOrNull { it.type == GFMTokenTypes.TABLE_SEPARATOR && '-' in it.text() }
             ?.text()?.parseAlignments(columns)
             ?: List(columns) { MarkdownColumnAlign.Start }
-        // GFM: зайві клітинки відкидаються, відсутні клітинки заповнюються, і всі рядки мають таку ж кількість стовпців, як і заголовок.
+        // GFM：多余的单元格丢弃，缺少的补空，所有行与表头列数一致。
         val rows = node.children.filter { it.type == GFMElementTypes.ROW }.map { row ->
             val cells = row.cells()
             List(columns) { column ->
@@ -214,8 +214,8 @@ private class BlockConverter(
     private fun ASTNode.text(): String = source.substring(startOffset, endOffset)
 
     /**
-     * Два послідовних EOL є порожніми рядками у вихідному коді; коли вони з’являються між елементами списку або всередині елементів списку, список є розширеним списком.
-     * Порожній рядок у кінці належить до вмісту після списку та не враховується.
+     * 两个连续 EOL 即源码中的空行；出现在列表项之间或列表项内部时，该列表为松散列表。
+     * 末尾的空行属于列表之后的内容，不计入。
      */
     private fun ASTNode.hasBlankLine(): Boolean {
         val lastContent = children.indexOfLast { it.type != MarkdownTokenTypes.EOL }
@@ -264,7 +264,7 @@ internal fun List<MarkdownBlock>.revealKeys(): Set<RevealBlockKey> = buildSet {
     this@revealKeys.forEach(::collect)
 }
 
-/** Час відображення маркера елемента списку: коли починає з’являтися перший блок із текстом елемента в порядку вихідного коду.*/
+/** 列表项 marker 的显示时机：项内按源码顺序第一个有文字的块开始显现时。 */
 private fun List<MarkdownBlock>.firstRevealKey(): RevealBlockKey? = asSequence()
     .mapNotNull { block ->
         when (block) {

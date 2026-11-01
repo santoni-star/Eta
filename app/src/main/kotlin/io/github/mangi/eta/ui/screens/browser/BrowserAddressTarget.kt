@@ -5,7 +5,7 @@ import android.util.Patterns
 
 private val AddressScheme = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://")
 
-/** Лише введення в адресному рядку бере участь у оцінці пошуку, а інструмент навігації Агента все одно виконується відповідно до оригінальної URL-адреси.*/
+/** 地址栏输入才参与搜索判断，Agent 的导航工具仍按原始 URL 执行。 */
 internal fun resolveBrowserAddress(input: String): String? {
     val value = input.trim().takeIf { it.isNotEmpty() } ?: return null
     if (AddressScheme.containsMatchIn(value)) return value

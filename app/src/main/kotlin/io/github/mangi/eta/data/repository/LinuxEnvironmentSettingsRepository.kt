@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
-/** Єдина точка входу постійності для вибраних дистрибутивів Linux.*/
+/** Linux 发行版选择的单一持久化入口。 */
 internal object LinuxEnvironmentSettingsRepository {
     @Volatile
     private var cachedSelection: LinuxDistribution? = null

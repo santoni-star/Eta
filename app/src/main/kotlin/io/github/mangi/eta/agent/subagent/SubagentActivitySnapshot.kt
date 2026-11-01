@@ -25,10 +25,10 @@ internal data class SubagentStepSnapshot(
 }
 
 /**
- * Субагентні знімки в реальному часі та постійні структуровані знімки активності.
+ * Subagent 实时与持久化的结构化活动快照。
  *
- * Зберігається в полі `command` повідомлення головного інструмента `subagent`, воно підтримує перегляд у реальному часі, натиснувши його під час роботи.
- * Він також підтримує архівування сеансу та прямий клік для перегляду повного внутрішнього процесу після перезапуску.
+ * 保存在父级 `subagent` 工具消息的 `command` 字段中，既支持运行中点击实时检视，
+ * 也支持会话归档与重启后直接点开回看完整内部过程。
  */
 @Serializable
 internal data class SubagentActivitySnapshot(
@@ -89,7 +89,7 @@ internal data class SubagentActivitySnapshot(
                 prompt = prompt,
                 resumed = resumeId.isNotEmpty(),
                 status = STATUS_RUNNING,
-                currentAction = "простоіснуютьпочатокрухатися…",
+                currentAction = "正在启动…",
             )
         }.getOrNull()
     }

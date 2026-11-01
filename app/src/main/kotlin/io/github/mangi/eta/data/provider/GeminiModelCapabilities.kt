@@ -3,7 +3,7 @@ package io.github.mangi.eta.data.provider
 import io.github.mangi.eta.data.model.ModelReasoningCapabilities
 import io.github.mangi.eta.data.model.ReasoningEffort
 
-/** Лише явно визначені моделі вмикають рідні можливості, і їх не можна додавати інструментом визначення можливостей каталогу generateContent.*/
+/** 仅明确确认的模型启用原生能力，不能由 generateContent 目录能力推断工具混用。 */
 internal object GeminiModelCapabilities {
     private data class Capabilities(
         val reasoning: ModelReasoningCapabilities,
@@ -26,7 +26,7 @@ internal object GeminiModelCapabilities {
 
     fun reasoningCapabilities(modelId: String): ModelReasoningCapabilities? = knownModels[normalize(modelId)]?.reasoning
 
-    // Невідомі моделі використовують лише параметри за замовчуванням на стороні сервера; з них не зроблено жодних висновків, які б підтверджували або вимагали роздумів.
+    // 未知模型只使用服务端默认值；不据此推断支持思考或必须思考。
     fun requestReasoningCapabilities(modelId: String): ModelReasoningCapabilities =
         reasoningCapabilities(modelId) ?: ModelReasoningCapabilities()
 

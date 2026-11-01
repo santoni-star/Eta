@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.browser
 
 import org.json.JSONObject
 
-/** Остаточний шлюз корисного навантаження UTF-8 для текстових результатів браузера.*/
+/** 浏览器文本结果的最终 UTF-8 载荷闸门。 */
 internal object BrowserPayloadLimiter {
     const val MAX_BYTES = 12 * 1024
 

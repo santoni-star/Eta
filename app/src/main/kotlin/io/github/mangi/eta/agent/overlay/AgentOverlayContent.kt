@@ -93,7 +93,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-// Miuix не надає семантичного кольору успіху, і буде використано існуюче значення проекту; колір помилки буде слідувати за помилкою теми
+// Miuix 未提供语义 success 色，沿用项目既有值；失败色走主题 error
 private val SuccessColor = Color(0xFF34C759)
 
 
@@ -105,7 +105,7 @@ internal fun overlayPhaseAccent(phase: AgentOverlayPhase): Color = when (phase) 
     AgentOverlayPhase.FAILED -> MiuixTheme.colorScheme.error
 }
 
-// Використовуйте краєві стрічки, щоб узгодити акцентні кольори теми та суміжні теплі та холодні кольори, щоб запобігти тому, що дуже насичені веселки не переймають увагу на світлих сторінках.
+// 边缘流光取主题强调色与相邻冷暖色，避免高饱和彩虹在浅色页面上喧宾夺主。
 private val EdgeLightColors = listOf(
     Color(0xFF7AB8FF),
     Color(0xFFB59CFF),
@@ -115,19 +115,19 @@ private val EdgeLightColors = listOf(
 )
 
 /**
- * Вікно підсвічування країв екрана: повноекранне проникнення дотиком (FLAG_NOT_TOUCHABLE), не затемнює сторінку та не блокує операції.
- * Тип вікна TYPE_ACCESSIBILITY_OVERLAY, фільтрується takeScreenshotOfWindow під час створення знімків екрана, прозорий для агента.
- * - БІГУЧИЙ: Тонка смужка світла, що тече вздовж заокругленого краю екрана, із шаром м’якого світла назовні; повідомляючи користувачеві, що телефон захоплений.
- * - ПРИЗУПИНЕНО: статична світлова лінія вказує на те, що завдання все ще існує, і керування тимчасово повернуто користувачеві.
- * - ЗАВЕРШЕНО/НЕВДАНО: не намальовано.
+ * 屏幕边缘光窗口：全屏触摸穿透（FLAG_NOT_TOUCHABLE），不压暗页面，不挡操作。
+ * 窗口类型 TYPE_ACCESSIBILITY_OVERLAY，截图时被 takeScreenshotOfWindow 过滤，对 Agent 透明。
+ * - RUNNING：沿屏幕圆角边缘流动的细光带，外侧一层柔光；告诉用户手机正被接管。
+ * - PAUSED：静止的淡色描边，提示任务仍在、控制权暂回用户。
+ * - FINISHED / FAILED：不绘制。
  */
 /**
- * Радіус кута екрана (пікселі). На дисплеї відображається лише радіус на основі дуги, а фактична панель – це округлений кут із безперервною кривизною;
- * Світлова смуга малює безперервну криву з однаковим радіусом, а кути більш повні, ніж дуги, прилипаючи до краю екрана замість того, щоб зменшуватися в кутах.
+ * 屏幕圆角半径（像素）。Display 只按圆弧上报一个半径，实际面板是连续曲率的圆角；
+ * 光带用同一半径画连续曲线，转角处比圆弧更饱满，贴住屏幕边缘而不是在角上内缩一截。
  */
 @Immutable
 internal data class ScreenCornerRadii(val topLeft: Float, val topRight: Float, val bottomRight: Float, val bottomLeft: Float) {
-    /** Чотири кути узгоджені на основних моделях; візьміть максимальне значення як розмір кута безперервної кривої та не дозволяйте жодному куту оголювати прямий край.*/
+    /** 四角在主流机型上一致；取最大值作为连续曲线的转角尺寸，不让任何一角露出直边。 */
     val radius: Float get() = maxOf(topLeft, topRight, bottomRight, bottomLeft)
 }
 
@@ -155,7 +155,7 @@ internal fun AgentOverlayGlow(state: AgentOverlayState, corners: ScreenCornerRad
         modifier = Modifier.fillMaxSize().drawBehind {
             val density = this.density
             val inset = 1.5f * density
-            // Світлова смуга повторює безперервну криву контуру екрана: контур вставляється, а кути одночасно зменшуються, щоб забезпечити рівну відстань від краю екрана.
+            // 光带沿屏幕轮廓的连续曲线走：路径向内收 inset，转角同步减小，保证与屏幕边缘等距。
             val edge = Path().apply {
                 addSquircleRect(
                     width = size.width - inset * 2,
@@ -179,7 +179,7 @@ internal fun AgentOverlayGlow(state: AgentOverlayState, corners: ScreenCornerRad
                 ).apply {
                     setLocalMatrix(android.graphics.Matrix().apply { setRotate(rotation, size.width / 2f, size.height / 2f) })
                 }
-                // Зовнішнє м’яке світло та внутрішня яскрава лінія мають однаковий обертовий градієнт, і здається, що світлові смуги течуть разом.
+                // 外层柔光与内层亮线共用同一个旋转渐变，光带看起来是一体流动的。
                 val halo = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                     style = android.graphics.Paint.Style.STROKE
                     strokeWidth = 14f * density
@@ -283,9 +283,9 @@ internal fun OverlaySupplementInput(
 }
 
 /**
- * Картка результатів після виконання завдання: плаваюча заокруглена панель унизу та кінчик ручки вгорі, який можна опустити вниз, щоб закрити.
- * Методи закриття: автоматичне згортання без взаємодії, ковзання вниз, повернення системи (зареєстровано Сервісом), кнопка «Готово» внизу;
- * Додаткова операція «копіювати» розміщується в тому ж рядку, і текст можна прокручувати. Якщо він задовгий, нижня частина згасне, вказуючи на те, що все ще є вміст.
+ * 任务结束后的结果卡片：底部浮起的圆角面板，顶部抓手提示可下滑关闭。
+ * 关闭途径：无交互自动收起、下滑、系统返回（由 Service 注册）、底部"完成"按钮；
+ * 次要操作"复制"放在同一行，正文可滚动，过长时底部渐隐提示还有内容。
  */
 @Composable
 internal fun AgentResultCard(
@@ -299,7 +299,7 @@ internal fun AgentResultCard(
     fun close() {
         if (!visible) return
         visible = false
-        // Зачекайте, доки закінчиться анімація виходу, перш ніж прибирати вікно, щоб уникнути миттєвого видалення картки.
+        // 等退场动画结束再移除窗口，避免卡片被瞬间抽走。
         scope.launch {
             delay(ResultCardExitMs.toLong())
             onClose()
@@ -368,7 +368,7 @@ internal fun AgentResultCard(
                             onDragCancel = { dragOffset = 0f },
                         ) { change, amount ->
                             change.consume()
-                            // Допускається лише перетягування вниз; передбачено амортизацію вгору, щоб запобігти висмикуванню картки з нижнього краю.
+                            // 只允许向下拖；向上带阻尼，避免卡片被拖离底边。
                             dragOffset = (dragOffset + amount).coerceAtLeast(0f)
                         }
                     },
@@ -453,7 +453,7 @@ private fun ResultCardActions(content: String, onOpenEta: () -> Unit, onDone: ()
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Копіювати — це кнопка-піктограма, а основна та допоміжна текстові кнопки — «Завершити» (залишитися в поточній програмі) і «Повернутися до Eta» (переглянути повний процес).
+        // 复制是图标按钮，主次两个文字按钮分别是"完成"（留在当前应用）与"回到 Eta"（查看完整过程）。
         IconButton(
             onClick = {
                 clipboard.setText(AnnotatedString(content))

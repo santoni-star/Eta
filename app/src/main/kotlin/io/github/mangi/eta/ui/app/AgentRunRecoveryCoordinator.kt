@@ -3,7 +3,7 @@ package io.github.mangi.eta.ui.app
 import io.github.mangi.eta.agent.runtime.AgentRunCheckpointStore
 import io.github.mangi.eta.agent.runtime.AgentRuntimeWire
 
-/** Використовуйте постійну контрольну точку, вихідну скриньку кінцевого стану та активний стан під час виконання для спільного визначення дій відновлення.*/
+/** 用持久 checkpoint、终态 outbox 与 Runtime 活跃状态共同判定恢复动作。 */
 internal object AgentRunRecoveryCoordinator {
     data class Completed(
         val result: AgentRuntimeWire.CompletedRun,

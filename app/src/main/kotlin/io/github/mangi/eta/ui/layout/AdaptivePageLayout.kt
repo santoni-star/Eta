@@ -31,7 +31,7 @@ internal fun isWideScreen(containerWidthPx: Int, density: androidx.compose.ui.un
     with(density) { containerWidthPx.toDp() >= WideScreenMinWidth }
 
 /**
- * Сам список залишається на всю ширину та обмежує вміст лише максимальною шириною в центрі, щоб уникнути прокручування мертвих зон по обидва боки широкого екрана.
+ * 列表本身保持全宽，只把内容限制在居中的最大宽度内，避免宽屏两侧形成滚动死区。
  */
 @Composable
 fun WidePageContent(
@@ -50,7 +50,7 @@ fun WidePageContent(
 }
 
 /**
- * Вміст додаткової сторінки заповнює лише горизонтальний проміжок екрана та область жестів; верхню частину займає TopAppBar, а нижню частину заповнює порожній простір у кінці сторінки.
+ * 二级页内容只补水平方向的屏幕缺口与手势区；顶部由 TopAppBar、底部由页面末尾留白负责。
  */
 @Composable
 fun Modifier.horizontalCutoutPadding(): Modifier = windowInsetsPadding(

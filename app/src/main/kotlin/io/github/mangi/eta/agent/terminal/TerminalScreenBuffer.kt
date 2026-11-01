@@ -5,15 +5,15 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 
 /**
- * Екранний буфер консолі: розбирайте потік байтів PTY у сітку рядків і стовпців + прокручування історії.
+ * 控制台屏幕缓冲区：把 PTY 字节流解析成行列网格 + 滚动历史。
  *
- * Реалізує лише підмножину VT, яка фактично використовується TUI: SGR, рух курсору, стирання рядка/екрана, область прокручування, вставлення/видалення рядків і символів,
- * REP, альтернативний екран, каркасний набір символів DEC, а також клавіші керування курсором, перенос слів, вставка в дужки та режими одночасного виведення.
- * Параметри поділяються на байти параметрів, проміжні байти та кінцеві байти відповідно до ECMA-48. Нереалізовані послідовності відкидаються в цілому, а залишкові параметри не відображатимуться як текст.
+ * 只实现 TUI 实际使用的 VT 子集：SGR、光标移动、行/屏擦除、滚动区、插入/删除行与字符、
+ * REP、备用屏幕、DEC 线框字符集，以及光标键、自动换行、括号粘贴与同步输出模式。
+ * 参数按 ECMA-48 分为参数字节、中间字节与结束字节，未实现的序列整体丢弃，不会把残余参数当正文显示。
  *
- * Вихід PTY може бути розділений на довільні байти: незавершені байти UTF-8, керуючі послідовності та об’єднання рядків OSC/DCS між фрагментами.
- * Відповіді на запити терміналу (DSR/CPR, DA, DECRQM, розмір вікна, колір OSC 10/11 за замовчуванням) видаляються за допомогою [drainResponses], а абонент записує назад до stdin;
- * Програми, які не відповідають, чекатимуть тайм-ауту під час запуску, а деякі CLI вийдуть безпосередньо, оскільки вони не можуть прочитати позицію курсору.
+ * PTY 输出可能在任意字节处分块：未完结的 UTF-8 字节、转义序列与 OSC/DCS 字符串跨块续接。
+ * 终端查询（DSR/CPR、DA、DECRQM、窗口尺寸、OSC 10/11 默认颜色）的应答由 [drainResponses] 取出，调用方回写 stdin；
+ * 不应答的程序会在启动时等待超时，部分 CLI 直接因读不到光标位置而退出。
  */
 internal class TerminalScreenBuffer(
     cols: Int,
@@ -21,7 +21,7 @@ internal class TerminalScreenBuffer(
     private val maxScrollback: Int = 500,
 ) {
     init {
-        require(cols > 0 && rows > 0) { "cols/rows повиненОбов'язководляпросто" }
+        require(cols > 0 && rows > 0) { "cols/rows 必须为正" }
     }
 
     var cols: Int = cols
@@ -32,14 +32,14 @@ internal class TerminalScreenBuffer(
     data class Cell(
         val text: String = " ",
         val style: SgrStyle = SgrStyle.PLAIN,
-        /** Другий заповнювач для широких символів.*/
+        /** 宽字符的第二个占位格。 */
         val continuation: Boolean = false,
     )
 
     /**
-     * Знімок усього рядка, який використовується для візуалізації: він не змінюється після створення, а рівність лише порівнює ідентифікатор і версію.
-     * Інтерфейс не може безпосередньо зберігати [Line]: ідентичність об’єкта лінії, переписаного на місці, залишається незмінною, а комбінований шар вважатиме її незмінною та пропускатиме перемальовування.
-     * Після того, як програма перемалює весь екран, на екрані залишається старий вміст; читання комірок змінних потоком малювання також буде перемежовуватися із записом потоку PTY.
+     * 渲染用的整行快照：创建后不再变化，相等性只比较 id 与 version。
+     * 界面不能直接持有 [Line]：原地改写的行对象身份不变，组合层会把它当作未变化而跳过重绘，
+     * 程序整屏重画后旧内容仍留在屏幕上；绘制线程读取可变单元格也会与 PTY 线程的写入交错。
      */
     class RenderLine internal constructor(val id: Long, val version: Long, val cells: List<Cell>) {
         override fun equals(other: Any?): Boolean =
@@ -48,7 +48,7 @@ internal class TerminalScreenBuffer(
         override fun hashCode(): Int = 31 * id.hashCode() + version.hashCode()
     }
 
-    /** Однолінійна сітка; ідентичність об’єкта є стабільною та перетворюється на [RenderLine] під час публікації в інтерфейсі.*/
+    /** 一行网格；对象身份稳定，向界面发布时转换为 [RenderLine]。 */
     class Line internal constructor(val id: Long, width: Int) {
         internal var cells = Array(width) { Cell() }
         var version = 0L
@@ -68,7 +68,7 @@ internal class TerminalScreenBuffer(
             if (width == cells.size) return
             val previous = cells
             cells = Array(width) { index -> previous.getOrNull(index) ?: Cell() }
-            // Коли точка скорочення потрапляє в середину широкого символу, перша клітинка втрачає місце заповнювача, і її можна очистити лише до порожнього місця.
+            // 截断点落在宽字符中间时，首格失去占位格，只能清成空白。
             if (width < previous.size && previous[width].continuation) cells[width - 1] = Cell()
             version++
         }
@@ -79,7 +79,7 @@ internal class TerminalScreenBuffer(
 
         private var rendered: RenderLine? = null
 
-        /** Повторно використовуйте останній знімок, коли версія залишається незмінною, і копіюйте клітинки лише для рядків, які фактично змінилися в кожному кадрі.*/
+        /** 版本未变时复用上一次的快照，每帧只为真正改动过的行复制单元格。 */
         internal fun render(): RenderLine =
             rendered?.takeIf { it.version == version } ?: RenderLine(id, version, cells.toList()).also { rendered = it }
     }
@@ -88,7 +88,7 @@ internal class TerminalScreenBuffer(
     private var screen = Array(rows) { Line(nextLineId++, cols) }
     private val scrollback = ArrayDeque<Line>()
 
-    /** Збільшується кожного разу, коли процес змінюється; рівень візуалізації створює новий знімок відповідно.*/
+    /** 每次 process 产生变化时递增；渲染层据此拉取新快照。 */
     var version = 0L
         private set
 
@@ -99,15 +99,15 @@ internal class TerminalScreenBuffer(
     var cursorVisible = true
         private set
 
-    /** DECCKM: коли ввімкнено, клавіші зі стрілками надсилають SS3 (ESC O A) замість CSI (ESC [ A).*/
+    /** DECCKM：开启后方向键发送 SS3（ESC O A）而不是 CSI（ESC [ A）。 */
     var applicationCursorKeys = false
         private set
 
-    /** Після відкриття вставлений вміст потрібно перемістити між ESC [200~ / ESC [201~], і програма відповідно розрізнить вставлення та поклавішне введення.*/
+    /** 开启后粘贴内容需包裹在 ESC [200~ / ESC [201~ 之间，程序据此区分粘贴与逐键输入。 */
     var bracketedPaste = false
         private set
 
-    /** ?2026: Програма оголошує, що кадр не завершено, і шар візуалізації слід відкласти, щоб уникнути перегляду половини кадру.*/
+    /** ?2026：程序声明一帧尚未画完，渲染层应暂缓发布，避免看到半帧画面。 */
     var synchronizedOutput = false
         private set
 
@@ -132,17 +132,17 @@ internal class TerminalScreenBuffer(
         .onUnmappableCharacter(CodingErrorAction.REPLACE)
     private var undecoded = EMPTY_BYTES
 
-    /** Незавершені вихідні послідовності або розібрані сурогатні пари в очікуванні завершення наступного блоку виведення.*/
+    /** 未完结的转义序列或被拆开的代理对，等待下一块输出补齐。 */
     private var pendingInput = ""
 
-    /** У рядку OSC/DCS/APC/PM/SOS до кінця BEL або ST; вміст не відображається.*/
+    /** 位于 OSC/DCS/APC/PM/SOS 字符串内，直到 BEL 或 ST 结束；内容不渲染。 */
     private var inControlString = false
     private var controlStringKind = ' '
     private val controlString = StringBuilder()
 
     /**
-     * За замовчуванням передній/фоновий колір інтерфейсу (0xAARRGGBB). TUI консультувався OSC 10/11 Він визначає темні та світлі теми;
-     * Коли не відповідають, більшість програм припускають темний фон і використовують світло-сірий, світло-жовтий та інші кольори, які важко розпізнати, у світлих темах.
+     * 界面的默认前景/背景色（0xAARRGGBB）。TUI 经 OSC 10/11 查询它判断深浅主题；
+     * 不应答时多数程序假定深色背景，浅色主题下会用浅灰、浅黄等难以辨认的配色。
      */
     var defaultForeground: Long = 0xFF000000
     var defaultBackground: Long = 0xFFFFFFFF
@@ -157,10 +157,10 @@ internal class TerminalScreenBuffer(
         val shiftOut: Boolean = false,
     )
 
-    /** Прокрутка історії + поточний екран; Ідентичність лінії стабільна на знімках.*/
+    /** 滚动历史 + 当前屏幕；Line 身份跨快照稳定。 */
     fun lines(): List<Line> = scrollback.toList() + screen.toList()
 
-    /** Незмінний екран, опублікований в інтерфейсі; абонент повинен утримувати ту саму блокування, що й [process]/[resize].*/
+    /** 发布给界面的不可变画面；调用方需与 [process]/[resize] 持同一把锁。 */
     fun renderLines(): List<RenderLine> {
         val out = ArrayList<RenderLine>(scrollback.size + screen.size)
         scrollback.forEach { out += it.render() }
@@ -168,21 +168,21 @@ internal class TerminalScreenBuffer(
         return out
     }
 
-    /** Для тестування та діагностики: звичайний текстовий рядок поточного екрана (з обрізаними пробілами в кінці).*/
+    /** 测试与诊断用：当前屏幕的纯文本行（尾随空格裁剪）。 */
     fun dump(): List<String> = screen.map { line ->
         line.cells.joinToString("") { it.text }.trimEnd()
     }
 
-    /** Рядок [рядок] поточного екрана (за винятком історії прокручування).*/
+    /** 当前屏幕第 [row] 行（不含滚动历史）。 */
     fun screenLine(row: Int): Line = screen[row]
 
-    /** Отримати відповідь на запит, яка буде записана в програму; повертає null, якщо його немає.*/
+    /** 取出待回写给程序的查询应答；没有时返回 null。 */
     fun drainResponses(): String? {
         if (responses.isEmpty()) return null
         return responses.toString().also { responses.setLength(0) }
     }
 
-    /** Подача необроблених байтів PTY; фрагментована усічена багатобайтова послідовність UTF-8 зберігається до наступного продовження.*/
+    /** 喂入原始 PTY 字节；被分块截断的 UTF-8 多字节序列保留到下一次续接。 */
     fun feed(bytes: ByteArray, length: Int = bytes.size) {
         val source = if (undecoded.isEmpty()) bytes else undecoded + bytes.copyOfRange(0, length)
         val size = if (undecoded.isEmpty()) length else source.size
@@ -208,7 +208,7 @@ internal class TerminalScreenBuffer(
                 c.code == 0x1B -> {
                     val next = consumeEscape(text, i)
                     if (next == INCOMPLETE) {
-                        // Довгі незавершені послідовності вважаються пошкодженими та відкидаються замість нескінченного буферизації.
+                        // 超长仍未结束的序列视为损坏，丢弃而不是无限缓存。
                         pendingInput = text.substring(i).takeIf { it.length <= MAX_PENDING_INPUT }.orEmpty()
                         break
                     }
@@ -261,11 +261,11 @@ internal class TerminalScreenBuffer(
     }
 
     /**
-     * Відрегулюйте розмір сітки. При зменшенні масштабу спочатку відкидається порожній рядок під курсором, а якщо його недостатньо, верхній рядок переміщується в історію прокручування;
-     * Витягувати з історії прокручування під час збільшення, щоб екран залишався ближче до низу та повертався, коли програмна клавіатура висувається та перемикається вперед і назад.
+     * 调整网格尺寸。缩小时优先丢弃光标下方的空行，不够再把顶部行推入滚动历史；
+     * 放大时从滚动历史取回，使软键盘弹出与收起来回切换时画面保持贴底且可逆。
      */
     fun resize(newCols: Int, newRows: Int) {
-        require(newCols > 0 && newRows > 0) { "cols/rows повиненОбов'язководляпросто" }
+        require(newCols > 0 && newRows > 0) { "cols/rows 必须为正" }
         if (newCols == cols && newRows == rows) return
         if (altActive) {
             mainScreen?.let { main ->
@@ -339,7 +339,7 @@ internal class TerminalScreenBuffer(
         lastPrintedWidth = width
     }
 
-    /** Об’єднання доповнювачів і з’єднувачів нульової ширини об’єднується в клітинку, де був розташований попередній гліф.*/
+    /** 组合附加符与零宽连接符并入前一个字形所在的单元格。 */
     private fun appendToPreviousCell(value: String) {
         var col = if (wrapPending) cursorCol else cursorCol - 1
         if (col < 0) return
@@ -357,7 +357,7 @@ internal class TerminalScreenBuffer(
         }
         wrapPending = false
         if (width == 2 && cursorCol == cols - 1) {
-            // Широкі символи не натискають на праву межу: під час автоматичного перенесення перейдіть до наступного рядка для написання, інакше на один пробіл назад і введіть у кінці рядка.
+            // 宽字符不压右边界：自动换行时换到下一行书写，否则退一格写在行尾。
             if (autoWrap) {
                 cursorCol = 0
                 linefeed()
@@ -380,7 +380,7 @@ internal class TerminalScreenBuffer(
         }
     }
 
-    /** Закриваючи будь-яку половину широкого символу, очистіть іншу половину, щоб не залишити половину гліфа.*/
+    /** 覆盖宽字符的任意一半时清掉另一半，避免残留半个字形。 */
     private fun clearWideCharAt(line: Line, col: Int) {
         val cell = line.cells[col]
         if (cell.continuation && col > 0) {
@@ -448,11 +448,11 @@ internal class TerminalScreenBuffer(
         }
     }
 
-    /** Стирання за успадкуванням кольору фону (bce): стертий бланк зберігає поточний фон SGR.*/
+    /** 擦除按背景色继承（bce）：擦出的空白保留当前 SGR 背景。 */
     private fun eraseCell(): Cell =
         if (style.bg != null) Cell(" ", SgrStyle(bg = style.bg)) else Cell()
 
-    /** Повертає індекс після послідовності; повертає [INCOMPLETE], якщо послідовність не закінчується в цьому блоці.*/
+    /** 返回序列之后的下标；序列在本块内没有结束时返回 [INCOMPLETE]。 */
     private fun consumeEscape(text: String, start: Int): Int {
         if (start + 1 >= text.length) return INCOMPLETE
         return when (val kind = text[start + 1]) {
@@ -499,12 +499,12 @@ internal class TerminalScreenBuffer(
                 reset()
                 start + 2
             }
-            // ESC \ є термінатором рядка ST і не виконує дії, коли він з’являється окремо; режими клавіатури, такі як ESC = / ESC >, не впливають на сітку.
+            // ESC \ 是字符串终止符 ST，单独出现时无动作；ESC = / ESC > 等键盘模式不影响网格。
             else -> start + 2
         }
     }
 
-    /** Пропустити вміст рядка: BEL закінчується; ESC повертає основний цикл, ESC \ ковтається як ST, а інший ESC вважається перерваним новою послідовністю.*/
+    /** 跳过字符串内容：BEL 结束；ESC 交还主循环，ESC \ 作为 ST 吞掉，其它 ESC 视为被新序列中断。 */
     private fun skipControlString(text: String, from: Int): Int {
         var j = from
         while (j < text.length) {
@@ -518,7 +518,7 @@ internal class TerminalScreenBuffer(
                     return j + 1
                 }
                 0x1B -> {
-                    // Коли ESC знаходиться в кінці блоку, неможливо визначити, чи є це ST, і він буде продовжений до наступного блоку.
+                    // ESC 位于块尾时无法判断是否为 ST，留到下一块续接。
                     if (j + 1 >= text.length) {
                         pendingInput = "\u001B"
                         return text.length
@@ -545,7 +545,7 @@ internal class TerminalScreenBuffer(
         responses.append("\u001B]${color.first};${xtermColor(color.second)}$terminator")
     }
 
-    /** Метод запису xterm rgb:rrrr/gggg/bbbb, 8-бітні компоненти копіюються в 16-бітні.*/
+    /** xterm 的 rgb:rrrr/gggg/bbbb 写法，8 位分量复制成 16 位。 */
     private fun xtermColor(argb: Long): String {
         fun channel(shift: Int): String = "%02x".format((argb shr shift) and 0xFF).repeat(2)
         return "rgb:${channel(16)}/${channel(8)}/${channel(0)}"
@@ -560,7 +560,7 @@ internal class TerminalScreenBuffer(
         while (i < text.length && text[i] in ' '..'/') i++
         if (i >= text.length) return INCOMPLETE
         val final = text[i]
-        // У середині послідовності з’являється недозволений байт: припиніть послідовність і дозвольте байту повторно обробити як звичайний вхід.
+        // 序列中途出现非法字节：放弃该序列，让这个字节按普通输入重新处理。
         if (final !in '@'..'~') return i
         dispatchCsi(params, text.substring(intermediatesStart, i), final)
         return i + 1
@@ -650,7 +650,7 @@ internal class TerminalScreenBuffer(
         }
     }
 
-    /** Відносний рух обмежується областю прокручування, але обмежується лише межами екрана, коли курсор знаходиться за межами області прокручування.*/
+    /** 相对移动受滚动区约束，但光标已在滚动区外时只受屏幕边界约束。 */
     private fun moveCursorRow(delta: Int) {
         val top = if (cursorRow >= scrollTop) scrollTop else 0
         val bottom = if (cursorRow <= scrollBottom) scrollBottom else rows - 1
@@ -693,7 +693,7 @@ internal class TerminalScreenBuffer(
         }
     }
 
-    /** Значення відповіді DECRQM: 1 встановлено, 2 скинуто, 0 не розпізнано.*/
+    /** DECRQM 应答值：1 已设置，2 已重置，0 不识别。 */
     private fun privateModeState(mode: Int): Int {
         val enabled = when (mode) {
             1 -> applicationCursorKeys
@@ -823,7 +823,7 @@ internal class TerminalScreenBuffer(
         for (col in cursorCol until end) line.set(col, blank)
     }
 
-    /** DECSTR: відновити режим і стиль, очистити екран і історію прокручування.*/
+    /** DECSTR：恢复模式与样式，不清屏也不清滚动历史。 */
     private fun softReset() {
         cursorVisible = true
         style = SgrStyle.PLAIN
@@ -857,7 +857,7 @@ internal class TerminalScreenBuffer(
         const val MAX_CONTROL_STRING = 64
         val EMPTY_BYTES = ByteArray(0)
 
-        /** Кольори VT220 + ANSI; нереалізовані можливості, такі як sixel, не оголошуються.*/
+        /** VT220 + ANSI 颜色；不声明 sixel 等未实现能力。 */
         const val PRIMARY_DEVICE_ATTRIBUTES = "\u001B[?62;22c"
         const val SECONDARY_DEVICE_ATTRIBUTES = "\u001B[>1;10;0c"
     }

@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Клієнт виконання на стороні початкового процесу.
+ * 入口进程侧的 Runtime 客户端。
  *
- * Він відповідає лише за передачу запиту агента процесу модуля та повернення подій/результатів до рівня адаптації входу;
- * Не запускайте моделі, не запускайте інструменти та не візуалізуйте інтерфейс користувача.
+ * 它只负责把一次 Agent 请求交给模块进程，并把事件/结果带回入口适配层；
+ * 不执行模型、不执行工具、不渲染 UI。
  */
 internal class AgentRuntimeClient(
     private val context: Context,
@@ -67,12 +67,12 @@ internal class AgentRuntimeClient(
         )
 
         val lease = AgentRuntimeConnection.acquire(context, logger)
-            ?: return AgentRuntimeWire.RunResult("", false, "", "Agent Runtime ОдягобслуговуваннякраваткаЗвичайновтратитипоразка")
+            ?: return AgentRuntimeWire.RunResult("", false, "", "Agent Runtime 服务绑定失败")
         val serviceMessenger = lease.messenger
         val deathRecipient = IBinder.DeathRecipient {
             if (resultRef.get() == null) {
                 resultRef.set(
-                    AgentRuntimeWire.toBundle(AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime ОдягобслуговуваннянавітьзловитивжеперерваВІДЧИНЕНО", contextSnapshotRef = request.runId))
+                    AgentRuntimeWire.toBundle(AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime 服务连接已断开", contextSnapshotRef = request.runId))
                 )
                 resultLatch.countDown()
             }
@@ -86,9 +86,9 @@ internal class AgentRuntimeClient(
             preparedImagesRef.set(preparedImages)
             msg.data = AgentRuntimeWire.toBundle(request, preparedImages.images, context.cacheDir)
             AgentWireText.send(serviceMessenger, msg)
-            // Кінцевий результат або відключення Binder відповідає за пробудження; звичайні довгі завдання не будуть скасовані через час очікування клієнта.
+            // 最终结果或 Binder 断连负责唤醒；正常长任务不因客户端等待时长被取消。
             resultLatch.await()
-            return resultRef.get()?.let(AgentRuntimeWire::runResultFromBundle) ?: AgentRuntimeWire.RunResult("", false, "", "Agent Runtime ще ніповерненняповерненнявузолфрукти")
+            return resultRef.get()?.let(AgentRuntimeWire::runResultFromBundle) ?: AgentRuntimeWire.RunResult("", false, "", "Agent Runtime 未返回结果")
         } catch (interrupted: InterruptedException) {
             Thread.currentThread().interrupt()
             runCatching {
@@ -96,7 +96,7 @@ internal class AgentRuntimeClient(
                 cancelMessage.data = AgentRuntimeWire.ackBundle(request.runId)
                 serviceMessenger.send(cancelMessage)
             }
-            return AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime чекатилікуватиковдрасерединаперерва", contextSnapshotRef = request.runId)
+            return AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime 等待被中断", contextSnapshotRef = request.runId)
         } catch (throwable: Throwable) {
             logger.warn("Agent runtime start request failed: type=${throwable.safeLogType()}")
             return AgentRuntimeWire.RunResult(
@@ -107,7 +107,7 @@ internal class AgentRuntimeClient(
                 error = when (throwable) {
                     is AgentRuntimeWire.PayloadTooLargeException -> throwable.message
                     is AgentRuntimeImageTransfer.ImageTransferException -> throwable.message
-                    else -> "Agent Runtime будь ласкапроситиволоссядоставитивтратитипоразка（${throwable.safeLogType()}）"
+                    else -> "Agent Runtime 请求发送失败（${throwable.safeLogType()}）"
                 },
             )
         } finally {
@@ -240,7 +240,7 @@ internal class AgentRuntimeClient(
         }
     }
 
-    /** Історія передається onReplay за один раз; onEvent буде використано, якщо не вказано. Згодом додані події завжди передаються onEvent.*/
+    /** 历史一次性交给 onReplay；未指定时沿用 onEvent。后续新增事件始终交给 onEvent。 */
     fun attachRun(
         runId: String,
         onReplay: ((List<AgentEvent>) -> Unit)? = null,

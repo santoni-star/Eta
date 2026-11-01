@@ -32,7 +32,7 @@ internal fun interface DmpQueryTransport {
     fun query(query: DmpQuery): DmpQueryResult
 }
 
-/** Приймає лише запити, створені на рівні домену; дані передаються через шістнадцятковий тип і не покладаються на екранування тексту CLI.*/
+/** 只接受领域层构造的查询；数据经带类型标记的十六进制传输，不依赖 CLI 的文本转义。 */
 internal class RootDmpQueryTransport internal constructor(
     private val userId: Int,
     private val execute: (command: String, timeoutMillis: Long, maxOutputBytes: Int) -> BoundedRootCommandExecutor.Result,
@@ -55,8 +55,8 @@ internal class RootDmpQueryTransport internal constructor(
             return failure("DMP_OUTPUT_INVALID")
         }
         val calendar = query.resource in CALENDAR_RESOURCES
-        // CLI не може відрізнити нульовий курсор від нульових рядків; розгортання календаря також може приймати винятки SQL як нульові.
-        // Постійне хибне виявлення ресурсу не проходить через шлях розширення, тому перегляд календаря повинен зберігати вихідні умови та підсумовувати дві частини кількості.
+        // CLI 无法区分 null cursor 和零行；日历展开还可能把 SQL 异常吞成 null。
+        // 恒假资源探测不经过展开路径，因此日历复核必须保留原条件并合计两部分数量。
         val probe = DmpQuery(query.resource, listOf(DmpProjection("count", "COUNT(*)", 16)),
             selection = if (calendar) query.selection else "0", limit = if (calendar) 2 else 1)
         return when (val checked = queryOnce(probe)) {
@@ -213,7 +213,7 @@ internal class RootDmpQueryTransport internal constructor(
     private fun validClause(value: String?, limit: Int): Boolean =
         value == null || value.length <= limit && '\u0000' !in value
 
-    /** Вікно календарного часу буде розширено до запиту на об’єднання, і сортування має посилатися на числовий псевдонім у SELECT.*/
+    /** 日历时间窗口会展开为联合查询，排序必须引用 SELECT 中的数值别名。 */
     private fun calendarSortColumns(query: DmpQuery): List<SortColumn>? {
         if (query.resource !in CALENDAR_RESOURCES || query.sortOrder.isNullOrBlank()) return emptyList()
         val terms = query.sortOrder.split(',')

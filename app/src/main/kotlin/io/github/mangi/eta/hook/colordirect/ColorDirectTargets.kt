@@ -23,7 +23,7 @@ internal object ColorDirectTargets {
             }
         }
 
-    // Назва класу Activity належить контракту Manifest; метод обробки обфусцований і використовує семантичне позиціонування порожньої гілки введення.
+    // Activity 类名属于 Manifest 合同；处理方法会混淆，使用空输入分支的语义定位。
     fun collectIntentMatcher(): MethodMatcher = MethodMatcher.create()
         .declaredClass(ModuleConfig.COLOR_DIRECT_COLLECT_ACTIVITY_CLASS)
         .paramTypes("android.content.Intent")

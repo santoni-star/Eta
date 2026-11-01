@@ -6,18 +6,18 @@ import java.io.File
 import java.nio.file.Files
 
 /**
- * Керуйте вбудованими та спеціальними профілями субагентів.
+ * 管理内置与自定义 Subagent Profile。
  *
- * Настроюваний субагент зберігається в `agents/<name>.md` у робочій області за замовчуванням, використовуючи той самий формат, що й код Kimi
- * Текстовий формат YAML frontmatter + Markdown:
+ * 自定义 Subagent 存放在默认工作区的 `agents/<name>.md`，采用与 Kimi Code 一致的
+ * YAML frontmatter + Markdown 正文格式：
  * ```markdown
  * ---
  * name: bill-analyzer
- * опис: спеціалізується на отриманні та узагальненні персональних рахунків і замовлень
- * whenToUse: використовується, коли потрібно порахувати рахунки, перевірити замовлення або проаналізувати споживання
+ * description: 专门检索与汇总个人账单与订单
+ * whenToUse: 当需要统计账单、核对订单或分析消费时使用
  * tools: summarize_bills, search_bills, search_personal_orders, read_personal_item
  * ---
- * Ви субагент, який спеціалізується на виставленні рахунків та аналізі споживання...
+ * 你是专门负责账单与消费分析的 Subagent...
  * ```
  */
 internal object SubagentProfileCatalog {
@@ -65,17 +65,17 @@ internal object SubagentProfileCatalog {
     ): SubagentProfile {
         val normalizedName = name.trim().lowercase()
         require(isValidName(normalizedName)) {
-            "Subagent назвасказатиповиненОбов'язководля 2~48 бітМаленькийНапишітьхарактермати、номерхарактерінавітьхарактерсимвол（kebab-case，прикладяк bill-analyzer）"
+            "Subagent 名称必须为 2~48 位小写字母、数字与连字符（kebab-case，例如 bill-analyzer）"
         }
         if (normalizedName in SubagentProfile.BUILTIN_NAMES && !overrideBuiltin) {
             throw IllegalArgumentException(
-                "немаєздатнийкришкабудуватиВсерединівстановити Subagent \"$normalizedName\"；будь ласкаЗмінавикористовуватищовінназвасказати（прикладяк custom-$normalizedName）абошоуРежимВІДЧИНЕНОпочаток override",
+                "不能覆盖内置 Subagent \"$normalizedName\"；请换用其他名称（例如 custom-$normalizedName）或显式开启 override",
             )
         }
         val cleanDescription = description.trim().replace(Regex("\\s+"), " ")
-        require(cleanDescription.isNotEmpty()) { "description немаєздатнийдлянульовий" }
+        require(cleanDescription.isNotEmpty()) { "description 不能为空" }
         val cleanPrompt = prompt.trim()
-        require(cleanPrompt.isNotEmpty()) { "prompt немаєздатнийдлянульовий" }
+        require(cleanPrompt.isNotEmpty()) { "prompt 不能为空" }
 
         val cleanWhenToUse = whenToUse.trim().replace(Regex("\\s+"), " ")
         val cleanTools = tools.map { it.trim() }
@@ -86,16 +86,16 @@ internal object SubagentProfileCatalog {
             .distinct()
 
         if (!agentsDir.exists() && !agentsDir.mkdirs()) {
-            error("немаєЗаконстворитивстановити agents Головазапис：${agentsDir.absolutePath}")
+            error("无法创建 agents 目录：${agentsDir.absolutePath}")
         }
         val canonicalRoot = agentsDir.canonicalFile.toPath()
         val targetFile = File(agentsDir, "$normalizedName.md")
         val canonicalTarget = targetFile.canonicalFile.toPath()
         require(canonicalTarget.startsWith(canonicalRoot) && canonicalTarget != canonicalRoot) {
-            "немаєЗаконз Subagent мистецтваштукдорогашлях"
+            "非法的 Subagent 文件路径"
         }
         require(!Files.isSymbolicLink(targetFile.toPath())) {
-            "відхилитиАбсолютноНапишітьвведітьсимволНомерланцюгзловитимистецтваштук"
+            "拒绝写入符号链接文件"
         }
 
         val markdown = renderProfileMarkdown(
@@ -109,7 +109,7 @@ internal object SubagentProfileCatalog {
         )
         targetFile.writeText(markdown, Charsets.UTF_8)
         return parseProfileFile(targetFile)
-            ?: error("зберегтижити Subagent мистецтваштукназадрозв'язатианалізувативтратитипоразка：$normalizedName")
+            ?: error("保存 Subagent 文件后解析失败：$normalizedName")
     }
 
     fun deleteCustomProfile(

@@ -35,7 +35,7 @@ internal class AgentPersonalContextTools(private val context: Context) {
         if (!AgentNotificationHistoryService.isEnabled(context)) {
             return error(
                 "NOTIFICATION_HISTORY_ACCESS_REQUIRED",
-                "будь ласкапершеіснуютьправильнообмеженняздоровийЗдоровийСторінканавчатидати Eta Пасзнатизробитивикористовуватиправильно；навчатиправильноназадВІДЧИНЕНОпочатокзапам'ятатизаписбільшістьзакрити 7 небоПасзнати",
+                "请先在权限健康页授予 Eta 通知使用权；授权后开始记录最近 7 天通知",
             )
         }
         return notificationHistory.search(
@@ -54,7 +54,7 @@ internal class AgentPersonalContextTools(private val context: Context) {
         val end = System.currentTimeMillis()
         val events = context.getSystemService(UsageStatsManager::class.java)
             ?.queryEvents(end - maxAgeHours * HOUR_MS, end)
-            ?: return error("APP_USAGE_UNAVAILABLE", "Краваткасистемаще ніповерненняповерненнявідповідьвикористовуватижитирухатисязапам'ятатизапис")
+            ?: return error("APP_USAGE_UNAVAILABLE", "系统未返回应用活动记录")
         val rows = ArrayDeque<JSONObject>()
         val event = UsageEvents.Event()
         while (events.hasNextEvent()) {
@@ -113,10 +113,10 @@ internal class AgentPersonalContextTools(private val context: Context) {
         is DeviceLocationProvider.Result.Unavailable -> error(
             "LOCATION_UNAVAILABLE",
             when (result.status) {
-                "permission_required" -> "будь ласкапершенавчатидатибітвстановитиправильнообмеження"
-                "background_permission_required" -> "будь ласкаВолябітвстановитиправильнообмеженняналаштуватидляпочатоккінецьдозволяютьтравня"
-                "location_disabled" -> "КраваткасистемаЗвичайнобітОдягобслуговуваннявжезакритизакрити"
-                else -> "Краваткасистемабезматиможевикористовуватизбільшістьзакритибітвстановити"
+                "permission_required" -> "请先授予位置权限"
+                "background_permission_required" -> "请将位置权限设为始终允许"
+                "location_disabled" -> "系统定位服务已关闭"
+                else -> "系统没有可用的最近位置"
             },
         )
     }
@@ -151,7 +151,7 @@ internal class AgentPersonalContextTools(private val context: Context) {
 
     private fun usageAccessError(): String = error(
         "APP_USAGE_ACCESS_REQUIRED",
-        "будь ласкапершеіснуютьправильнообмеженняздоровийЗдоровийСторінканавчатидати Eta зробитивикористовуватиПрихильністьхворобавідвідатизапитатиправильно",
+        "请先在权限健康页授予 Eta 使用情况访问权",
     )
 
     private fun ok(tool: String) = JSONObject().put("ok", true).put("tool", tool)

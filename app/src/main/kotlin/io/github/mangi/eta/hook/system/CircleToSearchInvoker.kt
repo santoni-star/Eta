@@ -28,7 +28,7 @@ internal object CircleToSearchInvoker {
     ): Boolean {
         if (!HookSupport.isPackageInstalled(context, ModuleConfig.GOOGLE_PACKAGE)) {
             logger.warnThrottled("${source}_cts_google_missing") {
-                "$source: Google App ще нівстановитиупаковка，$fallbackMessage"
+                "$source: Google App 未安装，$fallbackMessage"
             }
             return false
         }
@@ -36,14 +36,14 @@ internal object CircleToSearchInvoker {
         val intent = Intent(ModuleConfig.CONTEXTUAL_SEARCH_ACTION).setPackage(ModuleConfig.GOOGLE_PACKAGE)
         if (!HookSupport.resolvesActivity(context, intent)) {
             logger.warnThrottled("${source}_cts_entry_missing") {
-                "$source: Google App ще нінасильствороса Contextual Search введітьрот，$fallbackMessage"
+                "$source: Google App 未暴露 Contextual Search 入口，$fallbackMessage"
             }
             return false
         }
 
         val binder = getContextualSearchBinder() ?: run {
             logger.warnThrottled("${source}_cts_service_missing") {
-                "$source: contextual_search service немаєможевикористовувати，$fallbackMessage"
+                "$source: contextual_search service 不可用，$fallbackMessage"
             }
             return false
         }
@@ -58,7 +58,7 @@ internal object CircleToSearchInvoker {
     ): Boolean {
         val binder = getContextualSearchBinder() ?: return false
         return runCatching {
-            // Безпосередньо зателефонуйте системному зв’язувачу, щоб уникнути проходження OEM OCR/розпізнавання екрану.
+            // 直接调用系统 binder，避免再走 OEM OCR/识屏分发链。
             val asInterface = resolveAsInterfaceMethod() ?: return@runCatching false
             val startContextualSearch = resolveStartContextualSearchMethod() ?: return@runCatching false
             val service = asInterface.invoke(null, binder) ?: return@runCatching false
@@ -71,13 +71,13 @@ internal object CircleToSearchInvoker {
             } else {
                 startContextualSearch.method.invoke(service, entryPoint)
             }
-            logger.debug { "$source: вжедотикволосся Circle to Search" }
+            logger.debug { "$source: 已触发 Circle to Search" }
             true
         }.getOrElse { throwable ->
             logger.errorThrottled(
                 key = "${source}_cts_trigger_failed",
                 throwable = throwable
-            ) { "$source: дотикволосся Circle to Search втратитипоразка" }
+            ) { "$source: 触发 Circle to Search 失败" }
             false
         }
     }

@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.model
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Кроки підписання та пошуку відносяться лише до поточного запуску; кодек стабільного сеансу не читає ці поля.*/
+/** 签名与搜索步骤只属于当前 run；稳定会话 codec 不读取这些字段。 */
 internal object GeminiEphemeralState {
     private const val STEPS = "_eta_gemini_steps"
     private const val RUN_START = "_eta_gemini_run_start"

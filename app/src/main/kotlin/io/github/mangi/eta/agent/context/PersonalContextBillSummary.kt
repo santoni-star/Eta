@@ -5,7 +5,7 @@ import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Узагальнює повні обмежені результати запиту; суми зберігають десяткову точність, і не передбачається відшкодування, сторнування чи дублікати рахунків.*/
+/** 汇总完整的有界查询结果；金额保持十进制精度，不推断退款、冲正或重复账单。 */
 internal object PersonalContextBillSummary {
     const val MAX_RECORDS = 1_000
     private const val MAX_CATEGORIES = 20
@@ -13,10 +13,10 @@ internal object PersonalContextBillSummary {
 
     fun aggregate(result: DmpQueryResult.Success): JSONObject {
         if (result.rows.size > MAX_RECORDS) {
-            return failure("PERSONAL_CONTEXT_AGGREGATE_LIMIT", "матчматчрахунокодинобганятиПас 1000 смужка，будь ласкаскорочуватисяМаленькийгодинаміжабозакритиключслововентилятороточують；ще ніповерненняповерненнявідділточкавсьогоЛоб")
+            return failure("PERSONAL_CONTEXT_AGGREGATE_LIMIT", "匹配账单超过 1000 条，请缩小时间或关键词范围；未返回部分总额")
         }
         if (result.truncatedFields.isNotEmpty()) {
-            return failure("PERSONAL_CONTEXT_AGGREGATE_INCOMPLETE", "рахунокодинхарактерчастинаковдравирізатиперерва，ще нінародивсястатиобмінвсього")
+            return failure("PERSONAL_CONTEXT_AGGREGATE_INCOMPLETE", "账单字段被截断，未生成汇总")
         }
         val total = Totals()
         val categories = linkedMapOf<String, Totals>()
@@ -27,9 +27,9 @@ internal object PersonalContextBillSummary {
                 null
             }
             if (amount == null || amount.scale() !in -18..8 || amount.abs() > maximumAmount) {
-                return failure("PERSONAL_CONTEXT_INVALID_AMOUNT", "рахунокодинСумкаМіститьнемаєЗаконправильнорозпізнатиззолотоЛоб，ще нінародивсястатиобмінвсього")
+                return failure("PERSONAL_CONTEXT_INVALID_AMOUNT", "账单包含无法确认的金额，未生成汇总")
             }
-            val category = row["category"]?.trim().orEmpty().ifEmpty { "ще ніточкавид" }
+            val category = row["category"]?.trim().orEmpty().ifEmpty { "未分类" }
             val type = row["transaction_type"]?.trim()?.lowercase(Locale.ROOT)
             val bucket = when {
                 category.equals("transfer", ignoreCase = true) -> Bucket.TRANSFER
@@ -54,7 +54,7 @@ internal object PersonalContextBillSummary {
             .put("categories_truncated", ordered.size > MAX_CATEGORIES)
             .put("remaining_category_count", (ordered.size - MAX_CATEGORIES).coerceAtLeast(0))
             .put("other_categories", remainder.json())
-            .put("accounting_basis", "відповідно доОтжепривестисерединазапам'ятатизаписзОригіналпочатокзолотоЛобівидтипуобмінвсього；змінитирахунокіще нізнативидтипуодинСписок，немаєштовхатиперервавідступоплатачистийЛобабоплатитилегкоформустан，немаєпоколінняповерхнізакінченовсесріблодобрерахуноккнига")
+            .put("accounting_basis", "按索引中记录的原始金额和类型汇总；转账与未知类型单列，不推断退款净额或交易状态，不代表完整银行账本")
     }
 
     private enum class Bucket(val key: String) {

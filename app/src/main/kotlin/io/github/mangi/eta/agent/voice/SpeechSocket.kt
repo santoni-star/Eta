@@ -35,7 +35,7 @@ internal class SpeechSocket(request: Request) : Closeable {
 
     private fun receive(socket: WebSocket, bytes: ByteArray) {
         if (bytes.size > SpeechHttp.MAX_JSON_BYTES || !messages.trySend(bytes).isSuccess) {
-            messages.close(SpeechFailure(SpeechErrorCode.BACKPRESSURE, "мовазвукномервідповідно довпричинанемаєігодина，будь ласкаВажкаспробувати"))
+            messages.close(SpeechFailure(SpeechErrorCode.BACKPRESSURE, "语音数据处理不及时，请重试"))
             socket.cancel()
         }
     }
@@ -45,7 +45,7 @@ internal class SpeechSocket(request: Request) : Closeable {
     fun binary(value: ByteArray) = sent(socket.send(value.toByteString()))
     private fun sent(accepted: Boolean) {
         if (!accepted || socket.queueSize() > 256 * 1024) {
-            throw SpeechFailure(SpeechErrorCode.BACKPRESSURE, "чистиймережіначальникапропускнемаєігодина，будь ласкаперевіритиперевіритичистиймережіназадВажкаспробувати")
+            throw SpeechFailure(SpeechErrorCode.BACKPRESSURE, "网络上传不及时，请检查网络后重试")
         }
     }
     override fun close() {

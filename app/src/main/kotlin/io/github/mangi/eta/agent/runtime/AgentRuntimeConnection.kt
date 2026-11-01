@@ -14,10 +14,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * Спільне підключення Runtime Binder у процесі виконання.
+ * 进程内共享的 Runtime Binder 连接。
  *
- * Активні дзвінки використовують одне з’єднання та ненадовго зберігаються після завершення останнього дзвінка, щоб охопити безперервний діалог і підтвердження результату;
- * Активно від’єднуйте після тайм-ауту простою, щоб процес входу не утримував Eta протягом тривалого часу.
+ * 活跃调用共享同一连接，最后一个调用结束后短暂保活，以覆盖连续对话和结果确认；
+ * 空闲超时后主动解绑，避免入口进程长期拉住 Eta。
  */
 internal object AgentRuntimeConnection {
     class Lease internal constructor(
@@ -69,7 +69,7 @@ internal object AgentRuntimeConnection {
         override fun onServiceDisconnected(name: ComponentName) {
             synchronized(lock) {
                 messenger = null
-                // У разі звичайного відключення система автоматично відновить поточну прив'язку; не накладайте другий bindService.
+                // 普通断线由系统自动重连当前 binding；不要叠加第二次 bindService。
                 binding = true
                 connectionLatch = CountDownLatch(1)
                 bindStartedAt = SystemClock.elapsedRealtime()
@@ -87,7 +87,7 @@ internal object AgentRuntimeConnection {
 
     fun acquire(context: Context, callLogger: AgentLogger): Lease? {
         check(Looper.myLooper() != Looper.getMainLooper()) {
-            "Agent Runtime те самекрокгістьпобутовікінецьнемаєздатнийіснуютьхостДрітПроцедурамелодіявикористовувати"
+            "Agent Runtime 同步客户端不能在主线程调用"
         }
 
         val shouldBind: Boolean
@@ -144,7 +144,7 @@ internal object AgentRuntimeConnection {
                 binding = false
                 connectionLatch.countDown()
             } else if (binding || messenger != null) {
-                // onNullBinding/onBindingDied може бути повернуто безпосередньо поруч із bindService; не перезаписуйте його результати очищення.
+                // onNullBinding/onBindingDied 可能紧邻 bindService 返回；不要覆盖其清理结果。
                 bound = true
             }
         }

@@ -18,10 +18,10 @@ import io.github.mangi.eta.ui.model.AgentModelPickerUiState
 import io.github.mangi.eta.ui.model.roleplayChatUi
 
 /**
- *AgentChatHome: перший екран — це основна стадія чату.
+ * AgentChatHome：首屏为聊天主舞台。
  *
- * Верхній вхід рівномірно забезпечується [io.github.mangi.eta.ui.app.AgentAppShell],
- * Цей екран відповідає лише за потік повідомлень, трасування циклу, підсумок інструменту та нижнє поле введення.
+ * 顶部入口统一由 [io.github.mangi.eta.ui.app.AgentAppShell] 提供，
+ * 本 Screen 只负责消息流、Run trace、工具摘要和底部输入框。
  */
 @Composable
 internal fun AgentHomeScreen(
@@ -35,7 +35,7 @@ internal fun AgentHomeScreen(
     isDrawerOpen: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    // Зберігайте повну гілку в ключі, щоб уникнути передчасних повернень застарілих прапорів компілятора, які не можна перетворити на DEX.
+    // key 内保持完整分支，避免提前返回遗留无法转换为 DEX 的编译器标记。
     key(chatConversationCompositionKey(conversationKey)) {
         if (!state.isConversationLoaded) {
             AgentConversationLoadState(

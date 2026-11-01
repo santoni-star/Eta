@@ -43,10 +43,10 @@ internal object RuntimeConfigRepository {
     }
 
     /**
-     * Проаналізуйте конфігурацію моделі, яка використовується субагентом для фактичного запуску.
+     * 解析 Subagent 实际运行所用的模型配置。
      *
-     * Якщо вказано незалежну підмодель, а модель усе ще ввімкнено, підмодель використовуватиметься першою, інакше вона плавно повернеться до основної моделі;
-     * Перемикач інструментів успадковує батьківський запит і примусово вимикає `subagentTools`, щоб запобігти рекурсивній відправці.
+     * 指定了独立子模型且该模型仍处于启用状态时优先使用子模型，否则平滑回退到主模型；
+     * 工具开关继承父请求，并强制关闭 `subagentTools` 防止递归派发。
      */
     suspend fun subagentRuntimeConfig(
         primaryConfig: AgentModelClient.ModelConfig,
@@ -132,7 +132,7 @@ internal object RuntimeConfigRepository {
         return buildRuntimeConfig(provider, model)
     }
 
-    /** Використовуйте це, коли модель із прив’язкою до сеансу все ще доступна, інакше поверніться до моделі за замовчуванням.*/
+    /** 会话绑定的模型仍可用时使用它，否则回落到默认模型。 */
     suspend fun runtimeConfigFor(modelId: String?): AgentModelClient.ModelConfig? {
         ProviderRepository.ensureBuiltInsMerged()
         ProviderRepository.allProviders().enabledModel(modelId)?.let { (provider, model) ->

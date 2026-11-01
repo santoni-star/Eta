@@ -109,25 +109,25 @@ internal fun validateWebToolsSettings(
         settings.fetchBackend == WebToolBackend.DEEPSEEK
     if (usesDeepSeek) {
         if (credentials.deepSeekApiKey.isBlank() && !hasProviderDeepSeekKey) {
-            throw WebToolsValidationFailure("будь ласказаповнитиНапишіть DeepSeek API Key，абопершеіснуютьцвільтипунестидлябізнессерединаматчвстановити DeepSeek")
+            throw WebToolsValidationFailure("请填写 DeepSeek API Key，或先在模型提供商中配置 DeepSeek")
         }
         runCatching {
             ConfigurableWebBackends.deepSeekEndpoint(settings.deepSeek.baseUrl, "search")
         }.getOrElse {
-            throw WebToolsValidationFailure("DeepSeek Base URL Обов'язководлякомбайнЗаконз HTTP(S) землісайт")
+            throw WebToolsValidationFailure("DeepSeek Base URL 须为合法的 HTTP(S) 地址")
         }
     }
     if (settings.searchBackend == WebToolBackend.CUSTOM) {
         val rawUrl = settings.customSearch.url.trim()
         if (rawUrl.isEmpty()) {
-            throw WebToolsValidationFailure("будь ласказаповнитиНапишітьоскількиЗвичайноправеднийпошукОтжезловитиротземлісайт")
+            throw WebToolsValidationFailure("请填写自定义搜索接口地址")
         }
         val probeUrl = rawUrl
             .replace("{{query}}", "eta")
             .replace("{{raw_query}}", "eta")
             .replace("{{count}}", "5")
         runCatching { WebHttpTransport.validateUrl(probeUrl) }.getOrElse {
-            throw WebToolsValidationFailure("оскількиЗвичайноправеднийпошукОтжезловитиротОбов'язководлякомбайнЗаконз HTTP(S) землісайт")
+            throw WebToolsValidationFailure("自定义搜索接口须为合法的 HTTP(S) 地址")
         }
         runCatching {
             ConfigurableWebBackends.parseCustomHeaders(
@@ -135,19 +135,19 @@ internal fun validateWebToolsSettings(
                 credentials.customSearchApiKey,
             )
         }.getOrElse {
-            throw WebToolsValidationFailure(it.message ?: "оскількиЗвичайноправеднийпошукОтжебудь ласкапроситиголовасіткаРежимнемаєефект")
+            throw WebToolsValidationFailure(it.message ?: "自定义搜索请求头格式无效")
         }
     }
     if (settings.fetchBackend == WebToolBackend.CUSTOM) {
         val rawUrl = settings.customFetch.url.trim()
         if (rawUrl.isEmpty()) {
-            throw WebToolsValidationFailure("будь ласказаповнитиНапишітьоскількиЗвичайноправеднийчитатиВиберітьзловитиротземлісайт")
+            throw WebToolsValidationFailure("请填写自定义读取接口地址")
         }
         val probeUrl = rawUrl
             .replace("{{url}}", "https%3A%2F%2Fexample.com")
             .replace("{{raw_url}}", "https://example.com")
         runCatching { WebHttpTransport.validateUrl(probeUrl) }.getOrElse {
-            throw WebToolsValidationFailure("оскількиЗвичайноправеднийчитатиВиберітьзловитиротОбов'язководлякомбайнЗаконз HTTP(S) землісайт")
+            throw WebToolsValidationFailure("自定义读取接口须为合法的 HTTP(S) 地址")
         }
         runCatching {
             ConfigurableWebBackends.parseCustomHeaders(
@@ -155,7 +155,7 @@ internal fun validateWebToolsSettings(
                 credentials.customFetchApiKey,
             )
         }.getOrElse {
-            throw WebToolsValidationFailure(it.message ?: "оскількиЗвичайноправеднийчитатиВиберітьбудь ласкапроситиголовасіткаРежимнемаєефект")
+            throw WebToolsValidationFailure(it.message ?: "自定义读取请求头格式无效")
         }
     }
 }

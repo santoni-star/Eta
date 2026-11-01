@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Читання, редагування і збереження стану сторінок пам'яті; відсутність спільного стану з сеансом і запуском агента.*/
+/** 记忆页的读取、编辑与保存状态；与会话和 Agent run 无共享状态。 */
 internal class AgentMemoryStore(
     context: Context,
     private val scope: CoroutineScope,

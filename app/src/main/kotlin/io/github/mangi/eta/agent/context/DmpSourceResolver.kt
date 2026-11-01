@@ -13,7 +13,7 @@ internal sealed interface DmpSourceResolution {
     data class Unavailable(val code: String) : DmpSourceResolution
 }
 
-/** Кеш належить тільки поточному виконавцю інструменту; Зондування поля не зчитує окремі записи та не видаляє відсутні умови захисту.*/
+/** 缓存只属于当前工具执行器；字段探测不读取个人记录，也不移除缺失的保护条件。 */
 internal class DmpSourceResolver(private val transport: DmpQueryTransport) {
     private val resolved = ConcurrentHashMap<String, ResolvedPersonalContextSource>()
 

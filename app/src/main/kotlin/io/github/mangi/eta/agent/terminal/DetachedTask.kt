@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.terminal
 
 import org.json.JSONObject
 
-/** Запис завдань опіки. pid + маркер використовуються для заявки між програмами після перезапуску, а також для запобігання повторному використанню PID і випадковому знищенню перед зупинкою.*/
+/** 一条守护任务记录。pid + token 用于跨 App 重启后的认领，以及停止前防止 PID 复用误杀。 */
 internal data class DetachedTask(
     val id: String,
     val pid: Long,

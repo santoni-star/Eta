@@ -9,7 +9,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 
 /**
- * Вузький рівень адаптації між інтерфейсом користувача та ядром встановлення навичок. Інтерфейс користувача відповідає лише за повторне відкриття вхідного потоку SAF і не аналізує та не розпаковує ZIP.
+ * UI 与技能安装内核之间的窄适配层。UI 只负责重新打开 SAF 输入流，不解析或解压 ZIP。
  */
 internal fun interface SkillZipImportGateway {
     suspend fun installLocalZip(

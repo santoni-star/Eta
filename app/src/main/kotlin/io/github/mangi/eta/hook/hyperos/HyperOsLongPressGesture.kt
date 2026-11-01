@@ -6,7 +6,7 @@ import android.view.ViewConfiguration
 import java.lang.ref.WeakReference
 import kotlin.math.abs
 
-/** Кожен навігаційний режим має ексклюзивне використання одного жесту; відкладені завдання не утримують Hook Chain і не подовжують життєвий цикл перегляду.*/
+/** 每个导航视图独占一次手势；延迟任务不持有 Hook Chain，也不延长视图生命周期。 */
 internal class HyperOsLongPressGesture(
     view: View,
     private val enabled: () -> Boolean,
@@ -34,7 +34,7 @@ internal class HyperOsLongPressGesture(
         view.addOnAttachStateChangeListener(this)
     }
 
-    /** Якщо повернено true, змініть цю вихідну подію на CANCEL і завершіть вихідний потік жестів на робочому столі.*/
+    /** 返回 true 时将本次原始事件改为 CANCEL，结束桌面的原生手势流。 */
     fun onTouch(event: MotionEvent): Boolean {
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
             cancel()

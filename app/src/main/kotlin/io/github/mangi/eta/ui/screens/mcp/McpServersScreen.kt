@@ -125,7 +125,7 @@ internal fun McpServersScreen(
         title = stringResource(R.string.mcp_add_server),
         onDismissRequest = { if (!working) showAdd = false },
     ) {
-        // Прокручується лише форма, а кнопка закріплена внизу: операція підтвердження все ще доступна, коли спливає метод введення або довга помилка.
+        // 只有表单滚动，按钮固定在底部：输入法弹出或错误较长时确认操作仍然可达。
         Column(modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp)) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),

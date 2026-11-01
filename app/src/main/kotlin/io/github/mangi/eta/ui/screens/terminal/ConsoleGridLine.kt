@@ -23,7 +23,7 @@ import io.github.mangi.eta.agent.terminal.SgrStyle
 import io.github.mangi.eta.agent.terminal.TerminalScreenBuffer
 import io.github.mangi.eta.agent.terminal.terminalCharWidth
 
-/** Кольори теми, необхідні для візуалізації сітки; явний передній план і фон за замовчуванням, необхідні для інверсії, курсору та попереднього перегляду груп.*/
+/** 网格渲染所需的主题色；反显、光标与组字预览需要显式的默认前景和背景。 */
 @Immutable
 internal data class ConsolePalette(
     val foreground: Color,
@@ -31,7 +31,7 @@ internal data class ConsolePalette(
     val composing: Color,
 )
 
-/** Розмір комірки та базова лінія вимірюються в пікселях; висота рядка та ширина стовпця визначаються одним і тим же вимірюванням, щоб гарантувати узгодженість розмірів сітки та PTY.*/
+/** 单元格尺寸与基线，全部以像素计；行高与列宽由同一份度量决定，保证网格与 PTY 尺寸一致。 */
 @Immutable
 internal data class ConsoleCellMetrics(
     val width: Float,
@@ -40,8 +40,8 @@ internal data class ConsoleCellMetrics(
 )
 
 /**
- * Кеш набору шрифтів: той самий символ і комбінація щільності/шрифту вимірюються лише один раз, а колір перезаписується під час малювання.
- * Вміст рядка може змінюватися в кожному кадрі, але набір символів, який з’являється, дуже малий. Після потрапляння в кеш залишилося намалювати лише прямокутник і растрове зображення.
+ * 字形排版缓存：同一字符与字重/字形组合只测量一次，颜色在绘制时覆盖。
+ * 行内容每帧都可能变化，但出现的字符集合很小，缓存命中后绘制只剩矩形与位图合成。
  */
 internal class ConsoleGlyphCache(
     private val measurer: TextMeasurer,
@@ -52,8 +52,8 @@ internal class ConsoleGlyphCache(
     private val layouts = HashMap<Key, TextLayoutResult>()
 
     /**
-     * Ширина стовпця приймає ширину числа 0: усі гліфи однакові у справжньому шрифті фіксованої ширини; коли деякі системи замінюють шрифт фіксованої ширини пропорційним шрифтом,
-     * Цифри все ще містяться в гліфі фіксованої ширини, а літери, ширші за нього, стискаються горизонтально в клітинки під час малювання, не стискаючи сітку.
+     * 列宽取数字 0 的宽度：真等宽字体下所有字形相同；部分系统把等宽字体替换为比例字体时，
+     * 数字仍为等宽字形，宽于它的字母在绘制时横向压缩进单元格，不会挤乱网格。
      */
     fun metrics(): ConsoleCellMetrics {
         val layout = measurer.measure("0", baseStyle, softWrap = false, maxLines = 1)
@@ -81,8 +81,8 @@ internal class ConsoleGlyphCache(
 }
 
 /**
- * Намалюйте рядок на комірку: кожен гліф фіксується на `номер стовпця × ширина стовпця` і не залежить від ширини самого шрифту.
- * Тому резервні шрифти CJK і немоноширинні системні шрифти не призведуть до зміщення меж, вирівнювання та курсору TUI.
+ * 按单元格绘制一行：每个字形固定落在 `列号 × 列宽` 处，不依赖字体本身的字宽，
+ * 因此 CJK 回退字体与非等宽系统字体都不会让 TUI 的边框、对齐和光标错位。
  */
 @Composable
 internal fun ConsoleGridLine(
@@ -168,7 +168,7 @@ private fun DrawScope.drawGlyph(
     }
 }
 
-/** Попередній перегляд згрупованих символів покривається курсором, а ширина обчислюється на основі зайнятості символів. Він не потрапляє в сітку, поки не з’явиться на екрані.*/
+/** 组字预览覆盖在光标处，宽度按字符占格计算，未上屏前不进入网格。 */
 private fun DrawScope.drawComposing(
     composing: String,
     col: Int,
@@ -190,7 +190,7 @@ private fun DrawScope.drawComposing(
     }
 }
 
-/** Явний колір має перевагу, і якщо не вказано, він потрапляє до кольору теми за замовчуванням; зворотне відображення міняє передній план і фон, а затемнення послаблюється прозорістю.*/
+/** 显式颜色优先，未指定时落到主题默认色；反显互换前景与背景，dim 以透明度衰减。 */
 private fun resolveColors(style: SgrStyle, palette: ConsolePalette): Pair<Color, Color> {
     val foreground = style.fg?.let { Color(it) } ?: palette.foreground
     val background = style.bg?.let { Color(it) }
@@ -202,7 +202,7 @@ private fun resolveColors(style: SgrStyle, palette: ConsolePalette): Pair<Color,
     return (if (style.dim) text.copy(alpha = text.alpha * DIM_ALPHA) else text) to fill
 }
 
-/** Коли гліфи пропорційних шрифтів трохи ширші за ширину стовпця, вони залишаться такими, як є. Вони будуть стиснуті, лише якщо вони значно ширші, щоб уникнути непотрібної деформації звичайних літер.*/
+/** 比例字体的字形略宽于列宽时保持原样，明显超出才压缩，避免常规字母被无谓变形。 */
 private const val GLYPH_OVERFLOW_TOLERANCE = 1.08f
 private const val DIM_ALPHA = 0.6f
 private val COMPOSING_STYLE = SgrStyle(underline = true)

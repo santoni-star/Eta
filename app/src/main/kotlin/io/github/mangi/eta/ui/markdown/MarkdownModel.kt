@@ -4,17 +4,17 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 
 /**
- * Проаналізований документ Markdown: фоновий потік створюється з GFM AST, Compose відповідає лише за малювання.
+ * 解析后的 Markdown 文档：后台线程从 GFM AST 构建，Compose 只负责绘制。
  *
- * Усі блоки ідентифікуються початковим зміщенням вихідного коду [MarkdownBlock.offset]: потоковий вихід додається лише в кінці,
- * Зміщення та вміст завершеного блоку більше не змінюватимуться, конструктор повторно використовуватиме той самий екземпляр, а фазу комбінування буде відповідно пропущено.
+ * 所有块都以源码起始偏移 [MarkdownBlock.offset] 作为身份：流式输出只在尾部追加，
+ * 已完成块的偏移与内容都不再变化，构建器会复用同一实例，组合期据此直接跳过。
  */
 @Immutable
 internal class MarkdownDocument(
     val blocks: List<MarkdownBlock>,
-    /** Усі текстові блоки в документі, які беруть участь у дослівному відображенні, використовуються, щоб координатор відображення міг відкидати старі блоки, які зникли.*/
+    /** 文档内所有参与逐字显现的文本块，用于让显现协调器丢弃已消失的旧块。 */
     val revealKeys: Set<RevealBlockKey>,
-    /** Кольори посилань і вбудованого коду записуються під час створення; старі документи не можна повторно використовувати безпосередньо після зміни теми.*/
+    /** 链接与行内代码颜色在构建时写入；主题变化后旧文档不能直接复用。 */
     val inlineStyle: MarkdownInlineStyle,
 )
 
@@ -23,7 +23,7 @@ internal sealed interface MarkdownBlock {
     val offset: Int
 }
 
-/** Ліцевий блок, який містить фрагмент форматованого тексту; [revealKey] — це зміщення вихідного коду.*/
+/** 承载一段富文本的叶子块；[revealKey] 即其源码偏移。 */
 internal sealed interface MarkdownTextBlock : MarkdownBlock {
     val text: AnnotatedString
     val revealKey: RevealBlockKey get() = RevealBlockKey(offset)
@@ -44,7 +44,7 @@ internal data class MarkdownCode(
     override val offset: Int,
     val language: String?,
     override val text: AnnotatedString,
-    /** Формули на рівні блоку поки що не набираються. Вони відображаються у стилі блоку коду відповідно до оригінального тексту, щоб переконатися, що вміст видимий і його можна скопіювати.*/
+    /** 块级公式暂不排版，按原文以代码块样式显示，保证内容可见可复制。 */
     val isMath: Boolean = false,
 ) : MarkdownTextBlock
 
@@ -64,19 +64,19 @@ internal enum class MarkdownAlertKind { Note, Tip, Important, Warning, Caution }
 internal data class MarkdownList(
     override val offset: Int,
     val ordered: Boolean,
-    /** Між елементами у розширених списках зберігається пробіл на рівні абзацу, тоді як у компактних списках зберігається лише міжрядковий інтервал.*/
+    /** 松散列表的项之间保留段落级留白，紧凑列表只保留行距。 */
     val loose: Boolean,
     val items: List<MarkdownListItem>,
 ) : MarkdownBlock
 
 internal data class MarkdownListItem(
     val offset: Int,
-    /** Порядковий номер упорядкованого списку; null для невпорядкованого списку.*/
+    /** 有序列表的序号；无序列表为 null。 */
     val number: Int?,
-    /** Перевірений статус списку завдань; звичайні елементи списку є нульовими.*/
+    /** 任务列表的勾选状态；普通列表项为 null。 */
     val checked: Boolean?,
     val blocks: List<MarkdownBlock>,
-    /** Маркер з’являється одночасно з першим текстовим блоком, щоб уникнути появи окремих крапок першими під час трансляції.*/
+    /** marker 与首个文本块同时出现，避免流式时先冒出孤立的圆点。 */
     val markerRevealKey: RevealBlockKey?,
 )
 

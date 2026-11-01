@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.withContext
 
-/** У списку зберігаються сеанси за ідентифікатором повідомлення, і під час повторного монтування запису використовуватиметься поточний аналіз і прогрес відображення.*/
+/** 列表按消息身份保留会话，条目重新挂载时接用已有解析和显现进度。 */
 internal class StreamingMarkdownState {
     private var attachedContentCount by mutableIntStateOf(0)
     val isAttachedToContent: Boolean get() = attachedContentCount > 0
@@ -58,8 +58,8 @@ internal suspend fun consumeStreamingMarkdownTargets(
         }
         val parsed = parse(target)
         val newerTarget = targets.tryReceive().getOrNull()
-        // Додавання фрагментів не робить недійсними вирішені префікси. Якщо результати відкидати щоразу, коли з’являється нова мета, безперервний високошвидкісний потік буде
-        // Знищити дисплей; лише пропускати знімки, які більше не застосовуються, якщо висхідний поток виправляє повний текст або знову відкриває остаточний стан.
+        // 追加分片不会使已解析的前缀失效。若每次有新目标就丢弃结果，持续高速流会
+        // 饿死显示端；只有上游纠正全文或重新打开终态时，才跳过不再适用的快照。
         if (newerTarget == null ||
             (newerTarget.content.startsWith(parsed.originalSource) &&
                 (!parsed.isComplete || newerTarget == target))

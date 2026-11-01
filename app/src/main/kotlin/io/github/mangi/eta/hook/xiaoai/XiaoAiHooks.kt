@@ -108,7 +108,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.bootstrap",
                 description = "VAApplication.onCreate",
-                detail = "ще ніспробуйте знайтиприбутиобганятикласМаленькийяк Application версіякнигадверізаборонавведітьрот",
+                detail = "未找到超级小爱 Application 版本门禁入口",
             )
             return
         }
@@ -127,7 +127,7 @@ internal object XiaoAiHooks {
                 )
             } else {
                 hooks.logger.warnThrottled("xiaoai_unsupported_version") {
-                    "обганятикласМаленькийякверсіякниганемаєіснуютьтихийстанпідходитьматчвентилятороточують，зберегтиутримуватиОригіналнародивсядобредля: versionCode=$versionCode"
+                    "超级小爱版本不在静态适配范围，保持原生行为: versionCode=$versionCode"
                 }
             }
             chain.proceed()
@@ -171,7 +171,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.query-info",
                 description = "OperationManager.setQueryInfo",
-                detail = "ще ніспробуйте знайтиприбутиМаленькийякперевіритиЗапитуйтелистінтересвведітьрот",
+                detail = "未找到小爱查询信息入口",
             )
             return
         }
@@ -186,7 +186,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.query-info",
                 description = "OperationManager.setQueryInfo",
-                detail = "ще ніспробуйте знайтиприбути setQueryInfo(String,String,JSONObject)",
+                detail = "未找到 setQueryInfo(String,String,JSONObject)",
             )
             return
         }
@@ -216,7 +216,7 @@ internal object XiaoAiHooks {
                     documentInput = documentInput,
                 )
                 hooks.logger.debug {
-                    "зловитиотриматиобганятикласМаленькийякперевіритиЗапитуйте: dialog=${shortId(dialogId)}, queryChars=${query.length}"
+                    "捕获超级小爱查询: dialog=${shortId(dialogId)}, queryChars=${query.length}"
                 }
             }
             chain.proceed()
@@ -233,7 +233,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.asr-final",
                 description = "ASR final result",
-                detail = "ще ніспробуйте знайтиприбутиобганятикласМаленькийяккінецьстан ASR впричинапристрій",
+                detail = "未找到超级小爱终态 ASR 处理器",
             )
             return
         }
@@ -242,7 +242,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.asr-final",
                 description = "ASR final result",
-                detail = "ще ніспробуйте знайтиприбути z10.a.processed(Instruction): boolean",
+                detail = "未找到 z10.a.processed(Instruction): boolean",
             )
             return
         }
@@ -275,7 +275,7 @@ internal object XiaoAiHooks {
         val dialogId = optionalString(HookSupport.invokeNoArgs(instruction, "getDialogId"))
         turnTracker.capture(dialogId = dialogId, query = query)
         logger.debug {
-            "зловитиотриматиобганятикласМаленькийяккінецьстан ASR: dialog=${shortId(dialogId)}, queryChars=${query.length}"
+            "捕获超级小爱终态 ASR: dialog=${shortId(dialogId)}, queryChars=${query.length}"
         }
     }
 
@@ -289,7 +289,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.card-sink",
                 description = "FloatManager.addCard",
-                detail = "ще ніспробуйте знайтиприбутиМаленькийяккарткашматоктрубкапричинапристрій",
+                detail = "未找到小爱卡片管理器",
             )
             return
         }
@@ -298,7 +298,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.card-sink",
                 description = "FloatManager.addCard",
-                detail = "ще ніспробуйте знайтиприбути FloatManager.addCard(Card)",
+                detail = "未找到 FloatManager.addCard(Card)",
             )
             return
         }
@@ -322,7 +322,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.outbound",
                 description = "MiSpeechEngine.C0",
-                detail = "ще ніспробуйте знайтиприбутиМаленькийякпозастоятирічштукбікмежа",
+                detail = "未找到小爱出站事件边界",
             )
             return
         }
@@ -331,7 +331,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.outbound",
                 description = "MiSpeechEngine.C0",
-                detail = "ще ніспробуйте знайтиприбути C0(Event): boolean",
+                detail = "未找到 C0(Event): boolean",
             )
             return
         }
@@ -345,7 +345,7 @@ internal object XiaoAiHooks {
                 event != null && maybeClaimRequest(hooks.logger, classLoader, event)
             } catch (exception: Exception) {
                 hooks.logger.warnThrottled("xiaoai_claim_failed") {
-                    "Маленькийякбудь ласкапроситирозпізнатикомірвтратитипоразка，зберегтиутримуватиОригіналнародивсядобредля: type=${exception.safeLogType()}"
+                    "小爱请求认领失败，保持原生行为: type=${exception.safeLogType()}"
                 }
                 false
             }
@@ -362,7 +362,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.agent-action",
                 description = "AgentActionManager",
-                detail = "ще ніспробуйте знайтиприбутиобганятикласМаленькийяк Agent Action Виконатидобрепристрій",
+                detail = "未找到超级小爱 Agent Action 执行器",
             )
             return
         }
@@ -375,7 +375,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.agent-action",
                 description = "AgentActionManager",
-                detail = "ще ніспробуйте знайтиприбути Agent Action boolean Виконатидобревведітьрот",
+                detail = "未找到 Agent Action boolean 执行入口",
             )
             return
         }
@@ -386,7 +386,7 @@ internal object XiaoAiHooks {
                 description = "XiaoAi ${method.name}(Agent.Action)",
             ) { chain ->
                 if (shouldOwnLatestTurn()) {
-                    hooks.logger.info("вжебарвирізатиобганятикласМаленькийякОригіналнародився Agent Action")
+                    hooks.logger.info("已拦截超级小爱原生 Agent Action")
                     true
                 } else {
                     chain.proceed()
@@ -405,7 +405,7 @@ internal object XiaoAiHooks {
             hooks.missing(
                 id = "xiaoai.session-clear",
                 description = "MiSpeechEngine session clear",
-                detail = "ще ніспробуйте знайтиприбутиМаленькийякзасіданняговоритияснопричинавведітьрот",
+                detail = "未找到小爱会话清理入口",
             )
             return
         }
@@ -414,7 +414,7 @@ internal object XiaoAiHooks {
             executable = method,
             description = "XiaoAi MiSpeechEngine session clear",
         ) { chain ->
-            // НАЗАД Закриття плаваючого шару Xiaoai також очистить сеанс; тут відокремлюється лише вхідний UI, а середовище виконання, яке все ще виконується, не може бути скасовано.
+            // BACK 关闭小爱浮层也会清理 session；这里只分离入口 UI，不能取消仍在执行的 Runtime。
             rendererSlot.detach()?.cancel(classLoader)
             queryCache.clear()
             turnTracker.clear()
@@ -442,13 +442,13 @@ internal object XiaoAiHooks {
         val query = eventQuery.ifBlank { queryInfo?.query ?: latestTurn?.query.orEmpty() }
         if (query.isBlank()) {
             logger.warnThrottled("xiaoai_nlp_query_missing") {
-                "обганятикласМаленькийяк Nlp.Request відсутністьмаломожезловититрубказперевіритиЗапитуйтемистецтвакнига"
+                "超级小爱 Nlp.Request 缺少可接管的查询文本"
             }
             return false
         }
         if (queryInfo == null && query.equals("blank", ignoreCase = true)) {
             logger.warnThrottled("xiaoai_blank_query_uncorrelated") {
-                "обганятикласМаленькийяк blank будь ласкапроситивідсутністьмаломалюнокшматокначальникавнизмистецтва，зберегтиутримуватиОригіналнародивсядобредля"
+                "超级小爱 blank 请求缺少图片上下文，保持原生行为"
             }
             return false
         }
@@ -460,18 +460,18 @@ internal object XiaoAiHooks {
         }
         if (queryInfo == null && sameTrackedQuery && latestTurn.hasImage) {
             logger.warnThrottled("xiaoai_image_query_uncorrelated") {
-                "обганятикласМаленькийякмалюнокшматокбудь ласкапроситинемаєЗаконзакритипосилання setQueryInfo，зберегтиутримуватиОригіналнародивсядобредля"
+                "超级小爱图片请求无法关联 setQueryInfo，保持原生行为"
             }
             return false
         }
         if (queryInfo != null && queryInfo.dialogId != dialogId) {
             logger.debug {
-                "закритипосиланняобганятикласМаленькийякновий Event ID: queryDialog=${shortId(queryInfo.dialogId)}, " +
+                "关联超级小爱新 Event ID: queryDialog=${shortId(queryInfo.dialogId)}, " +
                     "event=${shortId(dialogId)}"
             }
         } else if (queryInfo == null) {
             logger.debug {
-                "прямозловитивід Nlp.Request зловитиотриматиобганятикласМаленькийякперевіритиЗапитуйте: event=${shortId(dialogId)}, " +
+                "直接从 Nlp.Request 捕获超级小爱查询: event=${shortId(dialogId)}, " +
                     "queryChars=${query.length}"
             }
         }
@@ -483,7 +483,7 @@ internal object XiaoAiHooks {
         )
         if (imageResolution is XiaoAiImages.Resolution.Failure) {
             logger.warnThrottled("xiaoai_image_${imageResolution.code.name.lowercase()}") {
-                "Маленькийякмалюнокшматокрозпізнатикомірвпередшколатествтратитипоразка，зберегтиутримуватиОригіналнародивсядобредля: code=${imageResolution.code.name}"
+                "小爱图片认领前校验失败，保持原生行为: code=${imageResolution.code.name}"
             }
             return false
         }
@@ -529,7 +529,7 @@ internal object XiaoAiHooks {
         previous?.cancel(logger, classLoader)
         claimedDialogIds.add(dialogId)
         run.activate()
-        logger.info("вжезловититрубкаобганятикласМаленькийякбудь ласкапросити: images=${if (image == null) 0 else 1}")
+        logger.info("已接管超级小爱请求: images=${if (image == null) 0 else 1}")
         return true
     }
 
@@ -574,13 +574,13 @@ internal object XiaoAiHooks {
                 run.renderer.complete(result.content)
             } else {
                 logger.warnThrottled("xiaoai_runtime_failed") {
-                    "обганятикласМаленькийяк Agent Runtime Виконатидобревтратитипоразка"
+                    "超级小爱 Agent Runtime 执行失败"
                 }
                 run.renderer.fail()
             }
         } catch (exception: Exception) {
             logger.warnThrottled("xiaoai_bridge_failed") {
-                "обганятикласМаленькийяк Agent Виконатидобрерізнічасто: type=${exception.safeLogType()}"
+                "超级小爱 Agent 执行异常: type=${exception.safeLogType()}"
             }
             if (activeRun.get() === run && !run.cancelled.get()) {
                 run.renderer.fail()
@@ -610,7 +610,7 @@ internal object XiaoAiHooks {
             getString.invoke(null, normalizedId, "") as? String
         } catch (exception: Exception) {
             logger.warnThrottled("xiaoai_image_lookup_failed") {
-                "МаленькийякмалюнокшматоквідображатистрілятичитатиВиберітьвтратитипоразка: type=${exception.safeLogType()}"
+                "小爱图片映射读取失败: type=${exception.safeLogType()}"
             }
             null
         }
@@ -632,7 +632,7 @@ internal object XiaoAiHooks {
                     }
                 } catch (_: RejectedExecutionException) {
                     logger.warnThrottled("xiaoai_drain_rejected") {
-                        "обганятикласМаленькийяквузолфруктивідновитискладнікомандаСписокТрадиційнийзайнятий，СтрибокПаскнигаДругосортнийвідновитискладні"
+                        "超级小爱结果恢复队列繁忙，跳过本次恢复"
                     }
                 }
             }, delay)
@@ -737,7 +737,7 @@ internal object XiaoAiHooks {
             client.get()?.cancelRun(runId)
             future.get()?.cancel(true)
             renderer.cancel(classLoader)
-            logger.debug { "обганятикласМаленькийякбудь ласкапроситивжеВиберітьвидалити" }
+            logger.debug { "超级小爱请求已取消" }
         }
 
         fun toHandoff(): AgentRuntimeWire.EntryHandoff =

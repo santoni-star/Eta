@@ -11,14 +11,14 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Відокремлений хост завдання: запускає резидентний процес, який від’єднується від будь-якої групи процесів командного сеансу та керує його життєвим циклом.
+ * 守护任务（detached task）宿主：启动脱离任何命令会话进程组的长驻进程，并托管其生命周期。
  *
- * Відмінність від звичайних команд терміналу полягає в семантиці переробки: керована оболонка очищатиме процеси в тій самій групі перед виходом, а завдання демона буде проходити
- * Незалежний сеанс setid відокремлений від цієї мережі переробки; вихідні дані перенаправляються у файл журналу робочої області замість пам’яті, а запис завдання скидається на диск.
- * Після перезапуску програми натисніть pid + маркер власності, щоб отримати доступ до процесу, який ще триває.
+ * 与普通终端命令的差别在于回收语义：托管 shell 退出前会清理同组进程，守护任务通过
+ * setsid 自立会话脱离这张回收网；输出重定向到工作区日志文件而非内存，任务记录落盘，
+ * App 重启后按 pid + ownership token 认领仍存活的进程。
  *
- * Після перезавантаження телефону всі завдання стануть недійсними; коли програму примусово зупинено, завдання ідентифікації користувача буде припинено системою.
- * завдання кореневої ідентифікації не впливають.
+ * 手机重启后任务全部失效；App 被强制停止时 user identity 任务会被系统连带终止，
+ * root identity 任务不受影响。
  */
 internal class DetachedTaskSupervisor(
     private val logger: AgentLogger,
@@ -39,18 +39,18 @@ internal class DetachedTaskSupervisor(
         const val MAX_RETAINED_RECORDS = 32
         const val MAX_LOG_READ_BYTES = 64 * 1024
 
-        // Стороні штучного інтелекту та стороні інтерфейсу користувача дозволено утримувати один екземпляр у процесі; читання-змінення-запис файлу запису має бути серіалізовано через ту саму блокування.
+        // 进程内允许 AI 侧与 UI 侧各持一个实例；记录文件的读-改-写必须经同一把锁串行。
         private val RECORDS_LOCK = Any()
         private val COMMAND_PROCESSES = java.util.concurrent.ConcurrentHashMap<String, CommandProcess>()
         private val USER_WAITERS = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
-        /** Сторона інструментів штучного інтелекту та сторона інтерфейсу користувача спільно використовують той самий файл запису, і шлях тут можна визначити лише один раз.*/
+        /** AI 工具侧与 UI 侧共用同一份记录文件，路径只能在这里定义一次。 */
         fun defaultRecordsFile(context: Context): File =
             File(context.filesDir, "terminal-daemons.json")
     }
 
 
-    /** command/cwd/identity/environment має бути нормалізовано абонентом.*/
+    /** command/cwd/identity/environment 必须已由调用方归一化。 */
     fun start(
         command: String,
         cwd: String,
@@ -60,16 +60,16 @@ internal class DetachedTaskSupervisor(
         description: String = "",
         timeoutMs: Long = 0,
     ): DaemonStartResult {
-        if (identity != "root" && identity != "user") return DaemonStartResult.Failed("INVALID_ARGUMENT", "Виконатидобретілочастканемаєефект")
-        if (identity == "root" && !rootAvailable()) return DaemonStartResult.Failed("ROOT_REQUIRED", "Root навчатиправильнонемаєможевикористовувати")
+        if (identity != "root" && identity != "user") return DaemonStartResult.Failed("INVALID_ARGUMENT", "执行身份无效")
+        if (identity == "root" && !rootAvailable()) return DaemonStartResult.Failed("ROOT_REQUIRED", "Root 授权不可用")
         if (identity == "user" && environment.isLinux && LinuxEnvironmentPaths.backendOf(rootfsPath(environment)) != LinuxExecutionBackend.PROOT) {
-            return DaemonStartResult.Failed("LINUX_ENVIRONMENT_REQUIRES_ROOT", "Місцевибрати Linux кільцетериторіїпотребахочуть Root")
+            return DaemonStartResult.Failed("LINUX_ENVIRONMENT_REQUIRES_ROOT", "所选 Linux 环境需要 Root")
         }
         if (identity == "root" && environment.isLinux && LinuxEnvironmentPaths.backendOf(rootfsPath(environment)) == LinuxExecutionBackend.PROOT) {
-            return DaemonStartResult.Failed("INVALID_IDENTITY", "відмовився Root Linux зробитивикористовуватизагальнийПасвідповідьвикористовуватитілочастка")
+            return DaemonStartResult.Failed("INVALID_IDENTITY", "免 Root Linux 使用普通应用身份")
         }
         if (list().count { it.running } >= MAX_TASKS) {
-            return DaemonStartResult.Failed("MAX_TASKS_REACHED", "зберегтизахиститипризначитиобслуговуванняномеркількістьвжедосяжністьначальникаобмеження $MAX_TASKS，будь ласкапершеСТІЙкінецьнемаєвикористовуватизпризначитиобслуговування")
+            return DaemonStartResult.Failed("MAX_TASKS_REACHED", "守护任务数量已达上限 $MAX_TASKS，请先停止不用的任务")
         }
         val id = (if (commandTask) "job_" else "dm_") + UUID.randomUUID().toString().take(8)
         val token = UUID.randomUUID().toString().replace("-", "")
@@ -78,7 +78,7 @@ internal class DetachedTaskSupervisor(
         val wireDir = wireDaemonDir(environment)
         val wirePidFile = "$wireDir/$id.pid"
         val wireLogFile = "$wireDir/$id.log"
-        // Внутрішній sh спочатку видаляє pid-файл, а потім виконує цільову команду, а PID залишається незмінним до та після виконання.
+        // 内层 sh 先落 pidfile 再 exec 目标命令，PID 在 exec 前后不变。
         val innerScript = "echo \$\$ > ${shellQuote(wirePidFile)}; " +
             "export $ETA_PROCESS_OWNER_ENV=${shellQuote(token)}; " +
             "exec sh -c ${shellQuote(command)} >> ${shellQuote(wireLogFile)} 2>&1"
@@ -86,7 +86,7 @@ internal class DetachedTaskSupervisor(
             appendLine("mkdir -p ${shellQuote(wireDir)} || exit 1")
             appendLine("rm -f ${shellQuote(wirePidFile)}")
             appendLine("cd ${shellQuote(cwd)} || exit 1")
-            // Обидві гілки мають працювати у фоновому режимі: setsid просто залишає сеанс, а абонент все ще буде на передньому плані, чекаючи завершення постійної команди.
+            // 两个分支都必须后台化：setsid 只是脱离会话，调用方仍会前台等待长驻命令结束。
             appendLine("if command -v setsid >/dev/null 2>&1; then")
             appendLine("  setsid sh -c ${shellQuote(innerScript)} < /dev/null &")
             appendLine("else")
@@ -100,7 +100,7 @@ internal class DetachedTaskSupervisor(
             appendLine("done")
             append("cat ${shellQuote(wirePidFile)} 2>/dev/null")
         }
-        // Засіб запуску має працювати без використання: команда очікування керованої оболонки заблокує дочірні процеси у фоновому режимі, а те саме очищення групи перед виходом також вб’є їх.
+        // 启动器必须裸跑：托管壳的 wait 会卡住已后台化的子进程，退出前的同组清理也会杀死它们。
         val result = launchRaw(identity, environment, launcherScript, timeoutSeconds = 10)
         val outputText = result.output.decodeToString().trim()
         val pid = outputText.lineSequence().map { it.trim() }.lastOrNull { it.isNotEmpty() }?.toLongOrNull()
@@ -128,7 +128,7 @@ internal class DetachedTaskSupervisor(
         )
         if (!synchronized(RECORDS_LOCK) { saveTasksLocked(loadTasksLocked() + task) }) {
             stopTaskProcess(task)
-            return DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "немаєЗаконзберегтижитиназадвежапризначитиобслуговування，будь ласкаперевіритиперевіритиВсерединівідділжитизберігати")
+            return DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "无法保存后台任务，请检查内部存储")
         }
         logger.info(
             "Agent terminal daemon action=start outcome=started taskId=$id " +
@@ -137,11 +137,11 @@ internal class DetachedTaskSupervisor(
         return DaemonStartResult.Started(task)
     }
 
-    /** Перевірте всі записи: відновіть живі, збережіть мертві записи для перегляду журналу та очистіть зайві вихідні записи.*/
+    /** 巡检全部记录：活着的重新认领，死掉的保留记录供查看日志，并清理超额的已退出记录。 */
     fun list(): List<DetachedTaskStatus> {
         val tasks = synchronized(RECORDS_LOCK) { loadTasksLocked() }
         if (tasks.isEmpty()) return emptyList()
-        // Перевірка груп з різними ідентифікаторами: /proc/<pid>/environ доступний для читання лише власнику процесу та кореневому користувачу, а виявлення за допомогою власного ідентифікатора завдання є найбільш стабільним.
+        // 不同身份分组巡检：/proc/<pid>/environ 只有进程属主与 root 可读，用任务自身身份探测最稳。
         val aliveById = mutableMapOf<String, Boolean>()
         tasks.filter { it.completedAt == null }.groupBy { it.identity }.forEach { (identity, group) ->
             if (identity == "root" && !rootAvailable()) return@forEach
@@ -166,7 +166,7 @@ internal class DetachedTaskSupervisor(
                 )
             }
         }
-        // Завдання, які не вдається виявити, консервативно вважаються такими, що все ще виконуються, і їх не буде помилково повідомлено про завершення; лише ті завдання, які підтверджено мертвими, дозволено очищати за допомогою видалення.
+        // 探测失败的任务保守视为仍在运行，不误报死亡；确认死亡的才允许被 prune 清掉。
         val statuses = tasks.map { task ->
             if (task.completedAt != null) return@map DetachedTaskStatus(task, false)
             var running = aliveById[task.id] ?: true
@@ -184,8 +184,8 @@ internal class DetachedTaskSupervisor(
 
     fun readLogs(id: String, maxBytes: Int = MAX_LOG_READ_BYTES): DaemonLogsResult {
         val task = synchronized(RECORDS_LOCK) { loadTasksLocked() }.firstOrNull { it.id == id }
-            ?: return DaemonLogsResult(ok = false, code = "TASK_NOT_FOUND", message = "ще ніспробуйте знайтиприбутизберегтизахиститипризначитиобслуговування：$id")
-        if (task.identity == "root" && !rootAvailable()) return DaemonLogsResult(ok = false, code = "ROOT_REQUIRED", message = "Root навчатиправильнонемаєможевикористовувати")
+            ?: return DaemonLogsResult(ok = false, code = "TASK_NOT_FOUND", message = "未找到守护任务：$id")
+        if (task.identity == "root" && !rootAvailable()) return DaemonLogsResult(ok = false, code = "ROOT_REQUIRED", message = "Root 授权不可用")
         val limit = maxBytes.coerceIn(1_024, MAX_LOG_READ_BYTES)
         val result = runOneShotShell(
             processSupervisor = oneShotSupervisor,
@@ -194,7 +194,7 @@ internal class DetachedTaskSupervisor(
             timeoutSeconds = 15,
         )
         if (result.exitCode != 0) {
-            return DaemonLogsResult(ok = false, code = "LOGS_UNAVAILABLE", message = "деньчестолюбствонемаєможевикористовувати：exit=${result.exitCode}")
+            return DaemonLogsResult(ok = false, code = "LOGS_UNAVAILABLE", message = "日志不可用：exit=${result.exitCode}")
         }
         return DaemonLogsResult(
             ok = true,
@@ -222,12 +222,12 @@ internal class DetachedTaskSupervisor(
             commandPayload(command, "$wireDir/$id.exit") + "; } > ${shellQuote(logPath)} 2>&1"
         val process = oneShotSupervisor.startShellProcess(identity, script, true, environment,
             linuxRootfsPath = rootfsPath(environment), linuxSharedMounts = linuxSharedMountsProvider())
-            ?: return DaemonStartResult.Failed("PROCESS_START_FAILED", "немаєЗаконпочатокрухатисяназадвежажиттязробити")
+            ?: return DaemonStartResult.Failed("PROCESS_START_FAILED", "无法启动后台命令")
         val ownership = oneShotSupervisor.ownershipOf(process)
         if (ownership == null) {
             oneShotSupervisor.terminateAndReap(process)
             oneShotSupervisor.unregisterProcess(process)
-            return DaemonStartResult.Failed("PROCESS_START_FAILED", "назадвежажиттязробитище нізакінченостатиВведітьПроцедураповерненнярідправильнорозпізнати")
+            return DaemonStartResult.Failed("PROCESS_START_FAILED", "后台命令未完成进程归属确认")
         }
         val task = DetachedTask(id, ownership.pid, ownership.token, command, cwd, identity, environment,
             logPath, System.currentTimeMillis(), LinuxEnvironmentPaths.backendOf(rootfsPath(environment)), workspace,
@@ -235,7 +235,7 @@ internal class DetachedTaskSupervisor(
         if (!synchronized(RECORDS_LOCK) { saveTasksLocked(loadTasksLocked() + task) }) {
             oneShotSupervisor.terminateAndReap(process)
             oneShotSupervisor.unregisterProcess(process)
-            return DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "немаєЗаконзберегтижитиназадвежажиттязробити")
+            return DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "无法保存后台命令")
         }
         val running = CommandProcess(process, oneShotSupervisor)
         COMMAND_PROCESSES[id] = running
@@ -298,13 +298,13 @@ internal class DetachedTaskSupervisor(
 
     private fun commandPayload(command: String, exitPath: String): String {
         val payload = "$command\neta_command_status=${'$'}?\nwait\nexit ${'$'}eta_command_status"
-        // Сама команда може викликати вихід; після того, як суб-оболонка виконана, оболонка хосту атомарно записує код виходу, і результат все ще можна підтвердити після перезапуску програми.
+        // 命令自身可调用 exit；在子壳执行后由宿主壳原子记录退出码，App 重启后仍可确认结果。
         return "{ sh -c ${shellQuote(payload)}; eta_status=$?; " +
             "printf '%s\\n' \"${'$'}eta_status\" > ${shellQuote("$exitPath.tmp")} && " +
             "mv ${shellQuote("$exitPath.tmp")} ${shellQuote(exitPath)}; exit \"${'$'}eta_status\"; }"
     }
 
-    /** Зупинка і видалення записів і журналів; коли процес завершився, це еквівалентно очищенню записів.*/
+    /** 停止并删除记录与日志；进程已退出时等价于清理记录。 */
     fun stop(id: String): Boolean {
         val tasks = synchronized(RECORDS_LOCK) { loadTasksLocked() }
         val task = tasks.firstOrNull { it.id == id } ?: return false
@@ -330,7 +330,7 @@ internal class DetachedTaskSupervisor(
         val stopScript = buildString {
             appendLine(aliveCheckFunction())
             appendLine("if eta_alive ${task.pid} ${shellQuote(ownerProof(task))}; then")
-            // pgid==pid під шляхом setsid, зібрати все дерево за групою відразу; у погіршеному середовищі без setsid буде вбито лише основний процес.
+            // setsid 路径下 pgid==pid，按组一次收整棵树；无 setsid 的退化环境只杀主进程。
             if (task.isolatedGroup != null) {
                 appendLine("  kill -TERM ${if (task.isolatedGroup) "-" else ""}${task.pid} 2>/dev/null")
             } else appendLine("  if [ -d /proc ]; then kill -TERM -${task.pid} 2>/dev/null; else kill -TERM ${task.pid} 2>/dev/null; fi")
@@ -354,7 +354,7 @@ internal class DetachedTaskSupervisor(
         return result.exitCode == 0
     }
 
-    /** Маркер права власності на визначення виживання: якщо PID повторно використовується системою, непов’язані процеси не розглядатимуться як це завдання. Середовища без /proc повертаються до зондів присутності.*/
+    /** 存活判定校验 ownership token：PID 被系统复用时不会把无关进程当作本任务。无 /proc 的环境退化为存在性探测。 */
     private fun aliveCheckFunction(): String =
         "eta_alive() { " +
             "if [ -d /proc ]; then " +
@@ -365,32 +365,32 @@ internal class DetachedTaskSupervisor(
 
     private fun ownerProof(task: DetachedTask): String = "$ETA_PROCESS_OWNER_ENV=${task.token}"
 
-    /** Звичайні охоронні завдання зберігають повну оболонку хоста та трасувальник; гість не може знову залишити життєвий цикл PRoot.*/
+    /** 普通守护任务保留完整宿主壳和 tracer；guest 内不能再次脱离 PRoot 的生命周期。 */
     private fun startUserDaemon(id: String, token: String, command: String, cwd: String, environment: TerminalEnvironment): DaemonStartResult {
         val workspace = if (environment.isLinux || daemonDir == DEFAULT_DAEMON_DIR) TerminalRuntime.userWorkspacePath else File(daemonDir).parent!!
         val hostDir = if (environment.isLinux || daemonDir == DEFAULT_DAEMON_DIR) File(workspace, "daemon") else File(daemonDir)
-        if (!hostDir.mkdirs() && !hostDir.isDirectory) return DaemonStartResult.Failed("WORKSPACE_UNAVAILABLE", "працюватиробитиГоловазаписнемаєможевідвідатизапитати")
+        if (!hostDir.mkdirs() && !hostDir.isDirectory) return DaemonStartResult.Failed("WORKSPACE_UNAVAILABLE", "工作目录不可访问")
         val pidFile = File(hostDir, "$id.pid")
         val logFile = File(hostDir, "$id.log")
         val commandBody = "exec sh -c ${shellQuote(command)}"
         val payload = if (environment.isLinux) {
             val rootfs = rootfsPath(environment)
-            if (!LinuxEnvironmentPaths.rootfsReady(rootfs)) return DaemonStartResult.Failed("LINUX_ENVIRONMENT_NOT_READY", "Linux кільцетериторіїдосіще нівстановитиупаковка")
-            if (!ProotCommandBuilder.available()) return DaemonStartResult.Failed("PROOT_UNAVAILABLE", "коливпередналаштуватиПриготуйтебезматиможевикористовуватизвідмовився Root Linux транспортдобреГрупаштук")
+            if (!LinuxEnvironmentPaths.rootfsReady(rootfs)) return DaemonStartResult.Failed("LINUX_ENVIRONMENT_NOT_READY", "Linux 环境尚未安装")
+            if (!ProotCommandBuilder.available()) return DaemonStartResult.Failed("PROOT_UNAVAILABLE", "当前设备没有可用的免 Root Linux 运行组件")
             ProotCommandBuilder.payload(requireNotNull(rootfs), "cd ${shellQuote(cwd)} && $commandBody", linuxSharedMountsProvider(), workspace = workspace)
         } else "cd ${shellQuote(cwd)} && $commandBody"
         val lease = "daemon:$id"
         val stopped = java.util.concurrent.atomic.AtomicBoolean(false)
         val launchLock = Any()
-        // Зупинка спочатку позначає намір, а потім очікує на кінець критичної секції запуску; зупинка до встановлення рекорду не скидається.
+        // 停止先标记意图，再等启动临界区结束；记录建立前的停止不会被丢弃。
         return synchronized(launchLock) {
             if (!acquireUserLease(lease) {
                     stopped.set(true)
                     synchronized(launchLock) { stop(id) }
-                }) return@synchronized DaemonStartResult.Failed("BACKGROUND_START_NOT_ALLOWED", "будь ласкаповерненняповернення Eta назадВажкановийпочатокрухатисяназадвежапризначитиобслуговування")
+                }) return@synchronized DaemonStartResult.Failed("BACKGROUND_START_NOT_ALLOWED", "请返回 Eta 后重新启动后台任务")
             if (stopped.get()) {
                 releaseUserLease(lease)
-                return@synchronized DaemonStartResult.Failed("TASK_CANCELLED", "назадвежапризначитиобслуговуваннявжеВиберітьвидалити")
+                return@synchronized DaemonStartResult.Failed("TASK_CANCELLED", "后台任务已取消")
             }
             val script = "printf '%s\\n' \"${'$'}${'$'}\" > ${shellQuote(pidFile.absolutePath)}; $payload"
             val launcher = "if command -v setsid >/dev/null 2>&1; then exec setsid -w sh -c ${shellQuote(script)}; else exec sh -c ${shellQuote(script)}; fi"
@@ -404,7 +404,7 @@ internal class DetachedTaskSupervisor(
                 }.start()
             } catch (_: java.io.IOException) {
                 releaseUserLease(lease)
-                return@synchronized DaemonStartResult.Failed("PROCESS_START_FAILED", "немаєЗаконпочатокрухатисяназадвежапризначитиобслуговування")
+                return@synchronized DaemonStartResult.Failed("PROCESS_START_FAILED", "无法启动后台任务")
             }
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3)
             while (pidFile.length() == 0L && process.isAlive && System.nanoTime() < deadline) Thread.sleep(10)
@@ -412,7 +412,7 @@ internal class DetachedTaskSupervisor(
             if (pid == null || pid <= 1) {
                 process.destroyForcibly()
                 releaseUserLease(lease)
-                return@synchronized DaemonStartResult.Failed("PROCESS_START_FAILED", "назадвежапризначитиобслуговуванняще нізакінченостатипочатокрухатися")
+                return@synchronized DaemonStartResult.Failed("PROCESS_START_FAILED", "后台任务未完成启动")
             }
             val task = DetachedTask(id, pid, token, command, cwd, "user", environment,
                 if (environment.isLinux) "$LINUX_DAEMON_DIR/$id.log" else logFile.absolutePath,
@@ -423,7 +423,7 @@ internal class DetachedTaskSupervisor(
                 stopTaskProcess(task)
                 process.destroyForcibly()
                 releaseUserLease(lease)
-                return@synchronized DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "немаєЗаконзберегтижитиназадвежапризначитиобслуговування，будь ласкаперевіритиперевіритиВсерединівідділжитизберігати")
+                return@synchronized DaemonStartResult.Failed("RECORDS_WRITE_FAILED", "无法保存后台任务，请检查内部存储")
             }
             thread(name = "eta-daemon-wait", isDaemon = true) {
                 try { process.waitFor() } finally {
@@ -433,12 +433,12 @@ internal class DetachedTaskSupervisor(
             }
             if (stopped.get()) {
                 stop(id)
-                DaemonStartResult.Failed("TASK_CANCELLED", "назадвежапризначитиобслуговуваннявжеВиберітьвидалити")
+                DaemonStartResult.Failed("TASK_CANCELLED", "后台任务已取消")
             } else DaemonStartResult.Started(task)
         }
     }
 
-    /** Після того, як процес додатка буде перебудовано, він вимагатиме лише тих звичайних завдань, які підтверджено належать до нього, щоб уникнути втрати сповіщень фоновим трасувальником і зупинки запису.*/
+    /** App 进程重建后只认领已确认归属的普通任务，避免后台 tracer 失去通知和停止入口。 */
     private fun adoptUserTask(task: DetachedTask): Boolean {
         if (!USER_WAITERS.add(task.id)) return true
         val lease = "daemon:${task.id}"
@@ -467,8 +467,8 @@ internal class DetachedTaskSupervisor(
     }
 
     /**
-     * Голий засіб запуску: керована оболонка, яка не проходить через [ShellProcessSupervisor] (очікування та очищення оболонки — це семантика переробки, від якої завдання демона хоче уникнути),
-     *Лише для запуску, збору виведених даних і захисту тайм-ауту. Середовище Linux все ще повторно використовує той самий пакет unshare + chroot.
+     * 裸启动器：不经过 [ShellProcessSupervisor] 的托管壳（壳的 wait 与退出清理正是守护任务要逃离的回收语义），
+     * 只做启动、输出收集与超时防御。Linux 环境仍复用同一套 unshare + chroot 包装。
      */
     private fun launchRaw(
         identity: String,
@@ -480,7 +480,7 @@ internal class DetachedTaskSupervisor(
             TerminalEnvironment.ANDROID -> oneShotSupervisor.buildAndroidPayload(identity, script)
             else -> {
                 val rootfs = rootfsPath(environment)
-                    ?: return OneShotShellResult(-1, ByteArray(0), "Linux rootfs ще німатчвстановити".toByteArray())
+                    ?: return OneShotShellResult(-1, ByteArray(0), "Linux rootfs 未配置".toByteArray())
                 oneShotSupervisor.buildLinuxPayload(rootfs, script, linuxSharedMountsProvider())
             }
         }
@@ -492,7 +492,7 @@ internal class DetachedTaskSupervisor(
             }
             builder.redirectErrorStream(true).start()
         }.getOrElse {
-            return OneShotShellResult(-1, ByteArray(0), (it.message ?: "немаєЗаконпочатокрухатисяВведітьПроцедура").toByteArray())
+            return OneShotShellResult(-1, ByteArray(0), (it.message ?: "无法启动进程").toByteArray())
         }
         val output = ByteArrayOutputCollector()
         val reader = thread(name = "agent-daemon-launch-reader", isDaemon = true) {
@@ -502,7 +502,7 @@ internal class DetachedTaskSupervisor(
         if (!finished) {
             runCatching { process.destroyForcibly() }
             runCatching { reader.join(500) }
-            return OneShotShellResult(-2, output.bytes(), "життязробитиВиконатидобреобганятигодина".toByteArray())
+            return OneShotShellResult(-2, output.bytes(), "命令执行超时".toByteArray())
         }
         runCatching { reader.join(500) }
         return OneShotShellResult(process.exitValue(), output.bytes(), ByteArray(0))
@@ -512,8 +512,8 @@ internal class DetachedTaskSupervisor(
         if (environment.isLinux) LINUX_DAEMON_DIR else daemonDir
 
     /**
-     * /workspace завдання Linux — це пов’язане подання робочого каталогу хоста, а фізичні розташування файлів журналу та pid все ще знаходяться на хості.
-     * Завжди використовуйте шлях хоста для читання та запису та уникайте введення chroot спеціально для читання журналів.
+     * Linux 任务的 /workspace 是宿主工作目录的 bind 视图，日志与 pid 文件的物理位置仍在宿主。
+     * 读写一律走宿主路径，避免为读日志专门进入 chroot。
      */
     internal fun hostDaemonPath(task: DetachedTask, wirePath: String): String =
         if (task.environment.isLinux && wirePath.startsWith(LINUX_DAEMON_DIR)) {

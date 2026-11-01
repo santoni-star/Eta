@@ -21,6 +21,6 @@ internal data class CharacterEntity(
 @Entity(tableName = "roleplay_user_persona")
 internal data class UserPersonaEntity(
     @PrimaryKey val id: String = "main",
-    val name: String = "використовуватипобутові",
+    val name: String = "用户",
     val description: String = "",
 )

@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.voice
 
 import okio.Buffer
 
-/** Кожна композиція незалежно розпізнає контейнери WAV або голий PCM, а заголовки та зразки можна використовувати в усіх сегментах мережі.*/
+/** 每次合成独立识别 WAV 容器或裸 PCM，文件头与采样都可以跨网络片段。 */
 internal class SpeechPcmDecoder(private val onAudio: (ByteArray) -> Unit) {
     private enum class Phase { DETECT, RIFF_HEADER, WAV_HEADER, PCM }
 
@@ -41,7 +41,7 @@ internal class SpeechPcmDecoder(private val onAudio: (ByteArray) -> Unit) {
             if (id == "data") {
                 if (!formatValidated || headerBytes + 8 > MAX_HEADER_BYTES) invalid()
                 buffer.skip(8)
-                // Поле довжини хмарного потокового WAV може бути значенням заповнювача; кінець аудіо визначається подією успішного завершення служби.
+                // 云端流式 WAV 的长度字段可能是占位值；音频结束以服务的成功终止事件为准。
                 phase = Phase.PCM
                 break
             }
@@ -85,7 +85,7 @@ internal class SpeechPcmDecoder(private val onAudio: (ByteArray) -> Unit) {
         if (phase != Phase.PCM || buffer.size != 0L || pcmBytes == 0L) invalid()
     }
 
-    private fun invalid(): Nothing = throw SpeechFailure(SpeechErrorCode.PROTOCOL, "мовазвукзвукчастотасіткаРежимабодовговитрачатинемаєефект")
+    private fun invalid(): Nothing = throw SpeechFailure(SpeechErrorCode.PROTOCOL, "语音音频格式或长度无效")
 
     private companion object {
         const val MAX_HEADER_BYTES = 65_536L

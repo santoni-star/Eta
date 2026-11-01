@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Перевірка працездатності дозволу; автоматично оновлюється, коли змінюється статус авторизації Root.*/
+/** 权限健康检查；Root 授权状态变化时自动刷新。 */
 internal class PermissionHealthStore(
     context: Context,
     private val scope: CoroutineScope,
@@ -84,14 +84,14 @@ private fun buildPermissionHealthState(context: Context): PermissionHealthUiStat
             ),
             localNetworkPermissionHealthItem(context),
             PermissionHealthItemUi(
-                id = "calendar", title = "денькалендарвідвідатизапитати", summary = "читатиВиберітьденьПроцедураістворитивстановити、будуватизмінитирічштукінестиПрокинутися；ще нінавчатиправильногодинаТількиіснуютьвжемати Root навчатиправильновниззробитивикористовуватизбільшенняпотужнийПасдорога。",
+                id = "calendar", title = "日历访问", summary = "读取日程并创建、修改事件与提醒；未授权时只在已有 Root 授权下使用增强通道。",
                 status = if (io.github.mangi.eta.agent.device.CalendarPermissions.granted(context, true)) PermissionStatusUi.Available else PermissionStatusUi.Missing,
-                primaryActionLabel = if (io.github.mangi.eta.agent.device.CalendarPermissions.granted(context, true)) null else "навчатиправильно",
+                primaryActionLabel = if (io.github.mangi.eta.agent.device.CalendarPermissions.granted(context, true)) null else "授权",
             ),
             PermissionHealthItemUi(
-                id = "notification_policy", title = "не робититурбувативідвідатизапитати", summary = "дозволяютьтравнязагальнийПасправильнообмеженнявнизвирізатиЗмінатихийзвук、вібруватирухатисяікільцедзвоникцвільРежим。",
+                id = "notification_policy", title = "勿扰访问", summary = "允许普通权限下切换静音、振动和响铃模式。",
                 status = if (context.getSystemService(android.app.NotificationManager::class.java)?.isNotificationPolicyAccessGranted == true) PermissionStatusUi.Available else PermissionStatusUi.Missing,
-                primaryActionLabel = "налаштувативстановити",
+                primaryActionLabel = "设置",
             ),
             PermissionHealthItemUi(
                 id = "location",

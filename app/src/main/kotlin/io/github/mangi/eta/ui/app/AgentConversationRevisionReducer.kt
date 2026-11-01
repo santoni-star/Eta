@@ -5,7 +5,7 @@ import io.github.mangi.eta.ui.model.AgentChatMessageUi
 import io.github.mangi.eta.ui.model.AgentChatUiState
 import io.github.mangi.eta.ui.model.UserMessageUi
 
-/** Синхронне обрізання відображуваного повідомлення та контексту моделі на основі черги користувача як межі.*/
+/** 以用户轮次为边界同步裁剪展示消息与模型上下文。 */
 internal object AgentConversationRevisionReducer {
     data class Boundary(
         val userMessage: UserMessageUi,
@@ -29,7 +29,7 @@ internal object AgentConversationRevisionReducer {
 
         val source = state.journal.ifEmpty { state.history }
         val historyUserIndices = source.indices.filter { source[it].role == "user" }
-        // Стара версія могла втратити префікс; існуючі записи можуть бути лише вирівняні в кінці, їх неможливо підробити та відновити.
+        // 旧版本可能已经丢失前缀；只能对已有记录做尾部对齐，不能伪造恢复。
         val retainedUserOrdinal = historyUserIndices.size - (userMessageIndices.size - targetUserOrdinal)
         val historyIndex = historyUserIndices.getOrNull(retainedUserOrdinal)
         val prefix = historyIndex?.let(source::take).orEmpty()

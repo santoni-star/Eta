@@ -40,7 +40,7 @@ internal object SystemUiHooks {
                 hooks.missing(
                     id = "systemui.ocr-long-press",
                     description = "OplusOcrScreenBusiness.onLongPressed",
-                    detail = "ще ніспробуйте знайтиприбути OplusOcrScreenBusiness.onLongPressed()"
+                    detail = "未找到 OplusOcrScreenBusiness.onLongPressed()"
                 )
                 return@install
             }
@@ -50,14 +50,14 @@ internal object SystemUiHooks {
                 executable = onLongPressedMethod,
                 description = "OplusOcrScreenBusiness.onLongPressed"
             ) { chain ->
-                // Коли перемикач вимкнено, використовуватиметься оригінальна логіка OCR.
+                // 开关关闭则走原 OCR 逻辑。
                 if (!Prefs.isEnabled(Prefs.Keys.GESTURE_BAR_CIRCLE_TO_SEARCH)) {
                     return@intercept chain.proceed()
                 }
                 val context = resolveContext(chain.getThisObject())
                 if (context == null) {
                     logger.warnThrottled("systemui_context") {
-                        "SystemUI немаєЗаконВиберітьповинні Context，поверненнявідступОригінал OCR логікаредагувати"
+                        "SystemUI 无法取得 Context，回退原 OCR 逻辑"
                     }
                     return@intercept chain.proceed()
                 }
@@ -66,7 +66,7 @@ internal object SystemUiHooks {
                         context,
                         logger,
                         "SystemUI",
-                        "поверненнявідступОригінал OCR логікаредагувати"
+                        "回退原 OCR 逻辑"
                     )
                 ) {
                     return@intercept chain.proceed()
@@ -91,14 +91,14 @@ internal object SystemUiHooks {
     private fun performOriginalLongPressHaptic(context: Context, logger: ModuleLogger) {
         val vibrationHelper = resolveVibrationHelper(context) ?: run {
             logger.warnThrottled("systemui_cts_vibration_helper_missing") {
-                "SystemUI: немаєЗаконВиберітьповинніОригіналнародився VibrationHelper，СтрибокПаскерівництвовітрилосмужкадовговідповідно дошокрухатися"
+                "SystemUI: 无法取得原生 VibrationHelper，跳过导航条长按震动"
             }
             return
         }
 
         if (!invokeVibrateCustomized(vibrationHelper, context)) {
             logger.warnThrottled("systemui_cts_linear_haptic_failed") {
-                "SystemUI: мелодіявикористовуватиОригіналнародивсякерівництвовітрилосмужкадовговідповідно дошокрухатисявтратитипоразка"
+                "SystemUI: 调用原生导航条长按震动失败"
             }
         }
     }

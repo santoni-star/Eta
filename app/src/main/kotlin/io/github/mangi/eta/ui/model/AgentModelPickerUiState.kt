@@ -112,7 +112,7 @@ internal object AgentModelPickerProjector {
 internal val AgentModelPickerUiState.modelCount: Int
     get() = providerGroups.sumOf { it.models.size }
 
-/** Назва постачальника послуг також бере участь у відповідності: при пошуку постачальника послуг перераховуються всі його моделі.*/
+/** 服务商名称也参与匹配：搜索服务商时列出它的全部模型。 */
 internal fun AgentModelPickerUiState.filterGroups(query: String): List<AgentModelProviderGroupUi> {
     val search = ModelSearchQuery(query)
     if (search.isEmpty) return providerGroups

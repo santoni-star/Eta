@@ -15,7 +15,7 @@ internal suspend fun synthesizeSpeech(settings: SpeechSettings, credentials: Spe
     when (settings.tts) {
         TtsProvider.GEMINI -> return@withTimeout synthesizeGemini(settings.geminiTts, credentials.geminiTts, text, onAudio)
         TtsProvider.MINIMAX -> return@withTimeout synthesizeMiniMax(settings.minimaxTts, credentials.minimaxTts, text, onAudio)
-        TtsProvider.NONE -> throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "будь ласкапершевибративибратимовазвуктрансляціягазетаОдягобслуговування")
+        TtsProvider.NONE -> throw SpeechFailure(SpeechErrorCode.CONFIGURATION, "请先选择语音播报服务")
         TtsProvider.QWEN, TtsProvider.DOUBAO -> Unit
     }
     val qwen = settings.tts == TtsProvider.QWEN
@@ -36,7 +36,7 @@ internal suspend fun synthesizeSpeech(settings: SpeechSettings, credentials: Spe
         val source = response.body.source()
         while (!source.exhausted() && !decoder.finished) {
             val line = try { source.readUtf8LineStrict(SpeechHttp.MAX_JSON_BYTES) } catch (error: java.io.EOFException) {
-                if (source.buffer.size > SpeechHttp.MAX_JSON_BYTES) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "мовазвукзвукчастоташматокПасвеликий")
+                if (source.buffer.size > SpeechHttp.MAX_JSON_BYTES) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "语音音频块过大")
                 source.readUtf8()
             }
             decoder.line(line)
@@ -45,7 +45,7 @@ internal suspend fun synthesizeSpeech(settings: SpeechSettings, credentials: Spe
     }
 }
 
-/** Межі подій SSE не залежать від меж фрагментів HTTP; beanbags — це один об’єкт JSON на рядок.*/
+/** SSE 事件边界与 HTTP chunk 边界无关；豆包则每行一个 JSON 对象。 */
 internal class SpeechAudioStreamDecoder(private val qwen: Boolean, onAudio: (ByteArray) -> Unit) {
     private val sse = SpeechSseDecoder { _, value -> payload(value) }
     private val audio = SpeechSegmentAudio(onAudio)
@@ -66,7 +66,7 @@ internal class SpeechAudioStreamDecoder(private val qwen: Boolean, onAudio: (Byt
         val encoded: String
         if (qwen) {
             if (message.optString("code").isNotBlank() || message.optInt("status_code", 200) != 200) {
-                throw SpeechFailure(SpeechErrorCode.SERVER, "тисячізапитатимовазвуккомбайнстативтратитипоразка，будь ласкаперевіритиперевіритиматчвстановити")
+                throw SpeechFailure(SpeechErrorCode.SERVER, "千问语音合成失败，请检查配置")
             }
             val output = message.getJSONObject("output")
             encoded = output.optJSONObject("audio")?.optString("data").orEmpty()
@@ -75,7 +75,7 @@ internal class SpeechAudioStreamDecoder(private val qwen: Boolean, onAudio: (Byt
             when (message.getInt("code")) {
                 0 -> Unit
                 20000000 -> finished = true
-                else -> throw SpeechFailure(SpeechErrorCode.SERVER, "квасоляСумкамовазвуккомбайнстативтратитипоразка（${message.getInt("code")}）")
+                else -> throw SpeechFailure(SpeechErrorCode.SERVER, "豆包语音合成失败（${message.getInt("code")}）")
             }
             encoded = message.optString("data")
         }

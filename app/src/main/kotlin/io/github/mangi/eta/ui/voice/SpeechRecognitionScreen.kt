@@ -141,7 +141,7 @@ internal fun SpeechRecognitionScreen(onBack: () -> Unit, onOpenOss: () -> Unit) 
     }
 }
 
-/** Короткі аудіофайли та транскрипція файлів розпізнаються лише після завершення запису, і немає жодного рішення щодо паузи, тому з автоматичним надсиланням доступні лише потокове передавання та системне розпізнавання.*/
+/** 短音频与文件转写只在录音结束后识别，没有停顿判定，因此只对流式与系统识别提供自动发送。 */
 @Composable
 private fun SpeechResultSection(store: SpeechSettingsStore) {
     val settings = store.settings
@@ -178,7 +178,7 @@ private fun SpeechResultSection(store: SpeechSettingsStore) {
     }
 }
 
-/** Використовуйте поточну чернетку для виклику офіційного ідентифікаційного посилання; натисніть OK, щоб завершити під час виконання, і скасувати праворуч.*/
+/** 使用当前草稿调用正式识别链路；进行中点击行完成，右侧可取消。 */
 @Composable
 private fun SpeechRecognitionTestSection(store: SpeechSettingsStore) {
     val state by store.recognition.state.collectAsState()

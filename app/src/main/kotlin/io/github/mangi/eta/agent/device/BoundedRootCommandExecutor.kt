@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Виконуйте лише фіксовані кореневі команди, розроблені Eta. Викликаю не дозволяється вводити параметри моделі безпосередньо в сценарії.
+ * 只执行 Eta 内部构造的固定 Root 命令。调用方不得把模型参数直接拼成脚本。
  *
- * Вихідні дані скорочуються під час читання, але канал усе ще опорожняється, щоб запобігти зависанню дочірнього процесу через заповнення буфера.
+ * 输出在读取时即截断，但仍持续排空管道，避免子进程因缓冲区写满而挂起。
  */
 internal class BoundedRootCommandExecutor(
     private val logger: AgentLogger,
@@ -53,7 +53,7 @@ internal class BoundedRootCommandExecutor(
                     it.readBounded(maxOutputBytes.coerceIn(1, MAX_MAX_OUTPUT_BYTES) + envelope.markerBytes)
                 }
             }
-            // Тіло передається зі стандартного вводу, щоб уникнути введення параметрів процесу su/app_process.
+            // 正文从 stdin 传递，避免进入 su/app_process 的进程参数。
             val inputFuture = if (input == null) {
                 process.outputStream.close()
                 null

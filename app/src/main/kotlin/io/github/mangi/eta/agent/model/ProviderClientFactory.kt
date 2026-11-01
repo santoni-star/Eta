@@ -20,7 +20,7 @@ internal object ProviderClientFactory {
             }
             ProviderTypes.ANTHROPIC -> AnthropicMessagesProvider
             ProviderTypes.GEMINI -> GeminiInteractionsProvider
-            else -> error("немаєвідділенняутримуватиз Provider об'єднанняобговоритивидтипу：${config.providerType}")
+            else -> error("不支持的 Provider 协议类型：${config.providerType}")
         }
     }
 }

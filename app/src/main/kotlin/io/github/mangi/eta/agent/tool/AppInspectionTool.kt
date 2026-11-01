@@ -8,19 +8,19 @@ import io.github.mangi.eta.agent.device.DeviceToolContract
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Деталі пакета зчитуються через PackageManager поточного користувача, а список дозволів розгортається окремо.*/
+/** 包详情通过当前用户的 PackageManager 读取，权限列表单独分页。 */
 internal class AppInspectionTool(private val context: Context) {
     fun inspect(args: JSONObject): JSONObject {
         val userId = DeviceToolContract.appUserId(context)
         DeviceToolContract.userScopeError(args, userId)?.let { return it }
         val packageName = args.optString("package_name")
         if (!DeviceToolContract.validPackageName(packageName)) {
-            return DeviceToolContract.failure("INVALID_PACKAGE", "СумканазвасіткаРежимнемаєефект")
+            return DeviceToolContract.failure("INVALID_PACKAGE", "包名格式无效")
         }
         val offset = args.optInt("permission_offset", 0)
         val limit = args.optInt("permission_limit", 100)
         if (offset < 0 || limit !in 1..200) {
-            return DeviceToolContract.failure("INVALID_ARGUMENT", "правильнообмеженнячастковийзмінаповиненОбов'язковонемаєтягар，permission_limit повиненОбов'язковоіснують 1 прибути 200 зміж")
+            return DeviceToolContract.failure("INVALID_ARGUMENT", "权限偏移必须非负，permission_limit 必须在 1 到 200 之间")
         }
         val manager = context.packageManager
         val info = try {
@@ -31,13 +31,13 @@ internal class AppInspectionTool(private val context: Context) {
             val allVisible = context.checkSelfPermission(Manifest.permission.QUERY_ALL_PACKAGES) == PackageManager.PERMISSION_GRANTED
             return DeviceToolContract.failure(
                 if (allVisible) "APP_NOT_INSTALLED" else "APP_NOT_FOUND_OR_NOT_VISIBLE",
-                if (allVisible) "це Android використовуватипобутовісерединаще нівстановитиупаковказвертатися доЗвичайновідповідьвикористовувати" else "коливпередвикористовуватипобутовіще нівстановитиупаковкацевідповідьвикористовувати，або Android СумкаможедивсексобмеженнясистемаблокуватикінецьзрозумівперевіритиЗапитуйте",
+                if (allVisible) "此 Android 用户中未安装指定应用" else "当前用户未安装此应用，或 Android 包可见性限制阻止了查询",
             ).put("user_id", userId)
         } catch (_: SecurityException) {
-            return DeviceToolContract.failure("APP_INSPECTION_DENIED", "КраваткасистемавідхилитиАбсолютночитатиВиберітьцевідповідьвикористовуватидокладноПрихильність").put("user_id", userId)
+            return DeviceToolContract.failure("APP_INSPECTION_DENIED", "系统拒绝读取此应用详情").put("user_id", userId)
         }
         val application = info.applicationInfo
-            ?: return DeviceToolContract.failure("APP_INFO_UNAVAILABLE", "Краваткасистемаще ніповерненняповерненнявідповідьвикористовуватилистінтерес").put("user_id", userId)
+            ?: return DeviceToolContract.failure("APP_INFO_UNAVAILABLE", "系统未返回应用信息").put("user_id", userId)
         val requested = info.requestedPermissions.orEmpty()
         val end = (offset.toLong() + limit).coerceAtMost(requested.size.toLong()).toInt()
         val permissions = JSONArray()

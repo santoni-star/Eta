@@ -15,7 +15,7 @@ import android.os.Process
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Бізнес-рівень використовує той самий контракт з постачальником; звичайна авторизація і Root відрізняються лише способом підключення.*/
+/** 业务层共用同一 Provider 合同；普通授权与 Root 只在连接方式上不同。 */
 internal interface PhoneProviderAccess {
     val callerPackage: String
 
@@ -63,7 +63,7 @@ internal class AppPhoneProviderAccess(
         resolver.applyBatch(authority, operations)
 }
 
-/** app_process не реєструє ApplicationThread програми та має містити явне посилання зовнішнього постачальника.*/
+/** app_process 不注册 App 的 ApplicationThread，必须持有显式的外部 Provider 引用。 */
 internal class RootPhoneProviderAccess(private val userId: Int) : PhoneProviderAccess {
     override val callerPackage = "root"
     private val attribution =
@@ -93,17 +93,17 @@ internal class RootPhoneProviderAccess(private val userId: Int) : PhoneProviderA
                     userId,
                     token,
                     "Eta",
-                ) ?: PhoneOperation.error("PHONE_PROVIDER_UNAVAILABLE", "Краваткасистемаще нінестидляСлідвідповідьвикористовуватизловитирот")
+                ) ?: PhoneOperation.error("PHONE_PROVIDER_UNAVAILABLE", "系统未提供该应用接口")
             provider =
                 holder.javaClass.getField("provider").get(holder)
-                    ?: PhoneOperation.error("PHONE_PROVIDER_UNAVAILABLE", "відповідьвикористовуватизловитиротдосінемаєможевикористовувати")
+                    ?: PhoneOperation.error("PHONE_PROVIDER_UNAVAILABLE", "应用接口尚不可用")
         }
 
         fun operation(name: String, vararg args: Any?): Any? {
             val method =
                 providerType.methods.singleOrNull {
                     it.name == name && it.parameterCount == args.size
-                } ?: PhoneOperation.error("PHONE_PROTOCOL_UNSUPPORTED", "коливпередКраваткасистемазОригіналнародивсязловитиротоб'єднанняобговоритинемаєодночаснийДозволити")
+                } ?: PhoneOperation.error("PHONE_PROTOCOL_UNSUPPORTED", "当前系统的原生接口协议不兼容")
             return invoke(method, provider, *args)
         }
 
@@ -125,7 +125,7 @@ internal class RootPhoneProviderAccess(private val userId: Int) : PhoneProviderA
     }
 
     private fun authority(uri: Uri): String =
-        uri.authority?.substringAfter('@') ?: PhoneOperation.error("INVALID_ARGUMENT", "відсутністьмаловідповідьвикористовуватизловитирот")
+        uri.authority?.substringAfter('@') ?: PhoneOperation.error("INVALID_ARGUMENT", "缺少应用接口")
 
     private fun withoutUser(uri: Uri) = uri.buildUpon().authority(authority(uri)).build()
 
