@@ -27,7 +27,7 @@ internal class AgentTraceFormatter {
             "fetch_url" -> summarizeFetchArguments(toolCall.argumentsJson)
             "open_uri" -> summarizeOpenUriArguments(toolCall.argumentsJson)
             in AgentTerminalToolCatalog.names -> summarizeTerminalArguments(toolCall.name, toolCall.argumentsJson)
-            "run_command" -> "Виконатидобрежиттязробити · Android"
+            "run_command" -> loc("Виконати команду", "Execute command") + " · " + loc("Android", "Android")
             "write_file" -> summarizeTextLength("Напишітьвведітьмистецтваштук", toolCall.argumentsJson, "content")
             "read_file" -> "читатиВиберітьмистецтваштук"
             "list_directory" -> "СписокпозаГоловазапис"
@@ -239,7 +239,7 @@ internal class AgentTraceFormatter {
             } else {
                 "$durationMs " + loc("мс", "ms")
             }
-            loc("Очікувати", "Wait") · " · " · duration
+            loc("Очікувати", "Wait") + " · " + duration
         }.getOrDefault("чекатилікувати")
 
     private fun summarizeObservationArguments(argumentsJson: String): String =
