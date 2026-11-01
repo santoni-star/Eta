@@ -71,8 +71,8 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * 模型不多时用输入栏上方的轻量弹窗一次列完；模型较多时弹窗既放不下也不好找，
- * 直接打开底部面板，用搜索和服务商筛选定位。
+ * Якщо моделей небагато, використовуйте легке спливаюче вікно над полем введення, щоб перерахувати їх усі одночасно; коли є багато моделей, спливаюче вікно неможливо розмістити, і його важко знайти.
+ * Безпосередньо відкрийте нижню панель і використовуйте пошук і фільтрацію постачальника послуг, щоб знайти.
  */
 @Composable
 internal fun AgentModelPickerButton(
@@ -85,7 +85,7 @@ internal fun AgentModelPickerButton(
 ) {
     var showPopup by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
-    // 每次打开面板换一个 key，搜索词、筛选与滚动位置都从头开始。
+    // Кожного разу, коли ви відкриваєте панель і змінюєте ключ, терміни пошуку, фільтрування та позиції прокручування починаються спочатку.
     var sheetSession by remember { mutableIntStateOf(0) }
     val selected = state.selectedModel
     val enabled = !isStreaming && !state.isChanging && state.providerGroups.isNotEmpty()
@@ -215,7 +215,7 @@ private fun ModelSheetContent(
         state.filterGroups(query)
             .filter { providerFilter == null || it.providerId == providerFilter }
             .flatMap { group ->
-                // 只看一个服务商时，筛选标签已经说明了归属，分组标题只会重复。
+                // Якщо розглядати лише одного постачальника послуг, тег фільтра вже пояснює приналежність, а назва групи буде лише повторена.
                 val header = if (providerFilter == null) {
                     listOf(ModelSheetEntry.Header(group.providerId, group.providerName))
                 } else {
@@ -234,7 +234,7 @@ private fun ModelSheetContent(
     val select = rememberConfirmedSelection(onModelSelected)
     val selectedId = select.pendingId ?: state.selectedModel?.id
     val density = LocalDensity.current
-    // 面板高度固定，不随搜索结果伸缩；键盘弹出时由面板的约束自然压缩列表区域。
+    // Висота панелі фіксована і не розширюється або звужується разом з результатами пошуку; коли з’являється клавіатура, область списку природним чином стискається через обмеження панелі.
     val sheetHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() } * 0.68f
 
     Column(
@@ -313,8 +313,8 @@ private fun ModelSheetContent(
 }
 
 /**
- * 点选后先把对勾移到新模型上，停留片刻再收起弹层，让人看清选中了谁。
- * 弹层收起会让作用域随组合一起离开，未完成的确认随之取消，不会回写已关闭的界面。
+ * Після натискання перемістіть галочку до нової моделі, залиштеся там деякий час, а потім закрийте спливаючий шар, щоб люди могли чітко бачити, кого вибрано.
+ * Згортання спливаючого шару призведе до того, що область залишиться разом із комбінацією, а незавершене підтвердження буде скасовано, а закритий інтерфейс не буде записано назад.
  */
 private class ConfirmedSelection(
     private val onConfirm: (String) -> Unit,
@@ -427,7 +427,7 @@ internal fun ModelBrandMark(
 
 private val ModelPopupWidth = 248.dp
 
-/** 不超过这个数量时弹窗一眼就能看完，不需要搜索。 */
+/** Якщо кількість не перевищує цього, спливаюче вікно можна переглянути з першого погляду без пошуку.*/
 private const val ModelPopupLimit = 8
 
 private const val SelectionConfirmMs = 140L

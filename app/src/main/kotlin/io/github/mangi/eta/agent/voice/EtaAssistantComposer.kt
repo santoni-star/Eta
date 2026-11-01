@@ -97,7 +97,7 @@ internal fun AssistantComposer(
     ) {
         if (recognitionEnabled) EtaSpeechFeedback(speech, onDownloadModel, onOpenSpeechSettings)
         AnimatedContent(
-            // 按住说话期间保持输入栏：切换布局会移除正被按住的按钮，松手事件随之丢失。
+            // Зберігайте поля введення, утримуючи натиснутою кнопку, щоб говорити: перемикання макетів видаляє кнопку, яка утримується, і подію випуску втрачається.
             targetState = recognitionEnabled && speech.active && !speech.holdToTalk && state.messages.isEmpty(),
             transitionSpec = {
                 fadeIn(tween(250)) togetherWith fadeOut(tween(160)) using
@@ -156,7 +156,7 @@ private fun AssistantInputBar(
     val inputEnabled = state.phase != EtaVoicePhase.PROCESSING && !speech.active
     LaunchedEffect(inputFocusRequestKey, inputEnabled) {
         if (inputFocusRequestKey < 0 || !inputEnabled) return@LaunchedEffect
-        // 输入栏挂载且浮窗取得焦点后再连接 IME，避免动画切换时请求落在尚不存在的输入框上。
+        // Підключіть IME після того, як поле введення буде змонтовано, а плаваюче вікно матиме фокус, щоб уникнути потрапляння запиту на поле введення, яке ще не існує під час перемикання анімації.
         withFrameNanos { }
         snapshotFlow { windowInfo.isWindowFocused }.first { it }
         focusRequester.requestFocus()
@@ -268,8 +268,8 @@ private fun AssistantInputBar(
 }
 
 /**
- * 输入栏尾部按钮。空闲时长按进入按住说话：松手发送，手指移出按钮取消；
- * 长按触发后不再派发点击，避免松手时又按旧状态开始一次新的录音。
+ * Кнопка в кінці поля введення. Натисніть і утримуйте, щоб увійти, коли неактивний, натисніть і утримуйте, щоб говорити: відпустіть, щоб надіслати, витягніть палець з кнопки, щоб скасувати;
+ * Клацання більше не надсилатимуться після тривалого натискання для запуску, щоб уникнути початку нового запису в старому стані під час відпускання.
  */
 @Composable
 private fun AssistantTrailingButton(
@@ -299,7 +299,7 @@ private fun AssistantTrailingButton(
                 scaleY = scale
             }
             .clip(CircleShape)
-            // 手势检测不产生无障碍动作；读屏用户只需要点击语义，按住说话依赖触摸时长不适合读屏。
+            // Розпізнавання жестів не створює безперешкодних дій; користувачам, які читають екран, потрібно лише клацати для семантики. Натискання й утримання для промови залежить від тривалості дотику, що не підходить для читання з екрана.
             .semantics(mergeDescendants = true) {
                 role = Role.Button
                 if (!enabled) disabled()

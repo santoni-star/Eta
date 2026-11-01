@@ -101,10 +101,10 @@ private object ConversationPanelMetrics {
 }
 
 /**
- * 侧栏与外层推移容器共用的背景色。
+ * Колір фону, спільний для бічної панелі та зовнішнього контейнера push.
  *
- * 深色下聊天区保持 surface（纯黑/近黑），侧栏沿用同一颜色会在展开后与聊天区融为一体；
- * 抬高一档到 surfaceContainer，保证两侧始终可分。浅色维持 surface，避免改变现有观感。
+ * Зона чату в темних кольорах зберігає поверхню (чисто чорна/майже чорна), а бічна панель використовує той самий колір і зливатиметься з областю чату після розширення;
+ * Підніміть один рівень до поверхні контейнера, щоб переконатися, що обидві сторони завжди можна розділити. Світлі кольори зберігають поверхню та не змінюють існуючий вигляд.
  */
 @Composable
 internal fun conversationPaneContainerColor(): Color {
@@ -130,7 +130,7 @@ internal fun ConversationPanePanel(
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // state.conversations 已由 AgentAppState 按标题、预览与消息内容过滤。
+    // AgentAppState відфільтрував state.conversations за назвою, попереднім переглядом і вмістом повідомлення.
     val query = state.searchQuery.trim()
     val groups = remember(state.conversations) { state.conversations.groupForDrawer() }
 
@@ -141,7 +141,7 @@ internal fun ConversationPanePanel(
         color = conversationPaneContainerColor(),
         contentColor = MiuixTheme.colorScheme.onSurface,
     ) {
-        // 搜索与工具条占据独立布局空间，列表只在中间视口内滚动和回弹。
+        // Панель пошуку та панель інструментів займають незалежний простір макета, а список лише прокручується та відскакує в середньому вікні перегляду.
         Column(modifier = Modifier.fillMaxSize()) {
             PaneFixedRegion {
                 Column(
@@ -253,8 +253,8 @@ private fun PaneActionBar(
                     expanded = false,
                     onExpandedChange = {},
                     label = stringResource(R.string.conversation_search_hint),
-                    // 深色下侧栏已抬高到 surfaceContainer，搜索框需再高一档才能显出轮廓；
-                    // 浅色的 surfaceContainerHigh 与 surfaceContainerHighest 相同，观感不变。
+                    // Темну нижню бічну панель було піднято до surfaceContainer, а вікно пошуку потрібно підняти на один рівень вище, щоб було видно його контури;
+                    // Світлий surfaceContainerHigh такий самий, як surfaceContainerHighest, а зовнішній вигляд і відчуття залишаються незмінними.
                     color = MiuixTheme.colorScheme.surfaceContainerHighest,
                 )
             },
@@ -320,7 +320,7 @@ private fun ConversationTextRow(
                 .clip(RoundedCornerShape(ConversationPanelMetrics.RowCornerRadius))
                 .background(
                     if (selected) {
-                        // 与侧栏背景保持一档亮度差；浅色下与 surfaceContainerHigh 相同。
+                        // Підтримувати один рівень різниці яскравості від фону бічної панелі; те саме, що surfaceContainerHigh у світлих кольорах.
                         MiuixTheme.colorScheme.surfaceContainerHighest
                     } else {
                         Color.Transparent
@@ -362,7 +362,7 @@ private fun ConversationTextRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 标题与角色名相同（如未改名的角色会话）时不再重复第二行。
+            // Другий рядок більше не повторюється, якщо заголовок збігається з іменем персонажа (наприклад, сеанс персонажа, який не було перейменовано).
             conversation.characterName?.takeIf { it != title }?.let { name ->
                 Text(name, style = MiuixTheme.textStyles.footnote1, color = MiuixTheme.colorScheme.onSurfaceVariantSummary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -506,19 +506,19 @@ private fun PaneDock(
     ) {
         DockEntry(
             icon = Icons.Rounded.Settings,
-            label = "设置",
+            label = "налаштувативстановити",
             onClick = onOpenSettings,
             modifier = Modifier.weight(1f),
         )
         DockEntry(
             icon = Icons.Rounded.Cloud,
-            label = "模型",
+            label = "цвільтипу",
             onClick = onOpenModelProviders,
             modifier = Modifier.weight(1f),
         )
         DockEntry(
             icon = Icons.Rounded.Dashboard,
-            label = "工具",
+            label = "працюватиІнструмент",
             onClick = onOpenTools,
             modifier = Modifier.weight(1f),
         )
@@ -530,13 +530,13 @@ private fun PaneDock(
         )
         DockEntry(
             icon = Icons.Rounded.Lock,
-            label = "权限",
+            label = "правильнообмеження",
             onClick = onOpenPermissions,
             modifier = Modifier.weight(1f),
         )
         DockEntry(
             icon = Icons.Rounded.SportsBar,
-            label = "角色",
+            label = "рігколір",
             onClick = onOpenCharacters,
             modifier = Modifier.weight(1f),
         )

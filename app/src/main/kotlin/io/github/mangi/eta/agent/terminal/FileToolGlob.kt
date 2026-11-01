@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.terminal
 
-/** 路径段使用动态规划，段内通配符使用有界回退；不把模型输入交给正则引擎。 */
+/** Динамічне програмування використовується для сегментів шляху, а обмежений резервний варіант використовується для символів підстановки всередині сегментів; вхід моделі не передається штатному двигуну.*/
 internal class FileToolGlob(pattern: String) {
     private val components: List<String>
 
@@ -8,7 +8,7 @@ internal class FileToolGlob(pattern: String) {
         if (pattern.isEmpty() || pattern.length > 512 || pattern.startsWith('/') || pattern.indexOf('\u0000') >= 0 ||
             pattern.split('/').any { it == ".." || it == "." || it.isEmpty() }
         ) {
-            throw FileToolException("INVALID_GLOB", "模式必须是搜索目录内的相对路径，支持 *、? 和 ** 路径段")
+            throw FileToolException("INVALID_GLOB", "цвільРежимповиненОбов'язковотакпошукОтжеГоловазаписВсерединізВзаємноправильнодорогашлях，відділенняутримувати *、? і ** дорогашляхчастина")
         }
         components = pattern.split('/').fold(mutableListOf<String>()) { result, component ->
             if (component != "**" || result.lastOrNull() != "**") result += component

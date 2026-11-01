@@ -48,7 +48,7 @@ private val bottomLineColors = listOf(
     Color(0xFF8CCBFF), Color(0xFFFFF7E8), Color(0xFFFF8CCB), Color(0xFFADB8FF),
 )
 
-/** 初次唤醒从电源键位置沿屏幕边缘进入；后续手动切回语音只恢复底部光效。 */
+/** Початкове пробудження відбувається за допомогою кнопки живлення вздовж краю екрана; подальше ручне перемикання назад до голосу відновлює лише нижній світловий ефект.*/
 @Composable
 internal fun EtaAssistantEdgeGlow(
     active: Boolean,

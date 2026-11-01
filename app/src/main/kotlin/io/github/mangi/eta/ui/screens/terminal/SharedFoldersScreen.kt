@@ -75,8 +75,8 @@ import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * 共享文件夹管理：把 Android 目录配置为 Linux 环境 /workspace/mounts/ 下的挂载点。
- * 配置即全部状态；挂载在每个 Linux 会话建立时按当前配置生效，页面只负责增删与源目录可用性提示。
+ * Керування спільними папками: налаштуйте каталог Android як точку монтування в /workspace/mounts/ у середовищі Linux.
+ * Конфігурація - це весь статус; монтування набуває чинності відповідно до поточної конфігурації, коли встановлюється кожен сеанс Linux, і сторінка відповідає лише за додавання та видалення та підказки про доступність вихідного каталогу.
  */
 @Composable
 internal fun SharedFoldersScreen(
@@ -190,7 +190,7 @@ internal fun SharedFoldersScreen(
                 )
             }
         }
-        // 失败提示紧贴列表出现，比页脚说明更靠前，进出带动画避免列表跳动。
+        // Підказка про помилку з’являється ближче до списку, перед описом нижнього колонтитула, і використовується анімація, щоб уникнути перестрибування списку.
         notice?.let { message ->
             item(key = "notice-card") {
                 EtaPreferenceGroup(modifier = Modifier.animateItem().padding(horizontal = EtaPreferenceDefaults.SidePadding).padding(bottom = EtaPreferenceDefaults.GroupSpacing)) {
@@ -259,7 +259,7 @@ internal fun SharedFoldersScreen(
                         removeTarget = null
                         refreshSources(updated)
                         coroutineScope.launch(Dispatchers.IO) {
-                            // 清理空的挂载点目录；仍有会话占用时 rmdir 失败，无副作用。
+                            // Очистити порожні каталоги точок монтування; rmdir не працює, якщо ще є зайняті сесії, без побічних ефектів.
                             runOneShotShell(
                                 processSupervisor = shellSupervisor,
                                 identity = TerminalRuntime.defaultIdentity(TerminalEnvironment.ANDROID),
@@ -279,7 +279,7 @@ internal fun SharedFoldersScreen(
     }
 }
 
-/** 批量探测源目录是否存在；name 只含安全字符，可直接拼进单引号。 */
+/** Визначати, чи існує вихідний каталог у пакетах; ім'я містить лише безпечні символи та може бути взяте в одинарні лапки.*/
 private fun probeSources(
     supervisor: ShellProcessSupervisor,
     mounts: List<SharedFolderMount>,
@@ -301,9 +301,9 @@ private fun probeSources(
 }
 
 /**
- * 目录选择弹层使用当前可用身份枚举目录；普通模式受 App 文件权限限制，
- * Root 模式可以访问系统目录。公共存储授权在进入弹层前按需申请。
- * 确认时挂载的是当前已列出内容的目录（path）；路径输入框只用于跳转。
+ * Спливаючий рівень вибору каталогу використовує доступні на даний момент ідентифікатори для перерахування каталогу; звичайний режим обмежений дозволами файлів програми.
+ * Кореневий режим може отримати доступ до системних каталогів. Авторизація громадського зберігання застосовується на вимогу перед входом у еластичний шар.
+ * При підтвердженні монтується каталог (шлях) з поточним вмістом; поле введення шляху використовується лише для стрибків.
  */
 @Composable
 private fun SharedFolderPickerDialog(

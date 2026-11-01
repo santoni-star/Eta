@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.runtime
 
 import android.content.Context
 
-/** 将高频文本增量合并后写入 checkpoint，结构化边界则同步落盘。 */
+/** Комбінуйте високочастотні прирости тексту та записуйте їх у контрольну точку, і структуровані межі записуються на диск одночасно.*/
 internal class AgentRunCheckpointRecorder private constructor(
     context: Context,
     private val runId: String,
@@ -45,7 +45,7 @@ internal class AgentRunCheckpointRecorder private constructor(
         append(checkpointEvent)
     }
 
-    /** 把最后一段增量提交到日志；日志由结果 ACK 或中断恢复负责删除。 */
+    /** Відправити останній приріст до журналу; журнал видаляється результатом ACK або відновленням переривання.*/
     fun seal() {
         flushPendingDelta()
     }

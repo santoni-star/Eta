@@ -63,7 +63,7 @@ internal class PendingSkillRecoveryJournal private constructor(
                 record
             }
         }
-        check(found) { "恢复日志中不存在 Skill：$skillId" }
+        check(found) { "відновитискладніденьчестолюбствосерединанемаєжитиіснують Skill：$skillId" }
         writeJournalAtomically(operationDirectory, records)
     }
 
@@ -74,7 +74,7 @@ internal class PendingSkillRecoveryJournal private constructor(
             records: List<SkillRecoveryRecord>,
         ): PendingSkillRecoveryJournal {
             validateOperationDirectory(skillsRoot, operationDirectory)
-            require(records.isNotEmpty()) { "恢复日志至少需要一个 Skill" }
+            require(records.isNotEmpty()) { "відновитискладніденьчестолюбстводомалопотребахочутьодиніндивідуальний Skill" }
             validateRecords(records)
             writeJournalAtomically(operationDirectory, records)
             return PendingSkillRecoveryJournal(operationDirectory, records)
@@ -87,7 +87,7 @@ internal class SkillRecoveryRequiredException(
     cause: Throwable? = null,
 ) : IOException(message, cause)
 
-/** 必须在持有 [SkillMutationLock] 的跨进程锁时调用。 */
+/** Необхідно викликати під час утримання міжпроцесного блокування [SkillMutationLock].*/
 internal fun recoverPendingSkillOperations(
     skillsRoot: File,
     directoryMover: SkillDirectoryMover = AtomicSkillDirectoryMover,
@@ -95,12 +95,12 @@ internal fun recoverPendingSkillOperations(
     val workRoot = skillInstallerWorkRoot(skillsRoot)
     if (!Files.exists(workRoot.toPath(), LinkOption.NOFOLLOW_LINKS)) return emptyList()
     if (!workRoot.isDirectory || Files.isSymbolicLink(workRoot.toPath())) {
-        throw SkillRecoveryRequiredException("Skill 恢复目录不安全")
+        throw SkillRecoveryRequiredException("Skill відновитискладніГоловазаписнемаєвстановитиПовний")
     }
     val operations = workRoot.listFiles()
         ?.filter { it.name.startsWith(OPERATION_PREFIX) }
         ?.sortedBy { it.name }
-        ?: throw SkillRecoveryRequiredException("无法读取 Skill 恢复目录")
+        ?: throw SkillRecoveryRequiredException("немаєЗакончитатиВиберіть Skill відновитискладніГоловазапис")
     val recovered = operations.mapNotNull { operation ->
         val journalFile = File(operation, JOURNAL_FILE_NAME)
         if (!Files.exists(journalFile.toPath(), LinkOption.NOFOLLOW_LINKS)) return@mapNotNull null
@@ -112,7 +112,7 @@ internal fun recoverPendingSkillOperations(
         .filterValues { it.size > 1 }
         .keys
     if (duplicateIds.isNotEmpty()) {
-        recoveryFailure("多个待恢复事务包含相同 Skill")
+        recoveryFailure("багатоіндивідуальнийлікувативідновитискладнірічобслуговуванняСумкаМіститьВзаємноте саме Skill")
     }
     return recovered
 }
@@ -126,10 +126,10 @@ private fun recoverOperation(
     try {
         validateOperationDirectory(skillsRoot, operation)
         if (Files.isSymbolicLink(journalFile.toPath()) || !journalFile.isFile) {
-            recoveryFailure("Skill 恢复日志不是普通文件")
+            recoveryFailure("Skill відновитискладніденьчестолюбствонемаєтакзагальнийПасмистецтваштук")
         }
         if (journalFile.length() !in 1..MAX_JOURNAL_BYTES) {
-            recoveryFailure("Skill 恢复日志大小无效")
+            recoveryFailure("Skill відновитискладніденьчестолюбствовеликийМаленькийнемаєефект")
         }
         val records = parseJournal(journalFile)
         val backupRoot = File(operation, BACKUP_DIRECTORY_NAME)
@@ -146,14 +146,14 @@ private fun recoverOperation(
                         record.id,
                         directoryMover,
                     )
-                    record.backupCompleted -> recoveryFailure("旧 Skill 备份缺失：${record.id}")
+                    record.backupCompleted -> recoveryFailure("старий Skill Приготуйтечасткавідсутністьвтратити：${record.id}")
                     !isSafeExistingTarget(skillsRoot, target) ->
-                        recoveryFailure("旧 Skill 目标与恢复日志不一致：${record.id}")
+                        recoveryFailure("старий Skill Головазнаківідновитискладніденьчестолюбствонемаєодиндо：${record.id}")
                 }
             } else {
-                if (backupExists) recoveryFailure("全新 Skill 不应存在旧备份：${record.id}")
+                if (backupExists) recoveryFailure("Повнийновий Skill немаєвідповідьжитиіснуютьстарийПриготуйтечастка：${record.id}")
                 if (!deleteSkillPathWithoutFollowingLinks(skillsRoot, target)) {
-                    recoveryFailure("无法移除未完成安装的 Skill：${record.id}")
+                    recoveryFailure("немаєЗаконзмінавидалитище нізакінченостативстановитиупаковказ Skill：${record.id}")
                 }
             }
         }
@@ -161,7 +161,7 @@ private fun recoverOperation(
     } catch (error: SkillRecoveryRequiredException) {
         throw error
     } catch (error: Exception) {
-        throw SkillRecoveryRequiredException("Skill 自动恢复失败", error)
+        throw SkillRecoveryRequiredException("Skill оскількирухатисявідновитискладнівтратитипоразка", error)
     }
 }
 
@@ -174,8 +174,8 @@ internal fun completeRecoveredSkillOperations(
         val operation = recovery.operationDirectory
         validateOperationDirectory(skillsRoot, operation)
         Files.deleteIfExists(File(operation, JOURNAL_FILE_NAME).toPath())
-        // journal 删除即表示文件与 registry 已共同恢复完成；残留的无 journal 暂存目录
-        // 不再影响索引，清理失败也不能把已经完成的恢复重新标记为待处理。
+        // Видалення журналу означає, що файл і реєстр було відновлено разом; тимчасового каталогу журналу не залишилося.
+        // Це більше не впливає на індекс, і невдале очищення не може повторно позначити завершене відновлення як очікуване.
         deleteSkillPathWithoutFollowingLinks(workRoot, operation)
     }
 }
@@ -186,7 +186,7 @@ internal fun createSkillRecoveryOperationDirectory(skillsRoot: File): File {
         val operation = File(workRoot, "$OPERATION_PREFIX${UUID.randomUUID()}")
         if (operation.mkdir()) return operation
     }
-    throw IOException("无法创建 Skill 安装事务")
+    throw IOException("немаєЗаконстворитивстановити Skill встановитиупаковкарічобслуговування")
 }
 
 private fun restoreBackup(
@@ -200,75 +200,75 @@ private fun restoreBackup(
         Files.isSymbolicLink(backupRoot.toPath()) || !backupRoot.isDirectory ||
         !isStrictChild(operation, backupRoot)
     ) {
-        recoveryFailure("Skill 备份根目录不安全")
+        recoveryFailure("Skill ПриготуйтечасткакоріньГоловазаписнемаєвстановитиПовний")
     }
     val backup = File(backupRoot, skillId)
     if (
         Files.isSymbolicLink(backup.toPath()) || !backup.isDirectory ||
         !isStrictChild(backupRoot, backup)
     ) {
-        recoveryFailure("旧 Skill 备份不安全：$skillId")
+        recoveryFailure("старий Skill ПриготуйтечастканемаєвстановитиПовний：$skillId")
     }
     val recoveryRoot = File(operation, RECOVERY_DIRECTORY_NAME)
     if (!recoveryRoot.mkdirs() && !recoveryRoot.isDirectory) {
-        recoveryFailure("无法创建 Skill 恢复暂存目录")
+        recoveryFailure("немаєЗаконстворитивстановити Skill відновитискладнітимчасовожитиГоловазапис")
     }
     if (Files.isSymbolicLink(recoveryRoot.toPath()) || !isStrictChild(operation, recoveryRoot)) {
-        recoveryFailure("Skill 恢复暂存目录不安全")
+        recoveryFailure("Skill відновитискладнітимчасовожитиГоловазаписнемаєвстановитиПовний")
     }
     val staging = File(recoveryRoot, skillId)
     if (!deleteSkillPathWithoutFollowingLinks(operation, staging)) {
-        recoveryFailure("无法清理 Skill 恢复暂存目录")
+        recoveryFailure("немаєЗаконяснопричина Skill відновитискладнітимчасовожитиГоловазапис")
     }
     copyDirectoryWithoutFollowingLinks(backup, staging)
 
     val target = File(skillsRoot, skillId)
     if (!deleteSkillPathWithoutFollowingLinks(skillsRoot, target)) {
-        recoveryFailure("无法清理未完成提交的 Skill：$skillId")
+        recoveryFailure("немаєЗаконяснопричинаще нізакінченостатинестиплатитиз Skill：$skillId")
     }
     directoryMover.move(staging, target)
 }
 
 private fun copyDirectoryWithoutFollowingLinks(source: File, target: File) {
     if (Files.isSymbolicLink(source.toPath()) || !source.isDirectory) {
-        recoveryFailure("Skill 备份目录不安全")
+        recoveryFailure("Skill ПриготуйтечасткаГоловазаписнемаєвстановитиПовний")
     }
-    if (!target.mkdir()) recoveryFailure("无法创建 Skill 恢复副本")
-    val children = source.listFiles() ?: recoveryFailure("无法读取 Skill 备份目录")
+    if (!target.mkdir()) recoveryFailure("немаєЗаконстворитивстановити Skill відновитискладніпороккнига")
+    val children = source.listFiles() ?: recoveryFailure("немаєЗакончитатиВиберіть Skill ПриготуйтечасткаГоловазапис")
     children.forEach { child ->
         if (Files.isSymbolicLink(child.toPath())) {
-            recoveryFailure("Skill 备份包含符号链接")
+            recoveryFailure("Skill ПриготуйтечасткаСумкаМіститьсимволНомерланцюгзловити")
         }
         val destination = File(target, child.name)
         when {
             child.isDirectory -> copyDirectoryWithoutFollowingLinks(child, destination)
             child.isFile -> Files.copy(child.toPath(), destination.toPath())
-            else -> recoveryFailure("Skill 备份包含不支持的文件类型")
+            else -> recoveryFailure("Skill ПриготуйтечасткаСумкаМіститьнемаєвідділенняутримуватизмистецтваштуквидтипу")
         }
     }
 }
 
 private fun parseJournal(journalFile: File): List<SkillRecoveryRecord> {
     val json = runCatching { JSONObject(journalFile.readText(Charsets.UTF_8)) }
-        .getOrElse { recoveryFailure("Skill 恢复日志格式无效") }
+        .getOrElse { recoveryFailure("Skill відновитискладніденьчестолюбствосіткаРежимнемаєефект") }
     if (json.optInt("version", -1) != JOURNAL_VERSION) {
-        recoveryFailure("Skill 恢复日志版本不受支持")
+        recoveryFailure("Skill відновитискладніденьчестолюбствоверсіякниганемаєзавідділенняутримувати")
     }
-    val entries = json.optJSONArray("skills") ?: recoveryFailure("Skill 恢复日志缺少 skills")
+    val entries = json.optJSONArray("skills") ?: recoveryFailure("Skill відновитискладніденьчестолюбствовідсутністьмало skills")
     if (entries.length() !in 1..MAX_JOURNAL_SKILLS) {
-        recoveryFailure("Skill 恢复日志条目数无效")
+        recoveryFailure("Skill відновитискладніденьчестолюбствосмужкаГолованомернемаєефект")
     }
     val records = (0 until entries.length()).map { index ->
-        val entry = entries.optJSONObject(index) ?: recoveryFailure("Skill 恢复日志条目无效")
+        val entry = entries.optJSONObject(index) ?: recoveryFailure("Skill відновитискладніденьчестолюбствосмужкаГолованемаєефект")
         val id = entry.optString("id")
         if (!entry.has("originalTargetExisted") || entry.opt("originalTargetExisted") !is Boolean) {
-            recoveryFailure("Skill 恢复日志缺少原目标状态")
+            recoveryFailure("Skill відновитискладніденьчестолюбствовідсутністьмалоОригіналГоловазнакформустан")
         }
         if (!entry.has("backupCompleted") || entry.opt("backupCompleted") !is Boolean) {
-            recoveryFailure("Skill 恢复日志缺少备份状态")
+            recoveryFailure("Skill відновитискладніденьчестолюбствовідсутністьмалоПриготуйтечасткаформустан")
         }
         if (!entry.has("newTargetCommitted") || entry.opt("newTargetCommitted") !is Boolean) {
-            recoveryFailure("Skill 恢复日志缺少提交状态")
+            recoveryFailure("Skill відновитискладніденьчестолюбствовідсутністьмалонестиплатитиформустан")
         }
         SkillRecoveryRecord(
             id = id,
@@ -343,26 +343,26 @@ private fun validateOperationDirectory(skillsRoot: File, operationDirectory: Fil
         operationDirectory.parentFile?.canonicalFile != workRoot.canonicalFile ||
         !OPERATION_NAME_REGEX.matches(operationDirectory.name)
     ) {
-        recoveryFailure("Skill 操作目录不安全")
+        recoveryFailure("Skill ТримайтеробитиГоловазаписнемаєвстановитиПовний")
     }
 }
 
 private fun validateRecords(records: List<SkillRecoveryRecord>) {
     if (records.map { it.id }.distinct().size != records.size) {
-        recoveryFailure("Skill 恢复日志包含重复 id")
+        recoveryFailure("Skill відновитискладніденьчестолюбствоСумкаМіститьВажкаскладні id")
     }
     records.forEach { record ->
         if (record.id.length !in 1..64 || !SKILL_ID_REGEX.matches(record.id)) {
-            recoveryFailure("Skill 恢复日志包含非法 id")
+            recoveryFailure("Skill відновитискладніденьчестолюбствоСумкаМіститьнемаєЗакон id")
         }
         if (!record.originalTargetExisted && record.backupCompleted) {
-            recoveryFailure("全新 Skill 的恢复日志包含非法备份状态")
+            recoveryFailure("Повнийновий Skill звідновитискладніденьчестолюбствоСумкаМіститьнемаєЗаконПриготуйтечасткаформустан")
         }
         if (record.originalTargetExisted && record.newTargetCommitted && !record.backupCompleted) {
-            recoveryFailure("替换 Skill 的恢复日志状态不一致")
+            recoveryFailure("дляЗміна Skill звідновитискладніденьчестолюбствоформустаннемаєодиндо")
         }
         val registry = record.registrySnapshot
-        if (registry.skillId != record.id) recoveryFailure("Skill 恢复日志 registry id 不一致")
+        if (registry.skillId != record.id) recoveryFailure("Skill відновитискладніденьчестолюбство registry id немаєодиндо")
         if (registry.entryExisted) {
             if (
                 registry.source !in VALID_REGISTRY_SOURCES ||
@@ -370,12 +370,12 @@ private fun validateRecords(records: List<SkillRecoveryRecord>) {
                 (registry.source == USER_SKILL_SOURCE &&
                     registry.installState != INSTALL_STATE_INSTALLED_VALUE)
             ) {
-                recoveryFailure("Skill 恢复日志包含非法 registry 状态")
+                recoveryFailure("Skill відновитискладніденьчестолюбствоСумкаМіститьнемаєЗакон registry формустан")
             }
         } else if (
             registry.enabled || registry.source.isNotEmpty() || registry.installState.isNotEmpty()
         ) {
-            recoveryFailure("不存在的 registry 快照包含额外状态")
+            recoveryFailure("немаєжитиіснуютьз registry швидкийВідповідно доСумкаМіститьЛобназовніформустан")
         }
     }
 }
@@ -385,16 +385,16 @@ private fun parseRegistrySnapshot(
     skillId: String,
 ): SkillRegistryRecoverySnapshot {
     val registry = entry.optJSONObject("registry")
-        ?: recoveryFailure("Skill 恢复日志缺少 registry 快照")
+        ?: recoveryFailure("Skill відновитискладніденьчестолюбствовідсутністьмало registry швидкийВідповідно до")
     val booleanKeys = listOf("entryExisted", "enabled")
     if (booleanKeys.any { key -> !registry.has(key) || registry.opt(key) !is Boolean }) {
-        recoveryFailure("Skill 恢复日志 registry 快照无效")
+        recoveryFailure("Skill відновитискладніденьчестолюбство registry швидкийВідповідно донемаєефект")
     }
     if (!registry.has("source") || registry.opt("source") !is String) {
-        recoveryFailure("Skill 恢复日志 registry source 无效")
+        recoveryFailure("Skill відновитискладніденьчестолюбство registry source немаєефект")
     }
     if (!registry.has("installState") || registry.opt("installState") !is String) {
-        recoveryFailure("Skill 恢复日志 registry installState 无效")
+        recoveryFailure("Skill відновитискладніденьчестолюбство registry installState немаєефект")
     }
     return SkillRegistryRecoverySnapshot(
         skillId = skillId,
@@ -415,7 +415,7 @@ private fun isStrictChild(root: File, target: File): Boolean {
 }
 
 internal fun skillInstallerWorkRoot(skillsRoot: File): File = File(
-    requireNotNull(skillsRoot.canonicalFile.parentFile) { "Skills 目录必须有父目录" },
+    requireNotNull(skillsRoot.canonicalFile.parentFile) { "Skills ГоловазаписповиненОбов'язковоматибатькоГоловазапис" },
     ".eta-skill-installer",
 )
 

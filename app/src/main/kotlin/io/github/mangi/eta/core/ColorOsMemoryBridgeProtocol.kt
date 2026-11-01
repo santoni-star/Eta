@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import org.json.JSONObject
 
-/** Eta Runtime 与小布记忆 Hook 之间的有界内部协议。 */
+/** Обмежений внутрішній протокол між Eta Runtime і Xiaobu Memory Hook.*/
 internal object ColorOsMemoryBridgeProtocol {
     const val PACKAGE_NAME = "com.oplus.aimemory"
     const val PROVIDER_CLASS = "com.oplus.aimemory.provider.DataShareProvider"
@@ -22,14 +22,14 @@ internal object ColorOsMemoryBridgeProtocol {
     private const val MAX_RESPONSE_BYTES = 320 * 1024
 
     fun encodeRequest(operation: String, args: JSONObject): String {
-        require(operation in OPERATIONS) { "不支持的 ColorOS 记忆查询操作" }
+        require(operation in OPERATIONS) { "немаєвідділенняутримуватиз ColorOS запам'ятативідкликатиперевіритиЗапитуйтеТримайтеробити" }
         val raw = JSONObject()
             .put("version", VERSION)
             .put("operation", operation)
             .put("args", JSONObject(args.toString()))
             .toString()
             .toByteArray(StandardCharsets.UTF_8)
-        require(raw.size <= MAX_REQUEST_BYTES) { "ColorOS 记忆查询参数过大" }
+        require(raw.size <= MAX_REQUEST_BYTES) { "ColorOS запам'ятативідкликатиперевіритиЗапитуйтеженьшеньномерПасвеликий" }
         return encode(raw)
     }
 
@@ -46,7 +46,7 @@ internal object ColorOsMemoryBridgeProtocol {
 
     fun encodeResponse(content: String): String {
         val raw = content.toByteArray(StandardCharsets.UTF_8)
-        require(raw.size <= MAX_RESPONSE_BYTES) { "ColorOS 记忆查询结果过大" }
+        require(raw.size <= MAX_RESPONSE_BYTES) { "ColorOS запам'ятативідкликатиперевіритиЗапитуйтевузолфруктиПасвеликий" }
         return "$VERSION:${encode(raw)}"
     }
 
@@ -64,9 +64,9 @@ internal object ColorOsMemoryBridgeProtocol {
     }
 
     fun buildRootCommand(encodedRequest: String): String {
-        require(encodedRequest.length <= MAX_REQUEST_BYTES * 2) { "ColorOS 记忆查询参数过大" }
+        require(encodedRequest.length <= MAX_REQUEST_BYTES * 2) { "ColorOS запам'ятативідкликатиперевіритиЗапитуйтеженьшеньномерПасвеликий" }
         require(encodedRequest.all { it.isLetterOrDigit() || it == '-' || it == '_' }) {
-            "ColorOS 记忆查询参数编码无效"
+            "ColorOS запам'ятативідкликатиперевіритиЗапитуйтеженьшеньномеркомпілюватикоднемаєефект"
         }
         return "content call --uri ${shellQuote(PROVIDER_URI)} " +
             "--method ${shellQuote(METHOD)} --arg ${shellQuote(encodedRequest)}"

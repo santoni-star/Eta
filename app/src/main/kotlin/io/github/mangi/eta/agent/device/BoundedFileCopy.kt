@@ -4,7 +4,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-/** 流式复制授权文件，不信任文档提供方声明的文件大小。 */
+/** Потокове копіювання авторизованих файлів не довіряє розміру файлу, заявленому постачальником документів.*/
 internal object BoundedFileCopy {
     fun copy(input: InputStream, output: OutputStream, maxBytes: Long) {
         require(maxBytes >= 0L)
@@ -20,5 +20,5 @@ internal object BoundedFileCopy {
         }
     }
 
-    class TooLargeException : IOException("文件超过导入大小限制")
+    class TooLargeException : IOException("мистецтваштукобганятиПаскерівництвовведітьвеликийМаленькийобмеженнясистема")
 }

@@ -2,7 +2,7 @@ package io.github.mangi.eta.agent.model
 
 import org.json.JSONArray
 
-/** 签名工具链完成前保持请求前缀，避免压缩或目录刷新破坏下一轮回传。 */
+/** Зберігайте префікс запиту, доки не буде завершено ланцюжок інструментів для підписання, щоб уникнути стиснення або оновлення каталогу знищення наступного раунду зворотних відправлень.*/
 internal object SignedToolContext {
     fun hasPendingResponse(messages: JSONArray): Boolean =
         AnthropicEphemeralState.hasPendingToolResponse(messages) ||
@@ -13,13 +13,13 @@ internal object SignedToolContext {
             AgentModelFailure(
                 "GEMINI_THINKING_CONTEXT_LOCKED",
                 false,
-                "当前 Gemini 工具链尚未完成，提交工具结果前无法压缩带签名的上下文。",
+                "коливперед Gemini працюватиІнструментланцюгдосіще нізакінченостати，нестиплатитипрацюватиІнструментвузолфруктивпереднемаєЗаконпресаскорочуватисяпринестизнакназвазначальникавнизмистецтва。",
             )
         } else {
             AgentModelFailure(
                 "ANTHROPIC_THINKING_CONTEXT_LOCKED",
                 false,
-                "当前 Anthropic 工具回合的思考签名绑定原始上下文，提交工具结果前无法压缩上下文。",
+                "коливперед Anthropic працюватиІнструментповерненнякомбайнздумаюТестзнакназвакраваткаЗвичайноОригіналпочатокначальникавнизмистецтва，нестиплатитипрацюватиІнструментвузолфруктивпереднемаєЗаконпресаскорочуватисяначальникавнизмистецтва。",
             )
         }
 }

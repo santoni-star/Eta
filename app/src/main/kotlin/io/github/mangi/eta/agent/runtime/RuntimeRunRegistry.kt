@@ -5,7 +5,7 @@ import io.github.mangi.eta.agent.overlay.AgentOverlayState
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.CountDownLatch
 
-/** 请求摄取前占位；同一会话直到终态提交完成都只有一个写入者。 */
+/** Заповнювач перед запитом прийому; той самий сеанс має лише одного автора, доки не буде завершено фіксацію остаточного стану.*/
 internal class RuntimeRunRegistry(private val capacity: Int = MAX_ACTIVE_RUNS) {
     init {
         require(capacity > 0)
@@ -55,7 +55,7 @@ internal class RuntimeRunRegistry(private val capacity: Int = MAX_ACTIVE_RUNS) {
             releaseIncoming()
         }
 
-        /** 外部助手替换自己的请求时，先等已取消前任排空，不能与其工具清理并行写会话。 */
+        /** Коли зовнішній помічник замінює свій власний запит, він очікує, поки скасований попередник буде спочатку злито, і не може писати сеанс паралельно з очищенням інструменту.*/
         fun awaitPredecessors() {
             if (predecessors.isEmpty()) return
             val worker = Thread.currentThread()
@@ -130,7 +130,7 @@ internal class RuntimeRunRegistry(private val capacity: Int = MAX_ACTIVE_RUNS) {
         val conversationId = AgentConversationIdentity.fromHandoff(request.handoff, request.runId)
         runs[request.runId]?.let { existing ->
             return if (existing.conversationId == conversationId) Admission.Duplicate(existing)
-            else Admission.Rejected("RUN_ID_CONFLICT", "运行标识与已有会话不一致，请重新发起任务")
+            else Admission.Rejected("RUN_ID_CONFLICT", "транспортдобрезнакзнанняівжематизасіданняговоритинемаєодиндо，будь ласкаВажкановийволоссяпідніматисяпризначитиобслуговування")
         }
         val previous = runs.values.filter { it.conversationId == conversationId }
         val source = request.handoff?.source
@@ -138,10 +138,10 @@ internal class RuntimeRunRegistry(private val capacity: Int = MAX_ACTIVE_RUNS) {
             AgentExternalArchivePayload.from(request.handoff.payload) != null &&
             previous.all { it.request.handoff?.source == source }
         if (previous.isNotEmpty() && !replacesExternalRun) {
-            return Admission.Rejected("CONVERSATION_BUSY", "当前会话仍有任务在运行，请等待完成或停止后再试")
+            return Admission.Rejected("CONVERSATION_BUSY", "коливпередзасіданняговоритидосіматипризначитиобслуговуванняіснуютьтранспортдобре，будь ласкачекатилікуватизакінченостатиабоСТІЙкінецьназадЗновуспробувати")
         }
         if (runs.size >= capacity) {
-            return Admission.Rejected("RUN_CAPACITY_REACHED", "同时运行的任务已达上限，请等待任务完成后再试")
+            return Admission.Rejected("RUN_CAPACITY_REACHED", "те самегодинатранспортдобрезпризначитиобслуговуваннявжедосяжністьначальникаобмеження，будь ласкачекатилікуватипризначитиобслуговуваннязакінченостатиназадЗновуспробувати")
         }
         val run = create()
         check(run.runId == request.runId && run.conversationId == conversationId)
@@ -163,7 +163,7 @@ internal class RuntimeRunRegistry(private val capacity: Int = MAX_ACTIVE_RUNS) {
         }
     }
 
-    // 不持登记锁读取 Session 状态，终态发布回调会反向移除登记。
+    // Зчитування стану сеансу без утримання блокування реєстрації, зворотний виклик опублікування остаточного стану призведе до зворотного видалення реєстрації.
     fun snapshots(): List<AgentRuntimeWire.ActiveRunSnapshot> = all()
         .filterNot { it.session.isTerminal }
         .map(Run::snapshot)

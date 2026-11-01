@@ -24,8 +24,8 @@ internal sealed interface AgentEvent {
     ) : AgentEvent {
         val displayMessage: String get() = when (phase) {
             PHASE_STARTED -> RUNNING_DETAIL
-            PHASE_COMPLETED -> "上下文已压缩，用量将在下一次模型响应后更新。"
-            else -> "上下文压缩失败，原始上下文已保留。"
+            PHASE_COMPLETED -> "начальникавнизмистецтвавжепресаскорочуватися，використовуватикількістьВоляіснуютьвнизодинДругосортнийцвільтипукільцевідповідьназадНавітьновий。"
+            else -> "начальникавнизмистецтвапресаскорочуватисявтратитипоразка，ОригіналпочатокначальникавнизмистецтвавжезберегтиТримайте。"
         }
         override fun toLogLine(): String =
             "context_compaction phase=${phase.toSafeLogToken()}, before=$tokensBefore, after=$tokensAfter, code=${reasonCode.toSafeLogToken()}"
@@ -33,8 +33,8 @@ internal sealed interface AgentEvent {
         companion object {
             const val PHASE_STARTED = "started"
             const val PHASE_COMPLETED = "completed"
-            /** 进行中的展示文案同时是 UI 判定运行态的依据，改动必须与 UI 侧同步。 */
-            const val RUNNING_DETAIL = "正在压缩上下文…"
+            /** Поточна копія відображення також є основою для інтерфейсу користувача для визначення поточного стану, а зміни мають бути синхронізовані з інтерфейсом користувача.*/
+            const val RUNNING_DETAIL = "простоіснуютьпресаскорочуватисяначальникавнизмистецтва…"
         }
     }
 
@@ -64,7 +64,7 @@ internal sealed interface AgentEvent {
         val reasonCode: String,
     ) : AgentEvent {
         val displayMessage: String
-            get() = "模型请求暂时中断，${delayMs / 1000} 秒后重试（$attempt/$maxAttempts）；此前工具结果已保留。"
+            get() = "цвільтипубудь ласкапросититимчасовогодинасерединаперерва，${delayMs / 1000} другеназадВажкаспробувати（$attempt/$maxAttempts）；цевпередпрацюватиІнструментвузолфруктивжезберегтиТримайте。"
 
         override fun toLogLine(): String =
             "model_retry_scheduled round=$round, attempt=$attempt, delay_ms=$delayMs, code=${reasonCode.toSafeLogToken()}"
@@ -178,7 +178,7 @@ internal sealed interface AgentEvent {
         val resultSummary: String,
         val imageCount: Int,
         val imageBytes: Int,
-        /** 可选：旧版本 Runtime 不发送，消费端缺省时回退到摘要文本判断。 */
+        /** Необов’язково: стара версія Runtime не надсилатиметься, і користувач за замовчуванням повернеться до підсумкового тексту.*/
         val success: Boolean? = null,
         val command: String? = null,
     ) : AgentEvent {
@@ -248,7 +248,7 @@ internal sealed interface AgentEvent {
 private const val MAX_LOGGED_TOOL_NAMES = 8
 private const val RESULT_CODE_MARKER = "code="
 
-/** 摘要字段分隔符：旧格式用逗号，人文化摘要用间隔号。 */
+/** Абстрактний роздільник полів: кома в старому форматі, пробіл у анотації людської культури.*/
 private val RESULT_FIELD_SEPARATORS = listOf(", ", " · ")
 
 private fun String.toSafeResultLogFields(): String = buildString {

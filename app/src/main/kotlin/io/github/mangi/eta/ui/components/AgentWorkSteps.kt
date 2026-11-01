@@ -6,7 +6,7 @@ import io.github.mangi.eta.ui.model.ThinkingMessageUi
 import io.github.mangi.eta.ui.model.ToolActivityMessageUi
 import io.github.mangi.eta.ui.model.ToolActivityStatusUi
 
-/** 工作过程卡片内的一个时间线节点：单条消息，或连续调用同一工具形成的分组。 */
+/** Вузол часової шкали в картці робочого процесу: окреме повідомлення або група, сформована послідовними викликами одного інструменту.*/
 @Immutable
 internal sealed interface AgentWorkStep {
     val key: String
@@ -26,8 +26,8 @@ internal sealed interface AgentWorkStep {
 }
 
 /**
- * Agent 常连续读取多个文件或多次观察屏幕；同名工具连续出现时合并为一个节点，
- * 时间线只保留“做了什么”的层级，细节按需展开。浏览器条目携带实时预览，保持独立。
+ * Агент часто читає кілька файлів безперервно або спостерігає за екраном кілька разів; коли інструменти з однаковою назвою з’являються постійно, вони об’єднуються в один вузол.
+ * Часова шкала зберігає лише рівень «що було зроблено», а деталі розширюються за потреби. Записи веб-переглядача містять попередній перегляд і залишаються незалежними.
  */
 internal fun List<AgentChatMessageUi>.toWorkSteps(): List<AgentWorkStep> = buildList {
     val run = mutableListOf<ToolActivityMessageUi>()
@@ -58,7 +58,7 @@ internal fun List<AgentChatMessageUi>.toWorkSteps(): List<AgentWorkStep> = build
 
 private val UNGROUPED_TOOLS = setOf("browser_use", "subagent")
 
-/** 折叠后的工作过程摘要所需计数。 */
+/** Необхідна кількість для згорнутого підсумку робочого процесу.*/
 internal data class AgentWorkSummary(
     val thinkingCount: Int,
     val toolCount: Int,
@@ -72,8 +72,8 @@ internal fun List<AgentChatMessageUi>.workSummary(): AgentWorkSummary = AgentWor
 )
 
 /**
- * 折叠行下方的一行结果。成功的常态结果（如“完成”）不占行；终端输出取最后一行，
- * 因为命令的结论通常在末尾；失败去掉重复的“失败”前缀与日志用的 code= 尾巴。
+ * Згорнути рядок результатів під рядком. Звичайний результат успіху (наприклад, «Завершено») не займає рядок; вихід терміналу займає останній рядок,
+ * Оскільки завершення команди зазвичай знаходиться в кінці; у разі невдачі, повторюваний префікс "відмова" та хвіст коду=, що використовуються в журналі, видаляються.
  */
 internal fun ToolActivityMessageUi.outcomeLine(): String? {
     val summary = resultSummary?.trim()?.takeIf { it.isNotEmpty() } ?: return null
@@ -99,10 +99,10 @@ internal fun ToolActivityMessageUi.outcomeLine(): String? {
     }
 }
 
-// 与 Runtime 侧结果摘要的固定格式对应。
-private const val FAILURE_LABEL = "失败"
-private const val FAILURE_PREFIX = "失败 · "
+// Відповідає фіксованому формату зведення результатів сторони виконання.
+private const val FAILURE_LABEL = "втратитипоразка"
+private const val FAILURE_PREFIX = "втратитипоразка · "
 private const val FAILURE_CODE_SEPARATOR = " · code="
-private const val SUCCESS_PREFIX = "完成 · "
+private const val SUCCESS_PREFIX = "закінченостати · "
 private const val TRUNCATION_MARK = "…"
-private val TRIVIAL_SUCCESS = setOf("完成", "执行完成")
+private val TRIVIAL_SUCCESS = setOf("закінченостати", "Виконатидобрезакінченостати")

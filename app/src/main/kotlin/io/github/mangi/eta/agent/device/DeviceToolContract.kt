@@ -3,19 +3,19 @@ package io.github.mangi.eta.agent.device
 import android.content.Context
 import org.json.JSONObject
 
-/** 结构化设备工具只操作 Eta 所属用户，不能把前台用户误当成调用方用户。 */
+/** Інструмент структурованого пристрою керує лише тим користувачем, якому належить Eta, і переднього користувача неможливо сплутати з користувачем, що телефонує.*/
 internal object DeviceToolContract {
-    // Android UID 的用户段宽度由系统 UserHandle 定义；公开 SDK 不提供数值 userId 的读取接口。
+    // Ширина сегмента користувача Android UID визначається системним UserHandle; загальнодоступний SDK не надає інтерфейсу читання для числового ідентифікатора користувача.
     fun appUserId(context: Context): Int = context.applicationInfo.uid / 100_000
 
     fun userScopeError(arguments: JSONObject, userId: Int): JSONObject? {
         if (!arguments.has("user_id")) return null
         val requested = arguments.opt("user_id")
         if (requested !is Number || requested.toDouble() != requested.toInt().toDouble() || requested.toInt() < 0) {
-            return failure("INVALID_ARGUMENT", "user_id 必须是非负整数")
+            return failure("INVALID_ARGUMENT", "user_id повиненОбов'язковотакнемаєтягарвсеномер")
         }
         if (requested.toInt() == userId) return null
-        return failure("USER_SCOPE_UNSUPPORTED", "此工具只支持 Eta 所属的 Android 用户，不自动跨用户或工作资料执行")
+        return failure("USER_SCOPE_UNSUPPORTED", "цепрацюватиІнструментТількивідділенняутримувати Eta Місцерідз Android використовуватипобутові，немаєоскількирухатисяпопереквикористовуватипобутовіабопрацюватиробитиКапіталматеріалВиконатидобре")
             .put("user_id", userId)
             .put("requested_user_id", requested.toInt())
     }

@@ -78,8 +78,8 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowListPopup
 
 /**
- * 用户手动终端：块式输出（命令、输出、退出码），给人用；与 AI 工具调用的任务模型分开。
- * 会话由 [UserTerminalStore] 持有，离开页面后正在运行的命令仍在常驻会话里继续。
+ * Термінал інструкції користувача: блок виведення (команда, вихід, код виходу), для використання людиною; окремо від моделі завдання, викликаної інструментом AI.
+ * Сеанс утримує [UserTerminalStore], і виконання команд продовжується в резидентному сеансі після виходу зі сторінки.
  */
 @Composable
 internal fun UserTerminalScreen(
@@ -93,7 +93,7 @@ internal fun UserTerminalScreen(
     var showSessions by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 从安装页返回后刷新 Linux 就绪态，引导页才会自动让位给终端；守护任务状态一并刷新。
+    // Після повернення зі сторінки встановлення оновіть стан готовності Linux, і сторінка завантаження автоматично поступиться місцем терміналу; статус завдання демона також буде оновлено.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -110,7 +110,7 @@ internal fun UserTerminalScreen(
     fun submit() {
         val command = input.trim()
         if (command.isEmpty()) return
-        // 运行中输入发给前台进程 stdin，否则作为新命令执行。
+        // Під час роботи вхідні дані надсилаються до основного процесу stdin, інакше вони виконуються як нова команда.
         if (state.running) {
             store.sendInput(command)
         } else {
@@ -209,7 +209,7 @@ private fun BlockList(
             lastVisible >= layoutInfo.totalItemsCount - 1
         }
     }
-    // 输出增长只在用户本来就停留在底部时跟随，向上翻历史不被打断。
+    // Зростання виводу відбувається лише тоді, коли користувач уже знаходиться внизу, і прокручування історії вгору не переривається.
     LaunchedEffect(blocks.size, blocks.lastOrNull()?.output?.length) {
         if (atBottom && blocks.isNotEmpty()) {
             listState.scrollToItem(blocks.lastIndex)
@@ -270,7 +270,7 @@ private fun CommandBlock(
                 modifier = Modifier.padding(top = 2.dp),
             )
             if (block.output.isNotEmpty()) {
-                // 原始输出含 ANSI 序列；整段重解析保证流式截断的序列在下一次到达后恢复。
+                // Вихідний вихід містить послідовності ANSI; повний повторний аналіз сегмента гарантує, що потокові усічені послідовності відновлюються після наступного надходження.
                 val parsedOutput = remember(block.output) { ansiToAnnotatedString(block.output) }
                 Text(
                     text = parsedOutput,
@@ -394,8 +394,8 @@ private fun SystemBlock(block: TerminalBlockUi) {
 }
 
 /**
- * 底部输入区：当前目录在上、命令输入在下。回车直接执行；
- * 运行中输入框为空时尾部按钮变为停止，有内容时发送到前台进程的 stdin。
+ * Нижня область введення: поточний каталог знаходиться вгорі, а введення команди - внизу. Натисніть Enter, щоб виконати безпосередньо;
+ * Коли поле введення порожнє під час роботи, хвіст кнопки змінюється на зупинку, а коли є вміст, він надсилається на стандартний вхід основного процесу.
  */
 @Composable
 private fun InputPanel(
@@ -489,7 +489,7 @@ private fun EmptyHint(message: String? = null) {
     )
 }
 
-/** 终端区域的居中占位：空态、环境未就绪与会话断开共用同一种层级与留白。 */
+/** Заповненість центру зони терміналу: порожній стан, середовище не готове та відключення сеансу спільно використовують той самий рівень і порожній простір.*/
 @Composable
 internal fun TerminalPlaceholder(
     icon: ImageVector,

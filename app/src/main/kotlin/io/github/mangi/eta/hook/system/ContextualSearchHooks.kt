@@ -21,7 +21,7 @@ internal object ContextualSearchHooks {
     ): HookInstallation {
         val hooks = HookRegistrar(module, rootLogger, "ContextualSearch")
         return hooks.install {
-            // 服务可能被 ROM 的资源配置禁用；先尝试原生启动，再保留启动尾段补齐。
+            // Служба може бути вимкнена конфігурацією ресурсів ПЗУ; спочатку спробуйте нативний запуск, а потім збережіть кінцевий сегмент запуску, щоб завершити.
             hookContextualSearchConfig(hooks, classLoader)
             hookContextualSearchBootstrap(module, hooks, classLoader)
             hookContextualSearchPackage(hooks, classLoader)
@@ -39,7 +39,7 @@ internal object ContextualSearchHooks {
             HookSupport.findMethod(it, "deviceHasConfigString", Context::class.java, Int::class.javaPrimitiveType!!)
         }
         if (resourceId == null || resourceId == 0 || method == null || method.returnType != Boolean::class.javaPrimitiveType) {
-            hooks.skipped("system.contextual-search-config", "SystemServer.deviceHasConfigString", "未提供 Contextual Search 资源启动条件，保留尾段补启动")
+            hooks.skipped("system.contextual-search-config", "SystemServer.deviceHasConfigString", "ще нінестидля Contextual Search Капіталджерелопочатокрухатисясмужкаштук，зберегтиТримайтехвістчастинаремонтпочатокрухатися")
             return
         }
         hooks.intercept("system.contextual-search-config", method, "SystemServer.deviceHasConfigString") { chain ->
@@ -53,8 +53,8 @@ internal object ContextualSearchHooks {
         classLoader: ClassLoader
     ) {
         val logger = hooks.logger
-        // 当前设备 2026-03-26 的重启日志已经证明，真正稳定生效的是 startOtherServices 末尾的补启动兜底。
-        // 这里直接守住系统服务启动尾段，不再把 deviceHasConfigString 当成唯一生效点。
+        // Журнал перезапуску поточного пристрою 2026-03-26 довів, що справді стабільним і ефективним є додатковий запуск наприкінці startOtherServices.
+        // Тут ми безпосередньо дотримуємося кінця запуску системної служби і більше не розглядаємо deviceHasConfigString як єдину ефективну точку.
         val systemServerClass = HookSupport.findClassOrNull(classLoader, ModuleConfig.SYSTEM_SERVER_CLASS)
         val timingsClass = HookSupport.findClassOrNull(classLoader, ModuleConfig.TIMINGS_TRACE_AND_SLOG_CLASS)
         val startOtherServicesMethod = if (systemServerClass != null && timingsClass != null) {
@@ -66,7 +66,7 @@ internal object ContextualSearchHooks {
             hooks.missing(
                 id = "system.contextual-search-bootstrap",
                 description = "SystemServer.startOtherServices",
-                detail = "未找到 SystemServer.startOtherServices(TimingsTraceAndSlog)"
+                detail = "ще ніспробуйте знайтиприбути SystemServer.startOtherServices(TimingsTraceAndSlog)"
             )
             return
         }
@@ -98,7 +98,7 @@ internal object ContextualSearchHooks {
             hooks.missing(
                 id = "system.contextual-search-package",
                 description = "ContextualSearchManagerService.getContextualSearchPackageName",
-                detail = "未找到 ContextualSearchManagerService.getContextualSearchPackageName()"
+                detail = "ще ніспробуйте знайтиприбути ContextualSearchManagerService.getContextualSearchPackageName()"
             )
             return
         }
@@ -120,7 +120,7 @@ internal object ContextualSearchHooks {
             hooks.missing(
                 id = "system.contextual-search-permission",
                 description = "ContextualSearchManagerService.enforcePermission",
-                detail = "未找到 ContextualSearchManagerService.enforcePermission(String)"
+                detail = "ще ніспробуйте знайтиприбути ContextualSearchManagerService.enforcePermission(String)"
             )
             return
         }
@@ -143,8 +143,8 @@ internal object ContextualSearchHooks {
         val context = HookSupport.invokeNoArgs(serviceInstance, "getContext") as? Context
             ?: HookSupport.getFieldValue(serviceInstance, "mContext") as? Context
             ?: return false
-        // IContextualSearchManager 是 oneway AIDL，调用 PID 固定不可用；Android 权限主体本身也是 UID。
-        // 因此这里只能按 UID 鉴权，getPackagesForUid 的结果代表整个 shared UID 安全边界。
+        // IContextualSearchManager є одностороннім AIDL, а PID виклику фіксований і недоступний; сама тема дозволу Android також є UID.
+        // Тому автентифікацію можна виконати лише на основі UID, а результат getPackagesForUid представляє всю межу безпеки спільного UID.
         val callingUid = Binder.getCallingUid()
         val packages = try {
             context.packageManager.getPackagesForUid(callingUid)
@@ -168,19 +168,19 @@ internal object ContextualSearchHooks {
         source: String
     ) {
         if (isContextualSearchServiceAlive()) {
-            logger.debug { "$source: contextual_search service 已存在" }
+            logger.debug { "$source: contextual_search service вжежитиіснують" }
             return
         }
 
         val systemServiceManager = HookSupport.getFieldValue(systemServerInstance, "mSystemServiceManager")
         if (systemServiceManager == null) {
-            logger.warn("$source: mSystemServiceManager 为空，无法补启动 contextual_search")
+            logger.warn("$source: mSystemServiceManager длянульовий，немаєЗаконремонтпочатокрухатися contextual_search")
             return
         }
 
         val serviceClass = HookSupport.findClassOrNull(classLoader, ModuleConfig.CONTEXTUAL_SEARCH_CLASS)
         if (serviceClass == null) {
-            logger.warn("$source: 未找到 ContextualSearchManagerService class，无法补启动")
+            logger.warn("$source: ще ніспробуйте знайтиприбути ContextualSearchManagerService class，немаєЗаконремонтпочатокрухатися")
             return
         }
 
@@ -190,20 +190,20 @@ internal object ContextualSearchHooks {
             Class::class.java
         )
         if (startServiceMethod == null) {
-            logger.warn("$source: 未找到 SystemServiceManager.startService(Class)")
+            logger.warn("$source: ще ніспробуйте знайтиприбути SystemServiceManager.startService(Class)")
             return
         }
 
         try {
             module.getInvoker(startServiceMethod).invoke(systemServiceManager, serviceClass)
             if (isContextualSearchServiceAlive()) {
-                logger.debug { "$source: 已补启动 ContextualSearchManagerService" }
+                logger.debug { "$source: вжеремонтпочатокрухатися ContextualSearchManagerService" }
             } else {
-                logger.warn("$source: 已调用 startService(Class)，但 contextual_search 仍不可用")
+                logger.warn("$source: вжемелодіявикористовувати startService(Class)，але contextual_search досінемаєможевикористовувати")
             }
         } catch (exception: Exception) {
-            // XposedFrameworkError 属于 Error，必须继续交给框架处理。
-            logger.error("$source: 补启动 ContextualSearchManagerService 失败", exception)
+            // XposedFrameworkError є помилкою, і її потрібно продовжувати передавати фреймворку для обробки.
+            logger.error("$source: ремонтпочатокрухатися ContextualSearchManagerService втратитипоразка", exception)
         }
     }
 

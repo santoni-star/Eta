@@ -30,7 +30,7 @@ internal data class CharacterBackupAsset(
     val memoryMd: String = "",
 )
 
-/** 备份内只传文件内容，恢复时重新生成当前设备的私有路径。 */
+/** У резервну копію переноситься лише вміст файлу, а під час відновлення приватний шлях поточного пристрою генерується повторно.*/
 internal object CharacterBackupTransfer {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -59,33 +59,33 @@ internal object CharacterBackupTransfer {
 
     fun validate(data: CharacterBackupData, bindingIds: Set<String>) {
         val ids = data.characters.map { it.id }
-        require(ids.size == ids.toSet().size && ids.all(::validId)) { "备份中的角色 ID 重复或无效" }
+        require(ids.size == ids.toSet().size && ids.all(::validId)) { "Приготуйтечасткасерединазрігколір ID Важкаскладніабонемаєефект" }
         data.characters.forEach { character ->
             val card = CharacterCardCodec.decodeJson(character.cardJson)
-            require(card.name.length <= 512) { "备份中的角色名称过长" }
+            require(card.name.length <= 512) { "ПриготуйтечасткасерединазрігколірназвасказатиПасдовго" }
         }
         val assets = data.assets.map { it.characterId }
-        require(assets.size == assets.toSet().size && assets.all { it in ids || it in bindingIds }) { "备份中的角色资源无效" }
+        require(assets.size == assets.toSet().size && assets.all { it in ids || it in bindingIds }) { "ПриготуйтечасткасерединазрігколірКапіталджерелонемаєефект" }
         data.assets.forEach { asset ->
-            require(asset.memoryMd.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "角色记忆超过 1 MiB 限制" }
+            require(asset.memoryMd.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "рігколірзапам'ятативідкликатиобганятиПас 1 MiB обмеженнясистема" }
             asset.avatarBase64?.let {
                 val bytes = Base64.getDecoder().decode(it)
-                require(bytes.size <= CharacterRepository.MAX_FILE_BYTES && CharacterCardPng.isPng(bytes)) { "备份中的角色图片无效" }
+                require(bytes.size <= CharacterRepository.MAX_FILE_BYTES && CharacterCardPng.isPng(bytes)) { "Приготуйтечасткасерединазрігколірмалюнокшматокнемаєефект" }
                 CharacterCardPng.validate(bytes)
             }
         }
         data.persona?.let {
-            require(it.id == "main" && it.name.isNotBlank() && it.name.length <= 256) { "备份中的用户人设无效" }
-            require(it.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "用户设定超过 1 MiB 限制" }
+            require(it.id == "main" && it.name.isNotBlank() && it.name.length <= 256) { "Приготуйтечасткасерединазвикористовуватипобутовілюдейналаштуватинемаєефект" }
+            require(it.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "використовуватипобутовіналаштуватиЗвичайнообганятиПас 1 MiB обмеженнясистема" }
         }
     }
 
     fun validateBindings(conversations: List<ConversationEntity>): List<RoleplayBinding> =
         conversations.mapNotNull { binding(it) }.onEach { binding ->
-            require(validId(binding.characterId)) { "备份中的角色会话 ID 无效" }
+            require(validId(binding.characterId)) { "Приготуйтечасткасерединазрігколірзасіданняговорити ID немаєефект" }
             CharacterCardCodec.decodeJson(binding.cardSnapshotJson)
             require(binding.userName.length <= 256 && binding.userDescription.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) {
-                "备份中的角色用户设定过大"
+                "ПриготуйтечасткасерединазрігколірвикористовуватипобутовіналаштуватиЗвичайноПасвеликий"
             }
         }
 
@@ -94,17 +94,17 @@ internal object CharacterBackupTransfer {
         val state = json.decodeFromString<RoleplayMessageState>(row.revisionsJson)
         state.links.forEach { (id, link) ->
             require(messageTypes[id] in setOf("user", "assistant") && link.transcriptMessageId.isNotBlank() && link.blockOrder >= 0) {
-                "备份中的正文关联缺少有效消息"
+                "Приготуйтечасткасерединазпростомистецтвазакритипосиланнявідсутністьмаломатиефектвидалитиінтерес"
             }
         }
         state.revisions.forEach { (id, revision) ->
             require(id in state.links && revision.candidates.isNotEmpty() && revision.selected in revision.candidates.indices) {
-                "备份中的正文候选或选中版本无效"
+                "Приготуйтечасткасерединазпростомистецтвачекативибратиабовибратисерединаверсіякниганемаєефект"
             }
         }
         state.pendingRewrites.forEach { (runId, target) ->
             require(runId.isNotBlank() && target in state.links && messageTypes[target] == "assistant") {
-                "备份中的重新生成目标无效"
+                "ПриготуйтечасткасерединазВажкановийнародивсястатиГоловазнакнемаєефект"
             }
         }
     }

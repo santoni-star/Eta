@@ -13,7 +13,7 @@ import io.github.mangi.eta.agent.device.RootAccess
 import java.util.Locale
 import org.json.JSONArray
 
-/** 每轮冻结的运行条件；不包含用户开关，也不触发授权请求。 */
+/** Умови виконання кожного циклу заморожування; не включає перемикання користувачів і не запускає запити авторизації.*/
 internal data class AgentToolCapabilities(
     val rootAvailable: Boolean,
     val rootState: RootAccessState? = null,

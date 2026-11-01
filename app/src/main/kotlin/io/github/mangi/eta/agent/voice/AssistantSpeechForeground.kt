@@ -9,14 +9,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import io.github.mangi.eta.R
 
-/** Overlay 不等同于前台 Activity；只在可见浮窗采集或播放音频期间提升服务类型。 */
+/** Накладання не є еквівалентом активності переднього плану; тип служби піднімається лише під час збирання видимих ​​плаваючих вікон або відтворення аудіо.*/
 internal class AssistantSpeechForeground(private val service: Service) {
-    fun recording() = start(ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE, "Eta 正在聆听")
-    fun playback() = start(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK, "Eta 正在朗读")
+    fun recording() = start(ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE, "Eta простоіснуютьчутислухати")
+    fun playback() = start(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK, "Eta простоіснуютьдовгийчитати")
 
     private fun start(type: Int, title: String) {
         service.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, "助手语音", NotificationManager.IMPORTANCE_LOW),
+            NotificationChannel(CHANNEL, "допомогтирукумовазвук", NotificationManager.IMPORTANCE_LOW),
         )
         val stop = PendingIntent.getService(service, 0,
             Intent(service, EtaAssistantOverlayService::class.java).setAction(ACTION_STOP),
@@ -24,15 +24,15 @@ internal class AssistantSpeechForeground(private val service: Service) {
         val notification = Notification.Builder(service, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
-            .setContentText("仅在助手浮窗可见时运行")
+            .setContentText("тількиіснуютьдопомогтирукуплавативікноможедивгодинатранспортдобре")
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
-            .addAction(Notification.Action.Builder(null, "停止", stop).build())
+            .addAction(Notification.Action.Builder(null, "СТІЙкінець", stop).build())
             .build()
         try {
             service.startForeground(NOTIFICATION_ID, notification, type)
         } catch (_: RuntimeException) {
-            throw SpeechFailure(SpeechErrorCode.PERMISSION, "系统不允许当前浮窗使用音频，请检查麦克风权限和默认数字助理设置")
+            throw SpeechFailure(SpeechErrorCode.PERMISSION, "Краваткасистеманемаєдозволяютьтравняколивпередплавативікнозробитивикористовуватизвукчастота，будь ласкаперевіритиперевіритипшеницяграмвітерправильнообмеженняімовчазнийрозпізнатиномерхарактердопомогтипричинаналаштувативстановити")
         }
     }
 

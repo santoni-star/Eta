@@ -107,7 +107,7 @@ import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
 import top.yukonga.miuix.kmp.window.WindowDialog
 
 /**
- * Agent App 根组件：持有本地导航栈，并把 Screen actions 交给 [AgentAppState]。
+ * Кореневий компонент програми агента: утримує локальний навігаційний стек і передає дії на екрані [AgentAppState].
  */
 @Composable
 fun AgentAppRoot(
@@ -230,7 +230,7 @@ fun AgentAppRoot(
 
     LaunchedEffect(requestedArchivedConversation) {
         val request = requestedArchivedConversation ?: return@LaunchedEffect
-        // 外部入口的结果要先导入归档才有会话；找不到时停在当前界面，不切到无关的会话。
+        // Результати зовнішнього входу необхідно імпортувати в архів до початку сеансу; якщо його не вдасться знайти, він зупиниться на поточному інтерфейсі та не перейде до невідповідних сеансів.
         if (agentState.openArchivedConversation(request.source, request.conversationKey)) {
             conversationPaneOpen = false
             navigator.popToHome()
@@ -243,7 +243,7 @@ fun AgentAppRoot(
         val opened = agentState.openAssistantConversation(conversationKey)
         if (opened) {
             conversationPaneOpen = false
-            // 接管落到主聊天舞台：与主界面同一页面、同一侧边对话列表，不再开独立对话页。
+            // Захоплення відбувається на етапі основного чату: та сама сторінка та бічний список бесід, що й основний інтерфейс, і не відкривається незалежна сторінка бесіди.
             navigator.popToHome()
         }
         onAssistantConversationOpened(opened)
@@ -435,7 +435,7 @@ fun AgentAppRoot(
                 }
             }
             entry<AppRoute.Browser> { route ->
-                // 保留已保存路由的恢复入口；新打开操作直接进入原生浏览器窗口。
+                // Запис відновлення для збережених маршрутів зберігається; нові операції відкриття безпосередньо вводяться у рідне вікно браузера.
                 LaunchedEffect(route) {
                     context.startActivity(AgentBrowserActivity.createIntent(context, route.sessionKey))
                     backStack.remove(route)
@@ -507,7 +507,7 @@ fun AgentAppRoot(
                         agentState.startCharacterConversation(binding, greeting)
                         conversationPaneOpen = false
                         navigator.popToHome()
-                        // 开始新故事直接呈现首页；重置导航呈现态，避免多层退栈扫过角色列表。
+                        // Почніть нову історію та відобразіть головну сторінку безпосередньо; скинути стан відображення навігації, щоб уникнути кількох шарів зворотних стосів і сканування списку символів.
                         navigationResetKey++
                     }
                 }
@@ -782,13 +782,13 @@ fun AgentAppRoot(
     characterStore.notice?.let { notice ->
         WindowDialog(
             show = true,
-            title = "角色",
+            title = "рігколір",
             summary = notice,
             cornerRadius = DialogDefaults.CornerRadius,
             onDismissRequest = characterStore::dismissNotice,
         ) {
             top.yukonga.miuix.kmp.basic.TextButton(
-                text = "知道了", onClick = characterStore::dismissNotice, modifier = Modifier.fillMaxWidth(),
+                text = "знатидорогазрозумів", onClick = characterStore::dismissNotice, modifier = Modifier.fillMaxWidth(),
             )
         }
     }

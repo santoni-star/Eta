@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.runtime
 import android.os.Bundle
 import java.io.Closeable
 
-/** Handler 接收，等待线程读取；超时或取消后到达的结果也必须释放文件描述符。 */
+/** Обробник отримує та чекає на читання потоку; результат, отриманий після тайм-ауту або скасування, також повинен звільнити дескриптор файлу.*/
 internal class AgentResultMailbox : Closeable {
     private var result: Bundle? = null
     private var closed = false

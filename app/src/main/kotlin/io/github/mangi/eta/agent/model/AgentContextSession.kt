@@ -4,7 +4,7 @@ import io.github.mangi.eta.agent.runtime.AgentEvent
 import io.github.mangi.eta.agent.runtime.AgentRunController
 import org.json.JSONArray
 
-/** 管理可替换的模型上下文；持久快照先提交，运行 transcript 始终追加。 */
+/** Управління контекстом змінної моделі; постійні знімки надсилаються першими, а поточні стенограми завжди додаються.*/
 internal class AgentContextSession(
     private val config: AgentModelClient.ModelConfig,
     private val messages: JSONArray,
@@ -105,7 +105,7 @@ internal class AgentContextSession(
             onEvent(AgentEvent.ContextCompaction(operation, "failed", before,
                 reasonCode = (failure as? AgentModelFailure)?.code ?: "CONTEXT_SUMMARY_FAILED"))
             if (!final) throw failure
-            // 已完成的回答仍成功交付；完整快照随终态 outbox 保存，不依赖先前检查点写入成功。
+            // Готові відповіді все ще успішно доставлені; повний знімок зберігається з вихідною папкою кінцевого стану і не залежить від успішності попереднього запису контрольної точки.
             committedSnapshot = createSnapshot(messages)
         }
     }

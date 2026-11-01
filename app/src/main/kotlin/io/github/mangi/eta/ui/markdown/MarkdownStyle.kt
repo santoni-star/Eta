@@ -11,12 +11,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 正文与思考共用同一套渲染器，只在字号、颜色与留白上区分层级。 */
+/** Текст і відображення мають однаковий набір засобів візуалізації та відрізняються лише розміром шрифту, кольором і пробілом.*/
 internal enum class MarkdownTone { Answer, Thinking }
 
 /**
- * 一次渲染所需的全部样式。按主题与语气整体记忆，块级组件只读取不再推导，
- * 避免每个段落各自拼一遍 TextStyle。
+ * Одразу візуалізуйте всі потрібні стилі. Загальна пам'ять базується на темі та тоні, а компоненти на рівні блоку лише зчитуються, а не виводяться.
+ * Уникайте написання TextStyle для кожного абзацу.
  */
 @Immutable
 internal class MarkdownStyle(
@@ -35,7 +35,7 @@ internal class MarkdownStyle(
 ) {
     fun heading(level: Int): TextStyle = headings[(level - 1).coerceIn(0, headings.lastIndex)]
 
-    /** 引用块内的弱化样式：文字退到次要色，结构与字号不变。 */
+    /** Послаблення стилю в блоці цитат: текст відступає до вторинного кольору, а структура та розмір шрифту залишаються незмінними.*/
     fun muted(): MarkdownStyle = MarkdownStyle(
         tone = tone,
         body = body.copy(color = secondaryColor),
@@ -64,7 +64,7 @@ internal fun rememberMarkdownStyle(tone: MarkdownTone): MarkdownStyle {
             lineHeight = if (answer) ANSWER_LINE_HEIGHT_SP.sp else THINKING_LINE_HEIGHT_SP.sp,
             color = textColor,
         )
-        // 聊天里的标题只是段落强调，不是页面标题：字号克制，层级主要靠字重区分。
+        // Заголовок у чаті – це лише виділення абзацу, а не заголовок сторінки: розмір шрифту стриманий, а ієрархія в основному розрізняється за щільністю шрифту.
         val headings = if (answer) {
             listOf(
                 body.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold),
@@ -101,8 +101,8 @@ internal fun rememberMarkdownStyle(tone: MarkdownTone): MarkdownStyle {
 }
 
 /**
- * 相邻块之间的留白。源码中的空行只用于切分块，不直接占据高度；可见间距按语义分配：
- * 段落之间约半行，标题前更宽以开启新段落，标题后收紧使其贴近所属内容。
+ * Простір між сусідніми блоками. Порожні рядки у вихідному коді використовуються лише для поділу блоків і безпосередньо не займають висоту; видимий інтервал виділяється відповідно до семантики:
+ * Приблизно половина рядка між абзацами, ширше перед заголовком, щоб відкрити новий абзац, і підтягнуте після заголовка, щоб наблизити його до змісту.
  */
 internal fun markdownBlockGap(previous: MarkdownBlock?, current: MarkdownBlock, tone: MarkdownTone): TextUnit {
     if (previous == null) return 0.sp
@@ -117,7 +117,7 @@ internal fun markdownBlockGap(previous: MarkdownBlock?, current: MarkdownBlock, 
     return (gap * scale).sp
 }
 
-/** 紧凑列表项内部（例如段落后紧跟子列表）只保留很小的间距。 */
+/** У компактних елементах списку зберігаються лише невеликі інтервали (наприклад, абзац, за яким іде підсписок).*/
 internal fun markdownCompactGap(previous: MarkdownBlock?, tone: MarkdownTone): TextUnit =
     if (previous == null) 0.sp else if (tone == MarkdownTone.Answer) 4.sp else 3.sp
 

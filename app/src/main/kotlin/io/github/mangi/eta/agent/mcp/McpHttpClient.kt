@@ -85,7 +85,7 @@ internal class McpHttpClient(
                     sessionId = sessionId,
                     additionalHeaders = parameterHeaders,
                 ).json,
-            ) { "MCP 工具返回为空" },
+            ) { "MCP працюватиІнструментповерненняповерненнядлянульовий" },
         )
         return if (version in SUPPORTED_LEGACY_PROTOCOL_VERSIONS) {
             withLegacySessionRetry(::invoke)
@@ -173,11 +173,11 @@ internal class McpHttpClient(
             sessionId = null,
         )
         val initializeResult = unwrapResult(
-            requireNotNull(initialized.json) { "MCP initialize 返回为空" }
+            requireNotNull(initialized.json) { "MCP initialize поверненняповерненнядлянульовий" }
         )
         val protocolVersion = initializeResult.optString("protocolVersion")
         require(protocolVersion in SUPPORTED_LEGACY_PROTOCOL_VERSIONS) {
-            "MCP 服务器返回了不支持的协议版本"
+            "MCP Одягобслуговуванняпристрійповерненняповерненнязрозумівнемаєвідділенняутримуватизоб'єднанняобговоритиверсіякнига"
         }
         val newSessionId = initialized.sessionId
         val accepted = synchronized(lifecycleLock) {
@@ -190,7 +190,7 @@ internal class McpHttpClient(
         }
         if (!accepted) {
             newSessionId?.let { releaseLegacySession(it, protocolVersion) }
-            error("MCP 客户端已关闭")
+            error("MCP гістьпобутовікінецьвжезакритизакрити")
         }
         notification(
             method = "notifications/initialized",
@@ -213,18 +213,18 @@ internal class McpHttpClient(
                 params = params,
                 protocolVersion = protocolVersion,
                 sessionId = sessionId,
-            ).json ?: error("MCP tools/list 返回为空")
+            ).json ?: error("MCP tools/list поверненняповерненнядлянульовий")
             val result = unwrapResult(response)
             if (protocolVersion == McpProtocolMode.LATEST) {
-                // 旧服务可能忽略现代协议元数据并仍以 200 返回，
-                // 此时需要改走 initialize 协商。
+                // Старіші служби можуть ігнорувати сучасні метадані протоколу та повертати 200,
+                // Натомість вам потрібно використовувати ініціалізацію узгодження.
                 if (!result.has("resultType") || result.isNull("resultType")) {
                     throw McpProtocolCompatibilityException(
-                        IOException("MCP tools/list 返回了旧协议结果")
+                        IOException("MCP tools/list поверненняповерненнязрозумівстарийоб'єднанняобговоритивузолфрукти")
                     )
                 }
                 require(result.optString("resultType") == "complete") {
-                    "MCP tools/list 返回了不支持的结果类型"
+                    "MCP tools/list поверненняповерненнязрозумівнемаєвідділенняутримуватизвузолфруктивидтипу"
                 }
                 val pageTtl = result.nullableLong("ttlMs")?.coerceAtLeast(0L) ?: 0L
                 cacheTtlMs = cacheTtlMs?.let { minOf(it, pageTtl) } ?: pageTtl
@@ -342,8 +342,8 @@ internal class McpHttpClient(
     ): WireResponse {
         val call = AgentHttpClient.client.newCall(request)
         synchronized(lifecycleLock) {
-            check(!closed) { "MCP 客户端已关闭" }
-            check(activeCall == null) { "MCP 客户端正在执行其他请求" }
+            check(!closed) { "MCP гістьпобутовікінецьвжезакритизакрити" }
+            check(activeCall == null) { "MCP гістьпобутовікінецьпростоіснуютьВиконатидобрещовінбудь ласкапросити" }
             activeCall = call
         }
         try {
@@ -362,9 +362,9 @@ internal class McpHttpClient(
                         jsonRpcCode = json?.optJSONObject("error")?.optInt("code"),
                     )
                 }
-                if (json == null) throw IOException("MCP 响应正文为空")
+                if (json == null) throw IOException("MCP кільцевідповідьпростомистецтвадлянульовий")
                 if (expectedId != null && json.opt("id")?.toString() != expectedId.toString()) {
-                    throw IOException("MCP 响应 id 不匹配")
+                    throw IOException("MCP кільцевідповідь id немаєматчматч")
                 }
                 json.optJSONObject("error")?.let { error ->
                     throw McpJsonRpcException(
@@ -407,7 +407,7 @@ internal class McpHttpClient(
     }
 
     private fun unwrapResult(response: JSONObject): JSONObject =
-        response.optJSONObject("result") ?: error("MCP 响应缺少 result")
+        response.optJSONObject("result") ?: error("MCP кільцевідповідьвідсутністьмало result")
 
     private fun Response.readWireJson(expectedId: Long?): JSONObject? =
         if (header("Content-Type").orEmpty().contains("text/event-stream", ignoreCase = true)) {
@@ -428,7 +428,7 @@ internal class McpHttpClient(
             }
             buffer.readByteArray()
         }
-        require(bytes.size <= MAX_RESPONSE_BYTES) { "MCP 响应超过大小限制" }
+        require(bytes.size <= MAX_RESPONSE_BYTES) { "MCP кільцевідповідьобганятиПасвеликийМаленькийобмеженнясистема" }
         return bytes.toString(Charsets.UTF_8)
     }
 
@@ -452,7 +452,7 @@ internal class McpHttpClient(
         while (true) {
             val line = source.readBoundedSseLine(MAX_RESPONSE_BYTES - totalBytes) ?: break
             totalBytes += line.toByteArray().size + 1L
-            require(totalBytes <= MAX_RESPONSE_BYTES) { "MCP 响应超过大小限制" }
+            require(totalBytes <= MAX_RESPONSE_BYTES) { "MCP кільцевідповідьобганятиПасвеликийМаленькийобмеженнясистема" }
             when {
                 line.isEmpty() -> consumeEvent()?.let { return it }
                 line.startsWith(":") -> Unit
@@ -463,14 +463,14 @@ internal class McpHttpClient(
     }
 
     private fun okio.BufferedSource.readBoundedSseLine(remainingBytes: Long): String? {
-        require(remainingBytes > 0L) { "MCP 响应超过大小限制" }
+        require(remainingBytes > 0L) { "MCP кільцевідповідьобганятиПасвеликийМаленькийобмеженнясистема" }
         val newline = indexOf('\n'.code.toByte(), 0L, remainingBytes + 1L)
         if (newline >= 0L) {
             val line = readUtf8(newline)
             skip(1L)
             return line.removeSuffix("\r")
         }
-        if (request(remainingBytes + 1L)) throw IOException("MCP 响应超过大小限制")
+        if (request(remainingBytes + 1L)) throw IOException("MCP кільцевідповідьобганятиПасвеликийМаленькийобмеженнясистема")
         if (exhausted()) return null
         val tail = readUtf8().removeSuffix("\r")
         return tail.ifEmpty { null }
@@ -509,15 +509,15 @@ internal class McpHttpStatusException(
     val code: Int,
     safeMessage: String,
     val jsonRpcCode: Int? = null,
-) : IOException("MCP 请求失败：HTTP $code ${safeMessage.take(200)}")
+) : IOException("MCP будь ласкапроситивтратитипоразка：HTTP $code ${safeMessage.take(200)}")
 
 internal class McpJsonRpcException(
     val code: Int,
     safeMessage: String,
-) : IOException("MCP 协议错误：code=$code ${safeMessage.take(200)}")
+) : IOException("MCP об'єднанняобговоритинеправильнопомилка：code=$code ${safeMessage.take(200)}")
 
 private class McpProtocolCompatibilityException(cause: Throwable) : IOException(cause.message, cause)
 
 internal fun validateMcpEndpoint(raw: String): okhttp3.HttpUrl {
-    return raw.trim().toHttpUrlOrNull() ?: error("MCP 地址无效")
+    return raw.trim().toHttpUrlOrNull() ?: error("MCP землісайтнемаєефект")
 }

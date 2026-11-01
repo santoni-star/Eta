@@ -24,7 +24,7 @@ internal sealed interface PackageProfileInstallResult {
     data object AlreadyReady : PackageProfileInstallResult
     data object EnvironmentNotReady : PackageProfileInstallResult
 
-    /** 依赖的 profile 尚未安装，按依赖链先装它。 */
+    /** Залежний профіль ще не встановлено. Спочатку встановіть його відповідно до ланцюжка залежностей.*/
     data class DependencyMissing(val profileId: String) : PackageProfileInstallResult
     data object Installed : PackageProfileInstallResult
     data class Failed(val stage: PackageProfileInstallStage) : PackageProfileInstallResult
@@ -41,7 +41,7 @@ internal data class LinuxPackageProfile(
     val markerName: String,
     val revision: Int,
     val specs: Map<LinuxDistribution, LinuxPackageSpec>,
-    /** 安装前必须就绪的前置 profile。 */
+    /** Попередній профіль, який повинен бути готовий до встановлення.*/
     val dependsOn: LinuxPackageProfile? = null,
 ) {
     fun spec(distribution: LinuxDistribution): LinuxPackageSpec = requireNotNull(specs[distribution])
@@ -76,7 +76,7 @@ internal object LinuxPackageProfiles {
                 packages = listOf("nodejs-current", "npm"),
             ),
             LinuxDistribution.DEBIAN to LinuxPackageSpec(
-                // Node 官方 arm64 二进制链接 libatomic.so.1，归档安装不含系统依赖，需补装。
+                // Офіційним двійковим посиланням Node arm64 є libatomic.so.1. Заархівована інсталяція не містить системних залежностей і потребує повторної інсталяції.
                 packages = listOf("libatomic1"),
                 managedTool = ManagedLinuxTool.NODE,
             ),
@@ -99,9 +99,9 @@ internal object LinuxPackageProfiles {
     )
 
     /**
-     * Kimi Code 使用 npm 分发，运行在 Node profile 之上；可选原生扩展由 npm 按平台安装。
-     * 始终安装最新正式版（升级重装即可）；--prefix /usr/local 让 kimi 进入 PATH 首位，
-     * 与 Node 归档自身的 prefix 无关。国内镜像优先，官方 registry 兜底。
+     * Kimi Code поширюється за допомогою npm і працює в профілі Node; необов’язкові власні розширення встановлюються npm для кожної платформи.
+     * Завжди встановлюйте останню офіційну версію (просто оновіть і перевстановіть); --prefix /usr/local дозволяє kimi вводити перше місце в PATH,
+     * Не має нічого спільного з префіксом самого архіву Node. Пріоритет віддається вітчизняним зображенням, а про все береться офіційний реєстр.
      */
     private const val KIMI_INSTALL_SCRIPT =
         "npm install -g --prefix /usr/local --registry=https://registry.npmmirror.com " +
@@ -129,7 +129,7 @@ internal fun linuxPackageProfileReady(rootfs: File, profile: LinuxPackageProfile
     }
 }
 
-/** 为当前选中的发行版按需安装单个工具 profile；成功后只写对应完成标记。 */
+/** Встановити єдиний профіль інструменту на вимогу для поточного вибраного дистрибутива; напишіть відповідний знак завершення лише після успіху.*/
 internal class LinuxPackageProfileInstaller(
     private val context: Context,
     private val distribution: LinuxDistribution,

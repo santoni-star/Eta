@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** 页面按会话保留，运行引用与挂载容器共同决定何时可以回收。 */
+/** Сторінки зберігаються протягом сеансу, а запущені посилання та змонтовані контейнери спільно визначають, коли їх можна переробити.*/
 internal object BrowserSessionRegistry {
     const val MANUAL_SESSION_KEY = "browser:manual"
 
@@ -57,7 +57,7 @@ internal object BrowserSessionRegistry {
         }
     }
 
-    /** 全局清理先唤醒动作等待，再在后台逐页重置，主线程从不等待页面操作锁。 */
+    /** Глобальне очищення спочатку активує дію, що очікує, а потім скидає її сторінку за сторінкою у фоновому режимі. Головний потік ніколи не чекає блокування операції сторінки.*/
     fun clearSharedBrowsingData(context: Context) {
         check(Looper.myLooper() != Looper.getMainLooper()) { "Browser data clearing requires a worker thread" }
         check(clearingData.compareAndSet(false, true)) { "Browser data clearing is already in progress" }

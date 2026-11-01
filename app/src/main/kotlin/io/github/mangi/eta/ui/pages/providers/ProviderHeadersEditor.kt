@@ -40,17 +40,17 @@ internal fun LazyListScope.providerHeadersEditor(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
-    // 请求头数量很少且必须收进同一张卡片，折叠/展开态整组重排，不拆成独立 Lazy 条目。
+    // Кількість заголовків запиту дуже мала, і їх потрібно включити в одну картку. Уся група переставляється в згорнутий/розгорнутий стан і не розбивається на незалежні відкладені записи.
     item(key = "custom_headers") {
-        ProviderSection(title = "自定义请求头") {
+        ProviderSection(title = "оскількиЗвичайноправеднийбудь ласкапроситиголова") {
             val chevronRotation by animateFloatAsState(if (expanded) 180f else 0f)
             EtaPreference(
-                title = if (headers.isEmpty()) "未设置" else "已设置 ${headers.size} 项",
-                summary = "可覆盖 User-Agent；认证与传输请求头由系统管理。",
+                title = if (headers.isEmpty()) "ще ніналаштувативстановити" else "вженалаштувативстановити ${headers.size} пункт",
+                summary = "можекришкабудувати User-Agent；розпізнатисертифікатіпропусквтратитибудь ласкапроситиголоваЗалежить відКраваткасистематрубкапричина。",
                 endActions = {
                     Icon(
                         imageVector = Icons.Rounded.ExpandMore,
-                        contentDescription = if (expanded) "收起" else "展开",
+                        contentDescription = if (expanded) "отриматипідніматися" else "виставкаВІДЧИНЕНО",
                         tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
                         modifier = Modifier.rotate(chevronRotation),
                     )
@@ -77,7 +77,7 @@ internal fun LazyListScope.providerHeadersEditor(
                 }
                 EtaPreferenceDivider(hasLeading = false)
                 EtaPreference(
-                    title = "添加请求头",
+                    title = "додатидодатибудь ласкапроситиголова",
                     titleColor = BasicComponentDefaults.titleColor(color = MiuixTheme.colorScheme.primary),
                     startAction = {
                         Icon(
@@ -112,14 +112,14 @@ private fun ProviderHeaderRow(
             TextField(
                 value = row.header.name,
                 onValueChange = onNameChange,
-                label = "名称",
+                label = "назвасказати",
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             TextField(
                 value = row.header.value,
                 onValueChange = onValueChange,
-                label = "值",
+                label = "значення",
                 singleLine = true,
                 visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {

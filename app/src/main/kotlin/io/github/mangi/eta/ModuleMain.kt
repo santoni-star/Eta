@@ -25,7 +25,7 @@ class ModuleMain : XposedModule() {
 
     private val logger = ModuleLogger(this)
     private var currentProcessName: String? = null
-    // 当前未启用热重载；保留句柄用于未来显式 unhook/replace，而不是维持 Hook 生效。
+    // Гаряче перезавантаження наразі не ввімкнено; дескриптор зберігається для майбутнього явного відключення/заміни, а не для збереження дії гака.
     private val hookHandles = mutableListOf<HookHandle>()
 
     override fun onModuleLoaded(param: ModuleLoadedParam) {
@@ -34,18 +34,18 @@ class ModuleMain : XposedModule() {
             detach()
             return
         }
-        // 缓存框架提供的只读 remote preferences，供所有 hook 拦截回调即时读取。
-        // getRemotePreferences 是 XposedInterface 的方法，XposedModule 继承自其 Wrapper 可直接调用。
-        // 调用失败时保留历史默认行为，但必须留下可诊断日志，不能伪装成配置同步正常。
+        // Віддалені параметри лише для читання, надані структурою кешу, можуть бути негайно прочитані всіма зворотними викликами перехоплення.
+        // getRemotePreferences — це метод XposedInterface, який XposedModule успадковує від своєї Wrapper і може викликатися напряму.
+        // Якщо виклик не вдається, історична поведінка за замовчуванням зберігається, але необхідно залишити журнали, які можна діагностувати, а синхронізацію конфігурації не можна вважати нормальною.
         val remotePreferences = try {
             getRemotePreferences(Prefs.GROUP)
         } catch (exception: Exception) {
-            logger.warn("RemotePreferences 不可用，将使用兼容默认值: ${exception.safeLogType()}")
+            logger.warn("RemotePreferences немаєможевикористовувати，ВолязробитивикористовуватиодночаснийДозволитимовчазнийрозпізнатизначення: ${exception.safeLogType()}")
             null
         }
         Prefs.attachRemote(remotePreferences)
         logger.debug {
-            "模块已加载 process=${param.processName}, framework=$frameworkName($frameworkVersionCode), api=$apiVersion"
+            "цвільшматоквжедодатинавантаження process=${param.processName}, framework=$frameworkName($frameworkVersionCode), api=$apiVersion"
         }
     }
 

@@ -8,7 +8,7 @@ import io.github.mangi.eta.data.model.ProviderTypes
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-/** 订阅凭据与官方服务地址绑定，用户配置不能改变其发送目标或计费通道。 */
+/** Облікові дані підписки прив’язані до офіційної адреси служби, і конфігурація користувача не може змінити призначення надсилання чи платіжний канал.*/
 internal enum class ProviderConnectionProfile(
     val authMode: String,
     val baseUrl: String,
@@ -41,7 +41,7 @@ internal enum class ProviderConnectionProfile(
 
     fun requireRequestTarget(url: HttpUrl) {
         require(url == modelsUrl.toHttpUrl() || url == inferenceUrl.toHttpUrl()) {
-            "订阅凭据只能用于对应服务商的官方模型接口"
+            "порядокчитатизавідповідно доТількиздатнийвикористовуватинаправильновідповідьОдягобслуговуваннябізнесзофіційнийплощіцвільтипузловитирот"
         }
     }
 
@@ -50,7 +50,7 @@ internal enum class ProviderConnectionProfile(
             ProviderAuthModes.API_KEY -> null
             ProviderAuthModes.OPENAI_CHATGPT -> OPENAI_CODEX
             ProviderAuthModes.XAI_GROK -> XAI_GROK
-            else -> error("不支持的服务商认证方式")
+            else -> error("немаєвідділенняутримуватизОдягобслуговуваннябізнесрозпізнатисертифікатплощіРежим")
         }
     }
 }

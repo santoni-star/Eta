@@ -1,8 +1,8 @@
 package io.github.mangi.eta.agent.terminal
 
 /**
- * 终端单元格样式的中性表示：颜色为 0xAARRGGBB 的 Long，不依赖 Compose。
- * 块式输出渲染（ui 层）与控制台屏幕缓冲区共用同一份 SGR 解释，避免两套调色板漂移。
+ * Нейтральне представлення стилю кінцевої комірки: довгий із кольором 0xAARRGGBB, не залежить від Compose.
+ * Візуалізація заблокованого виводу (шар інтерфейсу користувача) використовує ту саму інтерпретацію SGR, що й екранний буфер консолі, щоб уникнути двох наборів дрейфу палітри.
  */
 internal data class SgrStyle(
     val fg: Long? = null,
@@ -11,7 +11,7 @@ internal data class SgrStyle(
     val dim: Boolean = false,
     val italic: Boolean = false,
     val underline: Boolean = false,
-    /** 反显：前景与背景互换，TUI 用它标记列表选中项与光标所在条目。 */
+    /** Інверсне відображення: передній план і фон міняються місцями, і TUI використовує це, щоб позначити вибраний елемент списку та елемент, де знаходиться курсор.*/
     val inverse: Boolean = false,
     val strikethrough: Boolean = false,
 ) {
@@ -23,13 +23,13 @@ internal data class SgrStyle(
     }
 }
 
-/** SGR 参数序列解释器；[params] 为 CSI 与结尾 m 之间的原文（空串等价于 0）。 */
+/** Інтерпретатор послідовності параметрів SGR; [params] — вихідний текст між CSI і кінцем m (порожній рядок еквівалентний 0).*/
 internal object AnsiSgr {
 
     /**
-     * 参数以 ; 分组、组内以 : 分隔子参数（ITU T.416），两种扩展颜色写法都要识别：
-     * `38;5;n` / `38;2;r;g;b` 跨组读取，`38:5:n` / `38:2::r:g:b` 只在组内读取。
-     * 子参数不能当作独立参数解释，否则 `4:3`（波浪下划线）会被误读成下划线加斜体。
+     * Параметри згруповані за ; і підпараметри відокремлюються знаком : у межах групи (ITU T.416). Необхідно розпізнати обидва розширені методи кольорового письма:
+     * `38;5;n` / `38;2;r;g;b` читаються між групами, `38:5:n` / `38:2::r:g:b` читаються лише всередині групи.
+     * Підпараметри не можна інтерпретувати як незалежні параметри, інакше «4:3» (хвилясте підкреслення) буде неправильно прочитано як підкреслення та курсив.
      */
     fun apply(params: String, style: SgrStyle): SgrStyle {
         val groups = if (params.isEmpty()) {
@@ -62,7 +62,7 @@ internal object AnsiSgr {
                 49 -> current = current.copy(bg = null)
                 in 90..97 -> current = current.copy(fg = BRIGHT[code - 90])
                 in 100..107 -> current = current.copy(bg = BRIGHT[code - 100])
-                // 58 为下划线颜色：不渲染，但必须按同样规则吞掉其颜色参数。
+                // 58 — це колір підкреслення: не рендериться, але його колірні параметри потрібно проковтнути за тими ж правилами.
                 38, 48, 58 -> {
                     val (color, consumed) = if (group.size > 1) {
                         readSubparameterColor(group) to 0
@@ -81,7 +81,7 @@ internal object AnsiSgr {
         return current
     }
 
-    /** `38:5:n`、`38:2:r:g:b` 与带色彩空间 ID 的 `38:2::r:g:b`。 */
+    /** `38:5:n`, `38:2:r:g:b` та `38:2::r:g:b` з ідентифікатором колірного простору.*/
     private fun readSubparameterColor(group: List<Int>): Long? = when (group.getOrNull(1)) {
         5 -> group.getOrNull(2)?.let(::color256)
         2 -> {
@@ -91,7 +91,7 @@ internal object AnsiSgr {
         else -> null
     }
 
-    /** `38;5;n` 与 `38;2;r;g;b`：返回颜色与额外消费的组数；参数不足时不消费。 */
+    /** `38;5;n` і `38;2;r;g;b`: повертає колір і кількість додаткових груп споживання; не споживати, коли параметрів недостатньо.*/
     private fun readLegacyColor(groups: List<List<Int>>, index: Int): Pair<Long?, Int> {
         fun at(offset: Int): Int? = groups.getOrNull(index + offset)?.getOrNull(0)
         return when (at(1)) {

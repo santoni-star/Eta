@@ -11,7 +11,7 @@ import io.github.mangi.eta.data.model.ProviderSourceTypes
 internal object OfficialModelCatalog {
     internal const val CURRENT_REVISION = 4
 
-    // 旧安装只补入本次新增的模型，避免恢复用户主动删除的旧预设。
+    // До старої інсталяції буде додано лише нещодавно додані моделі, щоб уникнути відновлення старих налаштувань, які користувач активно видалив.
     private val additionsByRevision = mapOf(
         1 to mapOf(
             ProviderSourceTypes.OPENAI to setOf("gpt-6-astra", "gpt-6-sol", "gpt-6-luna"),

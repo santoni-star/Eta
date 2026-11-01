@@ -4,12 +4,12 @@ import io.github.mangi.eta.data.model.ProviderAuthModes
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Codex 使用无服务端存储的 Responses，请求约束在编码边界统一处理。 */
+/** Codex використовує відповіді без зберігання на стороні сервера, а обмеження запитів обробляються однаково на межах кодування.*/
 internal object CodexResponsesRequest {
     fun configure(request: JSONObject, config: AgentModelClient.ModelConfig) {
         if (config.authMode != ProviderAuthModes.OPENAI_CHATGPT) return
         val unsupported = UNSUPPORTED_FIELDS.filter(request::has)
-        require(unsupported.isEmpty()) { "Codex 不支持请求参数：${unsupported.joinToString()}" }
+        require(unsupported.isEmpty()) { "Codex немаєвідділенняутримуватибудь ласкапроситиженьшеньномер：${unsupported.joinToString()}" }
         val include = request.optJSONArray("include") ?: JSONArray()
         if ((0 until include.length()).none { include.optString(it) == "reasoning.encrypted_content" }) {
             include.put("reasoning.encrypted_content")

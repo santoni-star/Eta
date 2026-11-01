@@ -11,7 +11,7 @@ import java.io.File
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
-/** 只借用宿主已初始化的连接；不读取密钥、不初始化 Room，也不关闭宿主持有的数据库。 */
+/** Запозичувати лише з’єднання, ініціалізоване хостом; не читайте ключ, не ініціалізуйте кімнату та не закривайте базу даних, що зберігається на хості.*/
 internal class ColorOsMemoryHostDatabase private constructor(
     private val instanceField: Field,
     private val connectionField: Field,
@@ -22,11 +22,11 @@ internal class ColorOsMemoryHostDatabase private constructor(
         if (database.javaClass.getMethod("isOpen").invoke(database) != true) return null
         val path = database.javaClass.getMethod("getPath").invoke(database) as? String
             ?: return null
-        check(File(path).canonicalFile == databaseFile.canonicalFile) { "小布记忆数据库路径不匹配" }
+        check(File(path).canonicalFile == databaseFile.canonicalFile) { "Маленькийтканиназапам'ятативідкликатиномервідповідно доБібліотекадорогашляхнемаєматчматч" }
         val query = database.javaClass.getMethod(
             "rawQuery", String::class.java, Array<String>::class.java,
         ).apply { isAccessible = true }
-        check(Cursor::class.java.isAssignableFrom(query.returnType)) { "小布记忆游标类型不匹配" }
+        check(Cursor::class.java.isAssignableFrom(query.returnType)) { "Маленькийтканиназапам'ятативідкликатитурзнаквидтипунемаєматчматч" }
         return ColorOsMemoryReadDatabase { sql, args ->
             query.invoke(database, sql, args) as Cursor
         }
@@ -38,7 +38,7 @@ internal class ColorOsMemoryHostDatabase private constructor(
             targets: DexKitTargets,
             logger: ModuleLogger,
         ): ColorOsMemoryHostDatabase? {
-            // 已验证的 Room 类型保留了类名，结构满足时不必依赖原生 DEX 解析。
+            // Перевірений тип кімнати зберігає ім’я класу, і йому не потрібно покладатися на власний розбір DEX, коли структура задоволена.
             HookSupport.findClassOrNull(classLoader, "com.oplus.aimemory.db.MemoryDatabase")
                 ?.let { resolveClass(it, logger) }
                 ?.let { return it }
@@ -73,7 +73,7 @@ internal class ColorOsMemoryHostDatabase private constructor(
                         it.returnType.name == "androidx.sqlite.db.SupportSQLiteOpenHelper"
                 } ?: return null
                 val readableDatabase = openHelper.returnType.getMethod("getReadableDatabase")
-                // getReadableDatabase 可能触发建库或迁移；这里只用返回类型定位现有连接。
+                // getReadableDatabase може ініціювати створення або міграцію бази даних; тут лише тип повернення використовується для пошуку існуючих підключень.
                 val connectionField = generateSequence(databaseClass) { it.superclass }
                     .flatMap { it.declaredFields.asSequence() }
                     .filter {
@@ -85,10 +85,10 @@ internal class ColorOsMemoryHostDatabase private constructor(
                     connectionField.apply { isAccessible = true },
                 )
             } catch (exception: Exception) {
-                logger.warn("小布记忆宿主连接定位失败: type=${exception.safeLogType()}")
+                logger.warn("Маленькийтканиназапам'ятативідкликатипроживанняхостнавітьзловитиЗвичайнобітвтратитипоразка: type=${exception.safeLogType()}")
                 null
             } catch (error: LinkageError) {
-                logger.warn("小布记忆宿主连接类型缺失: type=${error.safeLogType()}")
+                logger.warn("Маленькийтканиназапам'ятативідкликатипроживанняхостнавітьзловитивидтипувідсутністьвтратити: type=${error.safeLogType()}")
                 null
             }
         }

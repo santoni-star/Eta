@@ -1,16 +1,16 @@
 package io.github.mangi.eta.agent.voice
 
 /**
- * 长文本按段独立合成后无缝拼接播放，相邻两段的末尾与开头采样不一定在零点附近，
- * 波形阶跃会听成一声“滋”。每段首尾各做几毫秒线性淡入淡出：段尾需要等段结束才能确定，
- * 因此始终保留最后 [fadeSamples] 个采样，直到 [end] 时淡出写出。输入为 16 位小端单声道 PCM，
- * 每次写入都是整采样。
+ * Довгий текст синтезується незалежно в сегменти та безперешкодно відтворюється. Кінцева та початкова вибірки двох сусідніх сегментів не обов’язково знаходяться поблизу нульової точки.
+ * Крок хвилі буде почуто як звук "Чжи". Виконайте кілька мілісекунд лінійного поступового набуття та згасання на початку та в кінці кожного абзацу: для визначення кінця абзацу потрібно зачекати до кінця абзацу.
+ * Таким чином, останні семпли [fadeSamples] завжди зберігаються до [end], коли вони зникають. Вхід - 16-бітний моно PCM з прямим порядком байтів,
+ * Кожен запис є повним зразком.
  */
 internal class SpeechSegmentFade(private val fadeSamples: Int = FADE_SAMPLES) {
     private var tail = ByteArray(0)
     private var emittedSamples = 0L
 
-    /** 返回可以立即播放的部分，可能为空。 */
+    /** Повертає розділ, який можна відтворити негайно, можливо, порожній.*/
     fun write(bytes: ByteArray): ByteArray {
         val joined = tail + bytes
         val keep = minOf(joined.size, fadeSamples * BYTES_PER_SAMPLE)
@@ -18,7 +18,7 @@ internal class SpeechSegmentFade(private val fadeSamples: Int = FADE_SAMPLES) {
         return joined.copyOfRange(0, joined.size - keep).also(::fadeIn)
     }
 
-    /** 结束当前段并返回淡出后的段尾，之后可以开始下一段。 */
+    /** Завершіть поточний сегмент і поверніться до кінця сегмента після згасання, після чого ви можете почати наступний сегмент.*/
     fun end(): ByteArray {
         val last = tail
         tail = ByteArray(0)
@@ -52,7 +52,7 @@ internal class SpeechSegmentFade(private val fadeSamples: Int = FADE_SAMPLES) {
 
     private companion object {
         const val BYTES_PER_SAMPLE = 2
-        /** 24 kHz 下 5 ms，短到听不出音量变化，足以消除阶跃。 */
+        /** 5 мс при 24 кГц, досить коротко, щоб не почути зміни гучності, достатньо довго, щоб усунути кроки.*/
         const val FADE_SAMPLES = 120
     }
 }

@@ -55,13 +55,13 @@ internal class SpeechInputController(
     private var refineTranscript = false
 
     /**
-     * [holdToTalk] 表示用户按住说话：松手才结束，期间的停顿不会自动发送。
-     * 停顿自动发送只对构造时声明 [automaticEndpoint] 的入口生效，聊天听写始终等待用户确认。
+     * [holdToTalk] означає, що користувач утримується, щоб говорити, і закінчує, коли відпускає руку, а пауза протягом періоду не надсилається автоматично.
+     * Призупинення автоматичного надсилання діє лише для записів, оголошених [automaticEndpoint] під час створення. Диктування чату завжди очікує на підтвердження користувача.
      */
     fun start(settings: SpeechSettings? = null, credentials: SpeechCredentials? = null, holdToTalk: Boolean = false) {
         cancel()
         val session = generation
-        mutableState.value = SpeechInputState(phase = EtaSpeechPhase.STARTING, progress = "正在连接")
+        mutableState.value = SpeechInputState(phase = EtaSpeechPhase.STARTING, progress = "простоіснуютьнавітьзловити")
         job = scope.launch(Dispatchers.Main.immediate) {
             try {
                 val config = settings ?: SpeechSettingsRepository.settings()
@@ -93,13 +93,13 @@ internal class SpeechInputController(
                                 recording = launch {
                                     try {
                                         audio.record(
-                                            onReady = { update { it.copy(phase = EtaSpeechPhase.LISTENING, progress = "正在聆听，点击完成结束") } },
+                                            onReady = { update { it.copy(phase = EtaSpeechPhase.LISTENING, progress = "простоіснуютьчутислухати，точкаударзакінченостативузолпучок") } },
                                             onLevel = { level -> update { it.copy(level = level) } },
                                         )
                                     } finally {
                                         if (generation == session) releaseCapture()
                                     }
-                                    update { it.copy(phase = EtaSpeechPhase.RECOGNIZING, level = 0f, progress = "正在识别") }
+                                    update { it.copy(phase = EtaSpeechPhase.RECOGNIZING, level = 0f, progress = "простоіснуютьзнанняне треба") }
                                 }
                             }
                             Unit
@@ -121,7 +121,7 @@ internal class SpeechInputController(
                             recording?.cancel()
                         }
                     }
-                    if (text.isBlank()) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "没有识别到语音，请重试")
+                    if (text.isBlank()) throw SpeechFailure(SpeechErrorCode.NO_SPEECH, "безматизнанняне требаприбутимовазвук，будь ласкаВажкаспробувати")
                     val final = refined(session, text)
                     if (generation == session) {
                         cancel()
@@ -146,7 +146,7 @@ internal class SpeechInputController(
         }
     }
 
-    /** 系统识别结果从回调到达，纠错需要挂起，因此在会话自身的协程外单独交付。 */
+    /** Результат розпізнавання системи надходить із зворотного виклику, і виправлення помилок потрібно призупинити, тому він доставляється окремо поза співпрограмою самого сеансу.*/
     private fun deliver(session: Long, text: String) {
         if (!refineTranscript) { cancel(); onResult(text); return }
         pendingSystemResult = null
@@ -158,11 +158,11 @@ internal class SpeechInputController(
         }
     }
 
-    /** 纠错失败不影响交付；只有纠错仍属于当前会话时才展示进度。 */
+    /** Збій у виправленні помилок не впливає на доставку; прогрес відображається лише тоді, коли виправлення помилок все ще належить до поточного сеансу.*/
     private suspend fun refined(session: Long, text: String): String {
         if (!refineTranscript || generation != session) return text
         mutableState.value = mutableState.value.copy(
-            phase = EtaSpeechPhase.RECOGNIZING, preview = text, progress = "正在校对", level = 0f,
+            phase = EtaSpeechPhase.RECOGNIZING, preview = text, progress = "простоіснуютьшколаправильно", level = 0f,
         )
         return try {
             refiner.refine(text)
@@ -179,8 +179,8 @@ internal class SpeechInputController(
             if (generation == session) mutableState.value = transform(mutableState.value)
         }
         system = EtaSpeechInput(context,
-            onListening = { update { it.copy(phase = EtaSpeechPhase.LISTENING, progress = "正在聆听") } },
-            onRecognizing = { update { it.copy(phase = EtaSpeechPhase.RECOGNIZING, progress = "正在识别") } },
+            onListening = { update { it.copy(phase = EtaSpeechPhase.LISTENING, progress = "простоіснуютьчутислухати") } },
+            onRecognizing = { update { it.copy(phase = EtaSpeechPhase.RECOGNIZING, progress = "простоіснуютьзнанняне треба") } },
             onLevel = { level -> update { it.copy(level = level) } },
             onPartial = { text -> update { it.copy(preview = text) } },
             onResult = { text ->
@@ -189,7 +189,7 @@ internal class SpeechInputController(
                     else {
                         pendingSystemResult = text
                         lease?.close(); lease = null
-                        update { it.copy(phase = EtaSpeechPhase.LISTENING, preview = text, progress = "识别完成，点击完成插入", level = 0f) }
+                        update { it.copy(phase = EtaSpeechPhase.LISTENING, preview = text, progress = "знанняне требазакінченостати，точкаударзакінченостатиВставкавведіть", level = 0f) }
                     }
                 }
             },
@@ -218,7 +218,7 @@ internal class SpeechInputController(
         if (mutableState.value.phase == EtaSpeechPhase.STARTING) { cancel(); return }
         recorder?.finish()
         system?.finish()
-        mutableState.value = mutableState.value.copy(phase = EtaSpeechPhase.RECOGNIZING, progress = "正在识别", level = 0f)
+        mutableState.value = mutableState.value.copy(phase = EtaSpeechPhase.RECOGNIZING, progress = "простоіснуютьзнанняне треба", level = 0f)
     }
 
     fun downloadModel() { system?.downloadModel() }

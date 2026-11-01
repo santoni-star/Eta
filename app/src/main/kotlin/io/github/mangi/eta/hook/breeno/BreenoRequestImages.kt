@@ -94,8 +94,8 @@ internal object BreenoRequestImages {
     val Empty = Snapshot(emptyList())
 
     /**
-     * CDM 图片引用按一次请求保存为一个条目，别名只作为索引。
-     * 所有变更都在同一把锁内完成，命中任一别名后会连同其他别名一起消费。
+     * Посилання на зображення CDM зберігаються як один запис на запит, а псевдонім використовується лише як індекс.
+     * Усі зміни вносяться в межах одного блокування, і натискання будь-якого псевдоніма буде використано разом з іншими псевдонімами.
      */
     internal class SnapshotCache(
         private val maxEntries: Int,
@@ -157,7 +157,7 @@ internal object BreenoRequestImages {
                     inputs = emptyList(),
                     failure = Resolution.Failure(
                         code = FailureCode.IMAGE_REFERENCE_CACHE_LIMIT_EXCEEDED,
-                        message = "图片引用数据过大，无法安全暂存，请重新选择图片或使用远程图片链接",
+                        message = "малюнокшматокпривестивикористовуватиномервідповідно доПасвеликий，немаєЗаконвстановитиПовнийтимчасовожити，будь ласкаВажкановийвибративибратималюнокшматокабозробитивикористовуватидалекоПроцедурамалюнокшматокланцюгзловити",
                         imageCount = snapshot.inputCount.coerceAtLeast(1),
                         estimatedBytes = estimatedBytesForChars(snapshot.estimatedChars),
                         maxBytes = estimatedBytesForChars(maxEstimatedChars),
@@ -242,7 +242,7 @@ internal object BreenoRequestImages {
     }
 
     /**
-     * Hook 热路径只读取已确认的图片字段并保存字符串，不读取 URI/文件，也不编码图片。
+     * Хок гарячий шлях лише читає підтверджене поле зображення та зберігає рядок, не читає URI/файл і не кодує зображення.
      */
     fun capturePayload(namespace: String?, name: String?, payload: Any?): Snapshot {
         if (payload == null || namespace != "Nlp" || name != "Doc") return Empty
@@ -267,8 +267,8 @@ internal object BreenoRequestImages {
     }
 
     /**
-     * 小布 12.9.6 的图片输入先进入 AIChatViewBean.clientResult(type=104)，
-     * 不保证同时出现 Nlp.Doc。这里只读取已确认的多图结构，不遍历未知对象。
+     * Введення зображення Xiaobu 12.9.6 спочатку вводить AIChatViewBean.clientResult(type=104),
+     * Одночасна поява Nlp.Doc не гарантується. Тут зчитується лише підтверджена мультиграфна структура, а невідомі об’єкти не обходяться.
      */
     fun isMultiImageClientResult(clientResult: Any?): Boolean =
         clientResult != null &&
@@ -302,7 +302,7 @@ internal object BreenoRequestImages {
         return Snapshot(inputs.toList(), failure)
     }
 
-    /** 保存可能包含图片引用的文本，JSON 解析延迟到 Agent 后台线程。 */
+    /** Зберігайте текст, який може містити посилання на зображення, відкладаючи розбір JSON до фонового потоку агента.*/
     fun captureText(text: String?, source: String): Snapshot {
         if (text.isNullOrEmpty()) return Empty
         val imageHint = source.hasImageHint()
@@ -333,7 +333,7 @@ internal object BreenoRequestImages {
         )
     }
 
-    /** 必须从后台线程调用；这里解析 JSON 与图片引用，真正的跨进程正文由文件描述符承载。 */
+    /** Повинен викликатися з фонового потоку; Тут аналізуються JSON і посилання на зображення, а справжній міжпроцесний текст передається дескриптором файлу.*/
     fun resolve(context: Context?, snapshot: Snapshot): Resolution {
         snapshot.failure?.let { return it }
         if (snapshot.isEmpty) return Resolution.Success(emptyList())
@@ -355,7 +355,7 @@ internal object BreenoRequestImages {
         if (candidates.size > MAX_IMAGES) {
             return Resolution.Failure(
                 code = FailureCode.IMAGE_COUNT_LIMIT_EXCEEDED,
-                message = "一次最多支持 $MAX_IMAGES 张图片，请减少图片数量后再试",
+                message = "одинДругосортнийбільшістьбагатовідділенняутримувати $MAX_IMAGES ВІДЧИНЕНОмалюнокшматок，будь ласказменшитималомалюнокшматокномеркількістьназадЗновуспробувати",
                 imageCount = candidates.size,
                 estimatedBytes = 0,
                 maxBytes = 0,
@@ -385,7 +385,7 @@ internal object BreenoRequestImages {
     private fun unreadableReferenceFailure(imageCount: Int): Resolution.Failure =
         Resolution.Failure(
             code = FailureCode.IMAGE_REFERENCE_UNREADABLE,
-            message = "无法读取请求中的全部图片，请重新选择图片后再试",
+            message = "немаєЗакончитатиВиберітьбудь ласкапроситисерединазПовнийвідділмалюнокшматок，будь ласкаВажкановийвибративибратималюнокшматокназадЗновуспробувати",
             imageCount = imageCount,
             estimatedBytes = 0,
             maxBytes = 0,
@@ -394,7 +394,7 @@ internal object BreenoRequestImages {
     private fun inputLimitFailure(inputCount: Int): Resolution.Failure =
         Resolution.Failure(
             code = FailureCode.IMAGE_INPUT_LIMIT_EXCEEDED,
-            message = "图片输入结构超过安全上限，请减少图片数量或简化图片数据后再试",
+            message = "малюнокшматоквтратитивведітьвузолструктураобганятиПасвстановитиПовнийначальникаобмеження，будь ласказменшитималомалюнокшматокномеркількістьабопростийзмінитималюнокшматокномервідповідно доназадЗновуспробувати",
             imageCount = inputCount.coerceAtLeast(1),
             estimatedBytes = 0,
             maxBytes = 0,
@@ -468,8 +468,8 @@ internal object BreenoRequestImages {
     }
 
     /**
-     * 图片选择器的 originUri 可能只带给小布进程一次性读取权限。
-     * 上传完成后的预处理 URL 是小布实际填入 Nlp.Doc 的引用，优先级应高于本地 Uri。
+     *OriginUri селектора зображень може надавати процесу Xiaobu лише одноразовий дозвіл на читання.
+     * Попередньо оброблена URL-адреса після завершення завантаження є посиланням, фактично заповненим Xiaobu в Nlp.Doc, і її пріоритет має бути вищим за локальний Uri.
      */
     private fun firstCompletedPreProcessUrl(uploadData: Any?): String? {
         if (uploadData == null) return null
@@ -503,7 +503,7 @@ internal object BreenoRequestImages {
     private fun oversizedReferenceFailure(valueChars: Int, source: String): Resolution.Failure =
         Resolution.Failure(
             code = FailureCode.IMAGE_DATA_LIMIT_EXCEEDED,
-            message = "图片输入数据超过安全上限，请缩小图片后重试",
+            message = "малюнокшматоквтратитивведітьномервідповідно дообганятиПасвстановитиПовнийначальникаобмеження，будь ласкаскорочуватисяМаленькиймалюнокшматокназадВажкаспробувати",
             imageCount = 1,
             estimatedBytes = estimateStringBytes(valueChars.toLong() + source.length),
             maxBytes = estimateStringBytes(MAX_INPUT_CHARS.toLong()),

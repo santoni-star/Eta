@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 仅在用户授予通知访问后保存有限期通知，内容不进入 Agent 会话持久记录。 */
+/** Зберігайте лише обмежені за часом сповіщення після того, як користувач надасть доступ до сповіщень, і вміст не входить у постійний запис сеансу агента.*/
 internal class NotificationHistoryRepository(context: Context) {
     private val database = Database(context.applicationContext)
 

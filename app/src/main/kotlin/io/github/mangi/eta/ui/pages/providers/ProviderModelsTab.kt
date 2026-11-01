@@ -126,8 +126,8 @@ private val editableReasoningEfforts = listOf(
 )
 
 /**
- * 常见上下文窗口档位。取十进制整数：标称 262,144、1,048,576 的模型按 256K、1M 填写只会略早压缩，
- * 不会越过真实上限。
+ * Загальний контекст вікна зупиняється. Беручи десяткові цілі числа: модель з номінальними значеннями 262 144 і 1 048 576 буде лише трохи стиснута, якщо заповнена як 256K і 1M.
+ * Не буде перевищувати справжню верхню межу.
  */
 internal val contextWindowPresets = listOf(128_000, 200_000, 256_000, 1_000_000)
 
@@ -135,7 +135,7 @@ private val modelDialogBodyMaxHeight = 520.dp
 private val modelDialogChromeHeight = 112.dp
 
 private fun Modifier.modelDialogScrollableBody(): Modifier = layout { measurable, constraints ->
-    // 从弹窗实际约束中为标题、间距和操作栏让出空间，避免横屏时底部按钮被内容挤出边界。
+    // Звільніть місце для заголовка, інтервалу та панелі дій із фактичних обмежень спливаючого вікна, щоб запобігти видавлюванню нижньої кнопки за межі вмістом, коли екран горизонтальний.
     val fallbackMaxHeight = modelDialogBodyMaxHeight.roundToPx()
     val reservedHeight = modelDialogChromeHeight.roundToPx()
     val maxHeight = if (constraints.hasBoundedHeight) {
@@ -193,8 +193,8 @@ internal fun ProviderModelsTab(
     var editorError by remember { mutableStateOf<String?>(null) }
     var modelPendingDelete by remember { mutableStateOf<Model?>(null) }
     var selectionMode by remember(provider.id) { mutableStateOf(false) }
-    // 退出多选时不清空已选集合：编辑栏和删除按钮还在退场动画里，清空会让数量闪成 0。
-    // 下次进入多选会整体替换为当次长按的模型，旧集合不会带进新一轮选择。
+    // Вибраний набір не буде очищено під час виходу з множинного вибору: панель редагування та кнопка видалення все ще знаходяться в анімації виходу, і після їх очищення число блимає на 0.
+    // Наступного разу, коли ви ввімкнете мультивибір, уся модель буде замінена моделлю, яка довго натискалася в той час, і стара колекція не буде перенесена в новий раунд вибору.
     var selectedModelIds by remember(provider.id) { mutableStateOf(setOf<String>()) }
     var showBatchDeleteDialog by remember { mutableStateOf(false) }
     var modelSearchQuery by remember(provider.id) { mutableStateOf("") }
@@ -226,9 +226,9 @@ internal fun ProviderModelsTab(
             ),
             overscrollEffect = null,
         ) {
-            // 多选时“模型管理”收起，换成吸顶的编辑栏：数量与全选放在这里，底部只留删除。
-            // 两个条目始终存在，只在内部做尺寸动画：下方列表随高度变化连续上移，
-            // 而不是条目增删时先跳位再补位移。
+            // Коли ви вибираєте декілька елементів, «Керування моделлю» згортається й замінюється панеллю редагування на стелі: тут розміщуються кількість і вибір, а внизу залишається лише видалення.
+            // Два записи існують завжди, і лише анімація розміру виконується внутрішньо: список нижче постійно рухається вгору зі зміною висоти,
+            // Замість того, щоб спочатку стрибати, а потім заповнювати зміщення, коли запис додається або видаляється.
             stickyHeader(key = "selection_header", contentType = "selection_header") {
                 AnimatedVisibility(
                     visible = selectionMode,
@@ -243,7 +243,7 @@ internal fun ProviderModelsTab(
                         selectedCount = selectedModelIds.size,
                         allVisibleSelected = allVisibleSelected,
                         enabled = !isFetching && !isMutatingModel && visibleIds.isNotEmpty(),
-                        // 全选只作用于当前搜索结果：先搜索再全选，可以一次清掉一类模型。
+                        // Вибрати все застосовується лише до поточних результатів пошуку: спочатку виконайте пошук, а потім виберіть усе, ви можете очистити один тип моделі за раз.
                         onToggleAll = {
                             selectedModelIds = if (allVisibleSelected) {
                                 selectedModelIds - visibleIds
@@ -260,7 +260,7 @@ internal fun ProviderModelsTab(
             item(key = "actions", contentType = "section") {
                 AnimatedVisibility(
                     visible = !selectionMode,
-                    // 卡片先淡出再收起高度，避免内容被压扁的观感；回来时先撑开再淡入。
+                    // Картка спочатку зникає, а потім зменшується у висоті, щоб уникнути враження, що вміст здавлений; коли він повертається, він спочатку розширюється, а потім зникає.
                     enter = expandVertically(selectionMotion(), expandFrom = Alignment.Top) +
                         fadeIn(selectionFade(delayMillis = SelectionMotionMillis / 3)),
                     exit = shrinkVertically(selectionMotion(), shrinkTowards = Alignment.Top) +
@@ -294,7 +294,7 @@ internal fun ProviderModelsTab(
                                         if (ProviderAuthModes.isOAuth(provider.authMode)) {
                                             val sync = ModelRepository.syncRemoteCatalog(catalog)
                                             RuntimeConfigRepository.syncToRemotePreferences(EtaApp.serviceInstance)
-                                            message = "已同步 ${sync.fetchedCount} 个远端模型"
+                                            message = "вжете самекрок ${sync.fetchedCount} індивідуальнийдалекокінецьцвільтипу"
                                             return@launch
                                         }
                                         val candidates = ModelRepository.newRemoteModels(provider.id, catalog.models)
@@ -302,7 +302,7 @@ internal fun ProviderModelsTab(
                                             pendingImport = RemoteModelImport(catalog, candidates)
                                             return@launch
                                         }
-                                        // 没有新模型时仍同步一次，刷新已添加模型的元数据并移除远端已下线的模型。
+                                        // Якщо немає нових моделей, синхронізація все одно виконується один раз, метадані доданих моделей оновлюються, а віддалені автономні моделі видаляються.
                                         val sync = ModelRepository.syncRemoteCatalog(catalog, emptySet())
                                         if (sync.applied) {
                                             RuntimeConfigRepository.syncToRemotePreferences(EtaApp.serviceInstance)
@@ -388,7 +388,7 @@ internal fun ProviderModelsTab(
                 item(key = "models_empty", contentType = "empty") {
                     ProviderSection(
                         title = modelListTitle,
-                        // 与非空列表末尾的 24dp 间隔一致：分组自带 16dp，再补 8dp。
+                        // Відповідно до інтервалу 24 dp у кінці непорожнього списку: група має 16 dp плюс 8 dp.
                         modifier = Modifier.padding(bottom = 8.dp),
                     ) {
                         Box(
@@ -471,7 +471,7 @@ internal fun ProviderModelsTab(
             }
 
             item(key = "bottom_spacer", contentType = "spacer") {
-                // 多选操作栏悬浮在底部时，预留高度避免遮挡最后一个列表项；其余情况与大圆角屏幕下沿保持间距
+                // Коли панель операцій із множинним вибором висить унизу, зарезервуйте висоту, щоб уникнути блокування останнього елемента списку; в інших випадках дотримуйтесь відстані від нижнього краю великого закругленого екрана.
                 Spacer(
                     modifier = Modifier
                         .height(if (selectionMode) 88.dp else 24.dp)
@@ -654,7 +654,7 @@ internal fun ProviderModelsTab(
     )
 }
 
-/** 进出多选的统一节奏：强调型减速曲线，起步干脆、收尾柔和，几处动画共用同一时长。 */
+/** Уніфікований ритм для входу та виходу з кількох виділень: підкреслена крива уповільнення з різким початком і м’яким кінцем, з кількома анімаціями однакової тривалості.*/
 private const val SelectionMotionMillis = 360
 private val SelectionEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
@@ -664,9 +664,9 @@ private fun selectionFade(delayMillis: Int = 0) =
     tween<Float>(SelectionMotionMillis / 2, delayMillis = delayMillis, easing = LinearEasing)
 
 /**
- * 多选模式的吸顶编辑栏：取消在左、已选数量居中、全选在右。
- * 两侧都用文字并与列表正文、勾选框对齐到同一左右边缘（分组外边距加行内边距）；
- * 点击区向外扩出，视觉边缘不变。
+ * Панель редагування стелі в режимі множинного вибору: скасування ліворуч, вибрана кількість у центрі та вибір усіх праворуч.
+ * Використовуйте текст з обох боків і вирівнюйте тіло списку та прапорці за тим самим лівим і правим краями (згрупуйте зовнішні поля плюс внутрішні поля лінії);
+ * Область натискання розширюється назовні, а візуальні краї залишаються незмінними.
  */
 @Composable
 private fun ModelSelectionHeader(
@@ -728,7 +728,7 @@ private fun SelectionHeaderAction(
 
 private val SelectionHeaderTouchInset = 8.dp
 
-/** 多选模式底部只放一个删除动作，写明数量，避免误删时看不清范围。 */
+/** Розташуйте лише одну дію видалення внизу режиму множинного вибору та вкажіть кількість, щоб уникнути нечіткої видимості діапазону під час помилкового видалення.*/
 @Composable
 private fun ModelDeleteBar(
     selectedCount: Int,
@@ -887,7 +887,7 @@ private fun ModelEditDialog(
     var displayName by remember(model.id, isNew) { mutableStateOf(model.displayName) }
     var modelId by remember(model.id, isNew) { mutableStateOf(model.modelId) }
     var contextWindowOverrideText by remember(model.id, isNew) {
-        // 早先拉取、未写入窗口的模型也带着远端标注，打开编辑时直接预填。
+        // Моделі, які були отримані раніше, але не записані у вікно, також мають віддалені анотації, які попередньо заповнюються безпосередньо під час відкриття для редагування.
         mutableStateOf((model.contextWindowOverride ?: model.contextWindow)?.toString().orEmpty())
     }
     var reasoningOverrideActive by remember(model.id, isNew) {
@@ -1022,7 +1022,7 @@ private fun ModelEditDialog(
                     modifier = Modifier.padding(start = 4.dp, top = 8.dp),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // 弹窗内不再套卡片：卡片与弹窗同色看不出边界，内边距只会让这一段错开左缘。
+                // Картки більше не вкладаються у спливаюче вікно: картка та спливаюче вікно мають однаковий колір і не мають видимої межі, а відступ лише зміщує цей розділ від лівого краю.
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1036,15 +1036,15 @@ private fun ModelEditDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (geminiCapabilities != null && !geminiCapabilities.mandatory) "思考档位使用 Default"
+                            text = if (geminiCapabilities != null && !geminiCapabilities.mandatory) "думаюТестфайлибітзробитивикористовувати Default"
                                 else stringResource(R.string.ui_support_thinking_5b9e4c),
                             style = MiuixTheme.textStyles.body1,
                             color = MiuixTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = if (geminiCapabilities != null) {
-                                if (geminiCapabilities.mandatory) "该模型必须思考，不支持 Off；Default 使用模型默认档位。"
-                                else "尚未确认该模型的思考档位；仅使用 Default，不发送自定义思考档位。"
+                                if (geminiCapabilities.mandatory) "СлідцвільтипуповиненОбов'язководумаюТест，немаєвідділенняутримувати Off；Default зробитивикористовуватицвільтипумовчазнийрозпізнатифайлибіт。"
+                                else "досіще ніправильнорозпізнатиСлідцвільтипуздумаюТестфайлибіт；тількизробитивикористовувати Default，немаєволоссядоставитиоскількиЗвичайноправеднийдумаюТестфайлибіт。"
                             } else if (reasoningOverrideActive) {
                                 stringResource(R.string.page_covered_model_automatic_capabilities_3fa7d4)
                             } else {
@@ -1072,7 +1072,7 @@ private fun ModelEditDialog(
                     )
                 }
                 if (geminiCapabilities != null || reasoningEnabled) {
-                    // Default 始终可用（交给模型或 Provider 决定），不作为可选项展示。
+                    // За замовчуванням завжди доступний (залишається на вибір моделі або постачальника) і не відображається як варіант.
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1097,7 +1097,7 @@ private fun ModelEditDialog(
                     }
                 }
                 Text(
-                    text = if (nativeGemini) "Gemini 原生连接只发送已确认支持的思考档位。"
+                    text = if (nativeGemini) "Gemini ОригіналнародивсянавітьзловитиТількиволоссядоставитивжеправильнорозпізнативідділенняутримуватиздумаюТестфайлибіт。"
                         else stringResource(R.string.ui_only_check_the_ranges_actually_supported_by_the_mode_2c343d),
                     style = MiuixTheme.textStyles.footnote2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
@@ -1112,7 +1112,7 @@ private fun ModelEditDialog(
                     )
                 }
                 if (reasoningOverrideActive || onDelete != null) {
-                    // 文字链接保持轻量外观，但点击区扩展到 40dp 高，避免在弹窗底部误触。
+                    // Текстові посилання зберігають легкий вигляд, але область натискання розширена до 40 dp у висоту, щоб уникнути випадкових дотиків у нижній частині спливаючого вікна.
                     Row(
                         modifier = Modifier.padding(top = 4.dp).offset(x = (-4).dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),

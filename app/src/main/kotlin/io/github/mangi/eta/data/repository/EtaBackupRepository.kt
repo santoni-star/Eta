@@ -28,7 +28,7 @@ import kotlinx.serialization.builtins.serializer
 import java.io.InputStream
 import java.io.OutputStream
 
-/** Eta 用户数据备份；旧备份没有角色字段时保留设备上的角色库。 */
+/** Eta резервне копіювання даних користувача; зберігає бібліотеку ролей на пристрої, коли стара резервна копія не має полів ролей.*/
 @Serializable
 internal data class EtaBackupDocument(
     val format: String = FORMAT,
@@ -47,7 +47,7 @@ internal data class EtaBackupDocument(
 ) {
     companion object {
         const val FORMAT = "eta-backup"
-        // 旧版会把未知原生 Provider 当作 OpenAI-compatible，必须通过备份版本阻止错误恢复。
+        // Старіші версії розглядають невідомих рідних постачальників як сумісні з OpenAI і повинні використовувати резервні версії, щоб запобігти виправленню помилок.
         const val SCHEMA_VERSION = 4
     }
 }
@@ -161,7 +161,7 @@ internal object EtaBackupRepository {
                 val oauthProviders = document.providers.map { it.provider }
                     .filter { ProviderAuthModes.isOAuth(it.authMode) }
                 val credentialIds = document.providers.mapTo(linkedSetOf()) { it.provider.id }
-                // 显式检查原任务取消，使 Room 提交到凭据清理之间不留下被取消打断的空隙。
+                // Явно перевірте вихідне скасування завдання, щоб не було розриву, перерваного скасуванням між поданням кімнати та очищенням облікових даних.
                 withContext(NonCancellable) {
                     var memoryWriteStarted = false
                     try {
@@ -235,7 +235,7 @@ internal object EtaBackupRepository {
                         }
                     } catch (failure: Exception) {
                         throw IllegalStateException(
-                            "数据已导入，但订阅登录清理未完成。订阅连接保持停用，请重新选择登录方式并登录。",
+                            "номервідповідно довжекерівництвовведіть，алепорядокчитатидошказаписяснопричинаще нізакінченостати。порядокчитатинавітьзловитизберегтиутримуватиСТІЙвикористовувати，будь ласкаВажкановийвибративибратидошказаписплощіРежимідошказапис。",
                             failure,
                         )
                     }
@@ -246,7 +246,7 @@ internal object EtaBackupRepository {
                         ProviderRepository.ensureBuiltInsMerged()
                         ProviderRepository.repairSelection()
                     } catch (failure: Exception) {
-                        throw IllegalStateException("数据已导入，但默认模型设置未完全恢复，请重新选择服务商和模型。", failure)
+                        throw IllegalStateException("номервідповідно довжекерівництвовведіть，алемовчазнийрозпізнатицвільтипуналаштувативстановитище нізакінченоПовнийвідновитискладні，будь ласкаВажкановийвибративибратиОдягобслуговуваннябізнесіцвільтипу。", failure)
                     }
                 }
                 summary
@@ -280,7 +280,7 @@ internal object EtaBackupRepository {
 
     private fun ProviderEntity.awaitingCredentialCleanup(): ProviderEntity =
         if (ProviderAuthModes.isOAuth(authMode)) {
-            // 即使提交后进程中断，导入的相同 ID 也不能接上设备中尚未清除的旧授权。
+            // Навіть якщо процес переривається після надсилання, той самий імпортований ідентифікатор не можна підключити до старих авторизацій, які не були видалені з пристрою.
             copy(authMode = ProviderAuthModes.API_KEY, apiKey = "", isEnabled = false)
         } else withoutOAuthSecrets()
 

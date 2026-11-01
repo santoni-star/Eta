@@ -277,7 +277,7 @@ internal fun LinuxEnvironmentScreen(
         }
     }
 
-    /** Kimi 就绪后按钮变为启动 Web UI：守护任务常驻 kimi web，解析地址后拉起浏览器。 */
+    /** Після того, як Kimi буде готовий, кнопка змінюється на запуск веб-інтерфейсу користувача: завдання демона є резидентним у kimi web, а браузер запускається після визначення адреси.*/
     fun launchKimiWeb() {
         if (kimiWebLaunching || requiresRoot) return
         requestExecutionNotifications()

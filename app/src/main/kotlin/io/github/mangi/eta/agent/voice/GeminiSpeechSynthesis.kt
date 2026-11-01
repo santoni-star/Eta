@@ -52,7 +52,7 @@ internal class GeminiSpeechDecoder(onAudio: (ByteArray) -> Unit) {
 
     fun event(name: String, data: String): Boolean {
         if (completed) return false
-        // [DONE] 只代表传输结束，不能代替 interaction 的成功状态。
+        // [Готово] означає лише завершення передачі та не може замінити статус успішної взаємодії.
         if (data == "[DONE]") return false
         val message = JSONObject(data)
         if (message.has("error")) throw geminiFailure(message.optJSONObject("error"))
@@ -63,14 +63,14 @@ internal class GeminiSpeechDecoder(onAudio: (ByteArray) -> Unit) {
                     val mime = delta.optString("mime_type", "audio/l16").substringBefore(';')
                     if (mime != "audio/l16" || delta.optInt("sample_rate", 24000) != 24000 ||
                         delta.optInt("channels", 1) != 1
-                    ) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "Gemini 返回了不支持的音频格式")
+                    ) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "Gemini поверненняповерненнязрозумівнемаєвідділенняутримуватиззвукчастотасіткаРежим")
                     val encoded = delta.optString("data")
                     if (encoded.isNotEmpty()) audio.write(Base64.getDecoder().decode(encoded))
                 }
             }
             "interaction.completed" -> {
                 if (message.getJSONObject("interaction").optString("status") != "completed") {
-                    throw SpeechFailure(SpeechErrorCode.SERVER, "Gemini 未完成朗读，请缩短文本或调整朗读风格后重试")
+                    throw SpeechFailure(SpeechErrorCode.SERVER, "Gemini ще нізакінченостатидовгийчитати，будь ласкаскорочуватисякороткиймистецтвакнигаабомелодіявседовгийчитативітерсітканазадВажкаспробувати")
                 }
                 completed = true
             }
@@ -84,8 +84,8 @@ internal class GeminiSpeechDecoder(onAudio: (ByteArray) -> Unit) {
 
 private fun geminiFailure(error: JSONObject?): SpeechFailure = when (error?.optString("status")) {
     "UNAUTHENTICATED", "PERMISSION_DENIED" ->
-        SpeechFailure(SpeechErrorCode.AUTHENTICATION, "Gemini 认证失败，请检查 API Key、地区和模型权限")
+        SpeechFailure(SpeechErrorCode.AUTHENTICATION, "Gemini розпізнатисертифікатвтратитипоразка，будь ласкаперевіритиперевірити API Key、землірайоніцвільтипуправильнообмеження")
     "RESOURCE_EXHAUSTED" ->
-        SpeechFailure(SpeechErrorCode.RATE_LIMITED, "Gemini 额度不足或请求过于频繁，请稍后重试")
-    else -> SpeechFailure(SpeechErrorCode.SERVER, "Gemini 语音合成失败，请检查模型权限和配置")
+        SpeechFailure(SpeechErrorCode.RATE_LIMITED, "Gemini Лобвитрачатинемаєстопаабобудь ласкапроситиПасначастотаТрадиційний，будь ласкатрохиназадВажкаспробувати")
+    else -> SpeechFailure(SpeechErrorCode.SERVER, "Gemini мовазвуккомбайнстативтратитипоразка，будь ласкаперевіритиперевіритицвільтипуправильнообмеженняіматчвстановити")
 }

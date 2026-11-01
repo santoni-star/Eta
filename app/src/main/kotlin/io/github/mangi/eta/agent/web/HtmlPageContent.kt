@@ -47,7 +47,7 @@ internal object HtmlPageContent {
                             "br" -> output.lineBreak(1)
                             "li" -> output.appendToken("- ")
                             "img" -> node.attr("alt").takeIf(String::isNotBlank)?.let {
-                                output.appendText("[图片：$it]", false)
+                                output.appendText("[малюнокшматок：$it]", false)
                             }
                         }
                     }

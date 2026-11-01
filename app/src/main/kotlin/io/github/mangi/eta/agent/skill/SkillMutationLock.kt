@@ -10,10 +10,10 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 /**
- * Skills 文件树与注册表的跨进程互斥锁。
+ * Міжпроцесне блокування м'ютексу для дерева файлів навичок і реєстру.
  *
- * UI 与 Agent Runtime 可能位于不同进程；仅使用 JVM monitor 无法避免两个安装事务同时通过
- * 冲突检查。锁文件位于索引扫描目录之外，线程内同一根目录允许重入。
+ * Інтерфейс користувача та середовище виконання агента можуть бути розташовані в різних процесах; використання лише монітора JVM не може уникнути двох інсталяційних транзакцій, що проходять одночасно
+ * Перевірка конфліктів. Файл блокування розташований за межами каталогу сканування індексу, а повторний вхід дозволений у тому самому кореневому каталозі потоку.
  */
 internal object SkillMutationLock {
     private val processLock = Any()
@@ -37,11 +37,11 @@ internal object SkillMutationLock {
                 (Files.isSymbolicLink(lockPath.toPath()) ||
                     !Files.isRegularFile(lockPath.toPath(), LinkOption.NOFOLLOW_LINKS))
             ) {
-                throw IOException("Skill 安装锁文件不安全")
+                throw IOException("Skill встановитиупаковкаЗамокмистецтваштукнемаєвстановитиПовний")
             }
             RandomAccessFile(lockPath, "rw").use { lockFile ->
                 if (Files.isSymbolicLink(lockPath.toPath())) {
-                    throw IOException("Skill 安装锁文件不安全")
+                    throw IOException("Skill встановитиупаковкаЗамокмистецтваштукнемаєвстановитиПовний")
                 }
                 lockFile.channel.use { channel ->
                     channel.lock().use {
@@ -51,7 +51,7 @@ internal object SkillMutationLock {
                             if (recovered.isNotEmpty()) {
                                 val handler = recoveryHandler
                                     ?: throw SkillRecoveryRequiredException(
-                                        "Skill 文件已恢复，等待 registry 恢复"
+                                        "Skill мистецтваштуквжевідновитискладні，чекатилікувати registry відновитискладні"
                                     )
                                 try {
                                     handler(recovered)
@@ -60,7 +60,7 @@ internal object SkillMutationLock {
                                     throw error
                                 } catch (error: Exception) {
                                     throw SkillRecoveryRequiredException(
-                                        "Skill registry 自动恢复失败",
+                                        "Skill registry оскількирухатисявідновитискладнівтратитипоразка",
                                         error,
                                     )
                                 }
@@ -77,12 +77,12 @@ internal object SkillMutationLock {
     }
 }
 
-/** 创建或验证只位于 Skills 同级私有目录中的安装工作区，拒绝 symlink 与特殊文件。 */
+/** Створюйте або перевіряйте робочі області встановлення, розташовані лише в приватних каталогах на тому ж рівні, що й навички, відхиляючи символічні посилання та спеціальні файли.*/
 internal fun prepareSkillInstallerWorkRoot(skillsRoot: File): File {
     val canonicalRoot = skillsRoot.canonicalFile
-    val parent = requireNotNull(canonicalRoot.parentFile) { "Skills 目录必须有父目录" }
+    val parent = requireNotNull(canonicalRoot.parentFile) { "Skills ГоловазаписповиненОбов'язковоматибатькоГоловазапис" }
     if (!Files.isDirectory(parent.toPath(), LinkOption.NOFOLLOW_LINKS)) {
-        throw IOException("Skills 父目录不可用")
+        throw IOException("Skills батькоГоловазаписнемаєможевикористовувати")
     }
     val workRoot = File(parent, ".eta-skill-installer")
     val path = workRoot.toPath()
@@ -90,7 +90,7 @@ internal fun prepareSkillInstallerWorkRoot(skillsRoot: File): File {
         try {
             Files.createDirectory(path)
         } catch (error: java.nio.file.FileAlreadyExistsException) {
-            // 与其他进程竞争创建时，交给下面的 NOFOLLOW 校验决定是否可用。
+            // Коли конкуруєте з іншими процесами за створення, дозвольте наступній перевірці NOFOLLOW визначити, чи він доступний.
         }
     }
     if (
@@ -99,12 +99,12 @@ internal fun prepareSkillInstallerWorkRoot(skillsRoot: File): File {
         workRoot.canonicalFile.parentFile != parent.canonicalFile ||
         workRoot.canonicalFile != workRoot.absoluteFile
     ) {
-        throw IOException("Skill 安装工作目录不安全")
+        throw IOException("Skill встановитиупаковкапрацюватиробитиГоловазаписнемаєвстановитиПовний")
     }
     return workRoot
 }
 
-/** 替换事务只能接收可完整复制恢复的普通目录树。 */
+/** Транзакції заміни можуть отримувати лише звичайні дерева каталогів, які можна повністю скопіювати та відновити.*/
 internal fun isRecoverableSkillDirectoryTree(skillsRoot: File, target: File): Boolean {
     val canonicalRoot = runCatching { skillsRoot.canonicalFile.toPath() }.getOrNull() ?: return false
     if (Files.isSymbolicLink(target.toPath())) return false
@@ -126,7 +126,7 @@ private fun isRegularDirectoryTreeWithoutLinks(path: Path): Boolean {
 
 internal fun moveSkillDirectoryAtomically(source: File, target: File) {
     target.parentFile?.let { parent ->
-        if (!parent.mkdirs() && !parent.isDirectory) throw IOException("无法创建目标父目录")
+        if (!parent.mkdirs() && !parent.isDirectory) throw IOException("немаєЗаконстворитивстановитиГоловазнакбатькоГоловазапис")
     }
     try {
         Files.move(source.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE)
@@ -135,7 +135,7 @@ internal fun moveSkillDirectoryAtomically(source: File, target: File) {
     }
 }
 
-/** 删除 Skills 根目录内的路径，但遇到任意符号链接时只删除链接本身。 */
+/** Видаліть шляхи в кореневому каталозі Skills, але видаліть самі посилання, лише якщо виявлено будь-які символічні посилання.*/
 internal fun deleteSkillPathWithoutFollowingLinks(skillsRoot: File, target: File): Boolean {
     val lexicalRoot = skillsRoot.absoluteFile.toPath().normalize()
     val lexicalTarget = target.absoluteFile.toPath().normalize()

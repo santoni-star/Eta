@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 声明给主 Agent 的 `subagent` 与 `subagent_profile` 工具 Schema。
+ * Схема інструментів `subagent` і `subagent_profile`, оголошена головному агенту.
  */
 internal object AgentSubagentToolCatalog {
     const val TOOL_NAME = "subagent"

@@ -11,7 +11,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import io.github.mangi.eta.agent.terminal.AnsiSgr
 import io.github.mangi.eta.agent.terminal.SgrStyle
 
-/** 中性样式到 Compose 的映射；dim 以透明度衰减表达，反显互换显式指定的前景与背景。 */
+/** Відображення нейтральних стилів у Compose; dim виражається в термінах ослаблення прозорості, інвертуючи чітко вказані передній план і фон.*/
 internal fun SgrStyle.toSpanStyle(): SpanStyle {
     val foreground = fg?.let { Color(it) } ?: Color.Unspecified
     val background = bg?.let { Color(it) } ?: Color.Unspecified
@@ -30,10 +30,10 @@ internal fun SgrStyle.toSpanStyle(): SpanStyle {
 }
 
 /**
- * 终端输出的 ANSI 转义渲染：SGR 颜色与字重/斜体/下划线转为 [AnnotatedString] span，
- * 其余控制序列（光标寻址、OSC 等）在块式界面无法表达，直接丢弃。
- * `\r` 按终端语义处理为行覆盖（进度条只保留最后一次刷新）。
- * 流式输出可能在任意位置截断序列；不完整的尾部序列丢弃，下次整段重解析自然恢复。
+ * ANSI уникнув візуалізації виводу терміналу: SGR колір і вага/курсив/підкреслення до [AnnotatedString] span,
+ * Решта керуючих послідовностей (адресація курсору, OSC тощо) не можуть бути виражені в інтерфейсі блоку та відкидаються безпосередньо.
+ * `\r` обробляється як покриття лінії відповідно до семантики терміналу (індикатор прогресу зберігає лише останнє оновлення).
+ * Потоковий вихід може обрізати послідовність у будь-якій позиції; неповна хвістова послідовність відкидається, і весь сегмент буде повторно проаналізовано природним чином для відновлення наступного разу.
  */
 internal fun ansiToAnnotatedString(text: String): AnnotatedString {
     if (!text.contains(ESC) && !text.contains('\r')) return AnnotatedString(text)
@@ -50,7 +50,7 @@ internal fun ansiToAnnotatedString(text: String): AnnotatedString {
     }
 
     var i = 0
-    // \r 只记录行起点；其后出现新文本才覆盖该行（CRLF 换行不会被误删）。
+    // \r Записується лише початок рядка; новий текст не перезапише рядок, доки він не з’явиться пізніше (нові рядки CRLF не будуть випадково видалені).
     var pendingOverwriteFrom = -1
 
     fun applyPendingOverwrite() {
@@ -103,14 +103,14 @@ internal fun ansiToAnnotatedString(text: String): AnnotatedString {
     }
 }
 
-/** 剥离全部转义序列后的纯文本（复制、日志展示等场景）。 */
+/** Звичайний текст після видалення всіх керуючих послідовностей (сценарії копіювання, відображення журналу тощо).*/
 internal fun ansiPlainText(text: String): String = ansiToAnnotatedString(text).text
 
 private const val ESC = '\u001B'
 
 private class EscapeResult(val style: SgrStyle, val next: Int)
 
-/** 消费一个转义序列；不完整序列直接消费到文本末尾。 */
+/** Використовуйте евакуаційну послідовність; неповні послідовності споживаються безпосередньо до кінця тексту.*/
 private fun consumeEscape(text: String, start: Int, style: SgrStyle): EscapeResult {
     val kind = text.getOrNull(start + 1) ?: return EscapeResult(style, text.length)
     return when (kind) {

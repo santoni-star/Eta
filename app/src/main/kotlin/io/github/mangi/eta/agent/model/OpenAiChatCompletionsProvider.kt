@@ -37,7 +37,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
     ): ProviderResponse {
         val config = request.effectiveConfig
         require(config.openAiEndpointMode == OpenAiEndpointMode.CHAT_COMPLETIONS) {
-            "当前 Provider 未配置为 Chat Completions API"
+            "коливперед Provider ще німатчвстановитидля Chat Completions API"
         }
         val url = ProviderUrls.openAiChatCompletionsUrl(config.baseUrl)
         val headers = okhttp3.Headers.Builder()
@@ -117,7 +117,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
                 RequestBodyMerge.mergeCustomBody(request, config.customBody)
                 ProviderReasoning.applyOpenAiCompatibleRequest(request, config)
                 if (config.authMode == ProviderAuthModes.XAI_GROK) {
-                    // 代理按请求头路由模型，正文必须与同一配置一致，并保持订阅所需的流式调用。
+                    // Модель маршрутизації заголовка проксі-запиту, тіло має відповідати тій самій конфігурації та підтримувати підписку на необхідні потокові виклики.
                     request.put("model", config.model)
                     request.put("stream", true)
                     request.put("messages", OpenAiRequestMessages.forChatCompletions(messages))
@@ -138,7 +138,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
         existingToolCallIds: Set<String>,
         onEvent: (ProviderEvent) -> Unit
     ): JSONObject {
-        if (stream == null) error("模型接口未返回响应流")
+        if (stream == null) error("цвільтипузловитиротще ніповерненняповерненнякільцевідповідьпотік")
         val content = StringBuilder()
         val reasoningContent = StringBuilder()
         val toolCalls = linkedMapOf<Int, StreamingToolCall>()
@@ -199,7 +199,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
                 finishReason = reason
             }
             if (reason == "error") {
-                error("模型接口 SSE 以 error 结束")
+                error("цвільтипузловитирот SSE за error вузолпучок")
             }
             val delta = choice.optJSONObject("delta") ?: JSONObject()
             val reasoningDelta = visibleReasoningDelta(delta)
@@ -255,8 +255,8 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
             true
         }
 
-        if (!sawStreamData) throw AgentModelFailure.incompleteStream("模型接口未返回 SSE data chunk")
-        if (!sawDone && finishReason == null) throw AgentModelFailure.incompleteStream("模型接口 SSE 流未正常结束")
+        if (!sawStreamData) throw AgentModelFailure.incompleteStream("цвільтипузловитиротще ніповерненняповернення SSE data chunk")
+        if (!sawDone && finishReason == null) throw AgentModelFailure.incompleteStream("цвільтипузловитирот SSE потікще ніпросточастовузолпучок")
 
         finishActiveVisibleBlock()
         resolveToolCallIds(toolCalls.values, existingToolCallIds)
@@ -302,7 +302,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
         val assignedIds = existingIds.toMutableSet()
         val prefix = "call_eta_${UUID.randomUUID().toString().replace("-", "")}_"
         var nextId = 0
-        // 先保留所有服务端 ID，再统一补齐；结束事件和历史必须使用同一个已定稿 ID。
+        // Спочатку збережіть усі ідентифікатори серверів, а потім заповніть їх разом; кінцева подія та історія повинні використовувати той самий остаточний ідентифікатор.
         calls.sortedBy { it.index }.forEach { call ->
             if (call.id?.let(assignedIds::add) != true) {
                 var generated: String
@@ -344,7 +344,7 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
     )
 
     private fun visibleReasoningDelta(delta: JSONObject): String {
-        // 同一分片的纯文本与结构化字段可重复携带相同思考，只消费一种表示。
+        // Звичайний текст і структуровані поля в тому самому сегменті можуть передавати ті самі думки знову і знову, споживаючи лише одне представлення.
         for (key in listOf("reasoning_content", "reasoning")) {
             (delta.opt(key) as? String)?.takeIf { it.isNotEmpty() }?.let { return it }
         }
@@ -383,11 +383,11 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
             errorType?.let { "type=$it" },
         ).joinToString(", ")
         val message = streamError.optString("message")
-            .ifBlank { "未提供错误信息" }
+            .ifBlank { "ще нінестидляповідомлення про помилку" }
             .compactError()
         throw AgentModelFailure.stream(
             streamError,
-            "模型接口 SSE 返回错误${context.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()}：$message",
+            "цвільтипузловитирот SSE поверненняповерненнянеправильнопомилка${context.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()}：$message",
         )
     }
 
@@ -402,8 +402,8 @@ internal object OpenAiChatCompletionsProvider : AgentProviderClient {
                 "output_tokens_details",
                 childKey = "reasoning_tokens"
             ),
-            // 兼容端点各用各的字段：OpenAI 嵌套在 prompt_tokens_details，DeepSeek 为 prompt_cache_hit_tokens，
-            // 部分端点直接放在顶层 cached_tokens。
+            // Кожна сумісна кінцева точка використовує власне поле: OpenAI вкладено в prompt_tokens_details, DeepSeek вкладено в prompt_cache_hit_tokens,
+            // Деякі кінцеві точки розміщуються безпосередньо на верхньому рівні cached_tokens.
             cachedTokens = usage.firstNestedInt(
                 "prompt_tokens_details",
                 childKey = "cached_tokens"

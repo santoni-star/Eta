@@ -130,7 +130,7 @@ internal object BreenoHooks {
         capacity = HANDLED_RUN_ID_CAPACITY,
         ttlMillis = HANDLED_RUN_ID_TTL_MS,
     )
-    // 只有已经展示或明确废弃的结果才能进入 ACK 重扫，避免交付过程中被提前确认。
+    // Лише результати, які були відображені або чітко відхилені, можуть увійти до повторного сканування ACK, щоб уникнути попереднього підтвердження під час процесу доставки.
     private val acknowledgeableRuntimeRunIds = BoundedRunIdSet(
         capacity = HANDLED_RUN_ID_CAPACITY,
         ttlMillis = HANDLED_RUN_ID_TTL_MS,
@@ -179,7 +179,7 @@ internal object BreenoHooks {
                 missing(
                     id = "breeno.runtime-contract",
                     description = "Breeno Runtime bridge",
-                    detail = "小布交付链路不完整，保留原生请求：${targets.missingBridgeMethods.joinToString()}",
+                    detail = "Маленькийтканинаплатитиплатитиланцюгдороганемаєзакінченовсе，зберегтиТримайтеОригіналнародивсябудь ласкапросити：${targets.missingBridgeMethods.joinToString()}",
                 )
                 return@install
             }
@@ -201,7 +201,7 @@ internal object BreenoHooks {
             hooks.missing(
                 id = "breeno.outbound-message",
                 description = "MessageQueueManager.send",
-                detail = "未找到唯一出站消息方法，保留原生处理",
+                detail = "ще ніспробуйте знайтиприбутитількиодинпозастоятивидалитиінтересплощіЗакон，зберегтиТримайтеОригіналнародивсявпричина",
             )
             return
         }
@@ -219,7 +219,7 @@ internal object BreenoHooks {
                 logger.debug { "outbound: ${summarizeOutboundMessage(message)}" }
             } catch (exception: Exception) {
                 logger.warnThrottled("breeno_outbound_log_failed") {
-                    "记录出站消息失败，type=${exception.safeLogType()}"
+                    "запам'ятатизаписпозастоятивидалитиінтересвтратитипоразка，type=${exception.safeLogType()}"
                 }
             }
             chain.proceed()
@@ -233,7 +233,7 @@ internal object BreenoHooks {
             hooks.missing(
                 id = "breeno.inbound-message",
                 description = "MessageProcessor.processMessage",
-                detail = "未找到唯一入站消息方法，保留原生处理",
+                detail = "ще ніспробуйте знайтиприбутитількиодинвведітьстоятивидалитиінтересплощіЗакон，зберегтиТримайтеОригіналнародивсявпричина",
             )
             return
         }
@@ -253,7 +253,7 @@ internal object BreenoHooks {
                 }
             } catch (exception: Exception) {
                 logger.warnThrottled("breeno_inbound_log_failed") {
-                    "记录入站消息失败，type=${exception.safeLogType()}"
+                    "запам'ятатизаписвведітьстоятивидалитиінтересвтратитипоразка，type=${exception.safeLogType()}"
                 }
             }
             when {
@@ -275,7 +275,7 @@ internal object BreenoHooks {
             hooks.missing(
                 id = "breeno.cdm-text-request",
                 description = "CdmNode.voiceStart",
-                detail = "未找到唯一文本请求方法，保留原生处理",
+                detail = "ще ніспробуйте знайтиприбутитількиодинмистецтвакнигабудь ласкапроситиплощіЗакон，зберегтиТримайтеОригіналнародивсявпричина",
             )
             return
         }
@@ -290,14 +290,14 @@ internal object BreenoHooks {
                 logger.debug { "CDM request: ${summarizeDmParameter(parameter)}" }
             } catch (exception: Exception) {
                 logger.warnThrottled("breeno_cdm_log_failed") {
-                    "记录 CdmNode 请求失败，type=${exception.safeLogType()}"
+                    "запам'ятатизапис CdmNode будь ласкапроситивтратитипоразка，type=${exception.safeLogType()}"
                 }
             }
             try {
                 cacheCdmImages(logger, parameter)
             } catch (exception: Exception) {
                 logger.warnThrottled("breeno_cdm_image_cache_failed") {
-                    "缓存 CdmNode 图片引用失败，type=${exception.safeLogType()}"
+                    "повільнийжити CdmNode малюнокшматокпривестивикористовувативтратитипоразка，type=${exception.safeLogType()}"
                 }
             }
             chain.proceed()
@@ -314,7 +314,7 @@ internal object BreenoHooks {
             hooks.missing(
                 id = "breeno.ai-chat-data-center",
                 description = "AIChatDataCenter.addChatBean",
-                detail = "未找到唯一对话派发方法，保留原生处理",
+                detail = "ще ніспробуйте знайтиприбутитількиодинправильноговоритигрупаволоссяплощіЗакон，зберегтиТримайтеОригіналнародивсявпричина",
             )
             return
         }
@@ -425,7 +425,7 @@ internal object BreenoHooks {
         if (claimedAgentRooms.isEmpty()) return content
         if (content.length > MAX_INBOUND_DIRECTIVE_CHARS) {
             logger.warnThrottled("breeno_native_directive_too_large") {
-                "入站指令超过解析上限，保留原始消息"
+                "введітьстоятизвертатися дозробитиобганятиПасрозв'язатианалізуватиначальникаобмеження，зберегтиТримайтеОригіналпочатоквидалитиінтерес"
             }
             return content
         }
@@ -468,7 +468,7 @@ internal object BreenoHooks {
             }
         } catch (exception: Exception) {
             logger.warnThrottled("breeno_native_directive_filter_failed") {
-                "过滤原生指令失败，type=${exception.safeLogType()}"
+                "ПасфільтрОригіналнародивсязвертатися дозробитивтратитипоразка，type=${exception.safeLogType()}"
             }
             content
         }
@@ -592,7 +592,7 @@ internal object BreenoHooks {
                         is BreenoRequestImages.Resolution.Success -> resolution.images
                         is BreenoRequestImages.Resolution.Failure -> {
                             logger.warnThrottled("breeno_${resolution.code.value}") {
-                                "图片处理失败: code=${resolution.code.value}, images=${resolution.imageCount}, " +
+                                "малюнокшматоквпричинавтратитипоразка: code=${resolution.code.value}, images=${resolution.imageCount}, " +
                                     "estimated=${resolution.estimatedBytes}, " +
                                     "limit=${resolution.maxBytes}"
                             }
@@ -687,7 +687,7 @@ internal object BreenoHooks {
                     }.onFailure { throwable ->
                         if (deliveryMarked) handledRuntimeRunIds.remove(deliveredRunId)
                         logger.error(
-                            "Breeno: 注入自定义模型响应失败，type=${throwable.safeLogType()}"
+                            "Breeno: ПриміткавведітьоскількиЗвичайноправеднийцвільтипукільцевідповідьвтратитипоразка，type=${throwable.safeLogType()}"
                         )
                     }
                     activeAgentRun.compareAndSet(runState, null)
@@ -720,7 +720,7 @@ internal object BreenoHooks {
         }.getOrElse { throwable ->
             if (!scheduled) startedAgentRequests.remove(requestKey)
             logger.error(
-                "Breeno: 接管自定义模型请求失败，放行原请求，type=${throwable.safeLogType()}"
+                "Breeno: зловититрубкаоскількиЗвичайноправеднийцвільтипубудь ласкапроситивтратитипоразка，поставитидобреОригіналбудь ласкапросити，type=${throwable.safeLogType()}"
             )
             scheduled
         }
@@ -805,7 +805,7 @@ internal object BreenoHooks {
                 AgentRuntimeClient(context, logger).drainCompletedRuns()
             }.getOrElse { throwable ->
                 logger.warnThrottled("breeno_pending_drain_failed") {
-                    "Breeno: 拉取 Agent 未交付结果失败，type=${throwable.safeLogType()}"
+                    "Breeno: тягнутиВиберіть Agent ще ніплатитиплатитивузолфруктивтратитипоразка，type=${throwable.safeLogType()}"
                 }
                 emptyList()
             }
@@ -835,7 +835,7 @@ internal object BreenoHooks {
         val runId = completedRun.result.runId.ifBlank { completedRun.handoff.id }
         val request = textRequestFromHandoff(completedRun.handoff, runId)
         if (request == null) {
-            logger.debug { "Breeno: 忽略非小布 Agent 未交付结果" }
+            logger.debug { "Breeno: раптовозлегканемаєМаленькийтканина Agent ще ніплатитиплатитивузолфрукти" }
             return
         }
         val result = completedRun.result
@@ -886,7 +886,7 @@ internal object BreenoHooks {
         }.onFailure { throwable ->
             if (deliveryMarked) handledRuntimeRunIds.remove(runId)
             logger.error(
-                "Breeno: 注入未交付 Agent 结果失败，type=${throwable.safeLogType()}"
+                "Breeno: Приміткавведітьще ніплатитиплатити Agent вузолфруктивтратитипоразка，type=${throwable.safeLogType()}"
             )
         }
     }
@@ -986,9 +986,9 @@ internal object BreenoHooks {
     private fun archiveTitle(userText: String): String {
         val firstLine = userText.lineSequence().firstOrNull().orEmpty().trim()
         return if (firstLine.isBlank()) {
-            "小布对话"
+            "Маленькийтканинаправильноговорити"
         } else {
-            "小布：${firstLine.take(BREENO_ARCHIVE_TITLE_CHARS)}"
+            "Маленькийтканина：${firstLine.take(BREENO_ARCHIVE_TITLE_CHARS)}"
         }
     }
 
@@ -1038,12 +1038,12 @@ internal object BreenoHooks {
         if (runId.isBlank()) return
         handledRuntimeRunIds.add(runId)
         acknowledgeableRuntimeRunIds.add(runId)
-        // 新的交付事件可以重新唤醒此前耗尽的有限重试；内部失败回队不会重置预算。
+        // Нові події доставки можуть відновити попередні обмежені повторні спроби; внутрішня помилка повторного постановки в чергу не скидає бюджет.
         pendingAckRetryBudget.reset()
         val enqueueResult = pendingRuntimeAcks.enqueue(runId)
         if (enqueueResult == PendingAckState.EnqueueResult.OVERFLOW) {
             logger.warnThrottled("breeno_ack_pending_overflow") {
-                "Breeno: 待确认结果已达上限，将从 Runtime 持久队列恢复"
+                "Breeno: лікуватиправильнорозпізнативузолфруктивжедосяжністьначальникаобмеження，Волявід Runtime утримуватидовгийкомандаСписоквідновитискладні"
             }
         }
         scheduleRuntimeAckDrain(logger)
@@ -1059,7 +1059,7 @@ internal object BreenoHooks {
         } catch (_: RejectedExecutionException) {
             pendingAckDrainRunning.set(false)
             logger.warnThrottled("breeno_ack_rejected") {
-                "Breeno: Agent 后台队列已满，将重试结果确认"
+                "Breeno: Agent назадвежакомандаСписоквжеПовний，ВоляВажкаспробувативузолфруктиправильнорозпізнати"
             }
             scheduleRuntimeAckRetry(logger)
         }
@@ -1085,7 +1085,7 @@ internal object BreenoHooks {
                         pendingRuntimeAcks.enqueue(runId)
                         deferRemainingWork = true
                         logger.warnThrottled("breeno_ack_unavailable") {
-                            "Breeno: Agent Runtime 暂不可用，将重试结果确认"
+                            "Breeno: Agent Runtime тимчасовонемаєможевикористовувати，ВоляВажкаспробувативузолфруктиправильнорозпізнати"
                         }
                         break
                     }
@@ -1093,7 +1093,7 @@ internal object BreenoHooks {
                     pendingRuntimeAcks.enqueue(runId)
                     deferRemainingWork = true
                     logger.warnThrottled("breeno_ack_failed") {
-                        "Breeno: 确认 Agent 结果失败，将重试，type=${exception.safeLogType()}"
+                        "Breeno: правильнорозпізнати Agent вузолфруктивтратитипоразка，ВоляВажкаспробувати，type=${exception.safeLogType()}"
                     }
                     break
                 }
@@ -1106,7 +1106,7 @@ internal object BreenoHooks {
                     pendingRuntimeAcks.requestRescan()
                     deferRemainingWork = true
                     logger.warnThrottled("breeno_ack_rescan_failed") {
-                        "Breeno: 恢复待确认结果失败，将重试，type=${throwable.safeLogType()}"
+                        "Breeno: відновитискладнілікуватиправильнорозпізнативузолфруктивтратитипоразка，ВоляВажкаспробувати，type=${throwable.safeLogType()}"
                     }
                     emptyList()
                 }
@@ -1123,13 +1123,13 @@ internal object BreenoHooks {
                 ackableRuns.forEach { recoveredRunId ->
                     runCatching {
                         check(client.ackResult(recoveredRunId)) {
-                            "Agent Runtime ACK 未提交"
+                            "Agent Runtime ACK ще нінестиплатити"
                         }
                     }.onFailure { throwable ->
                         pendingRuntimeAcks.enqueue(recoveredRunId)
                         deferRemainingWork = true
                         logger.warnThrottled("breeno_ack_rescan_item_failed") {
-                            "Breeno: 确认恢复结果失败，将重试，type=${throwable.safeLogType()}"
+                            "Breeno: правильнорозпізнативідновитискладнівузолфруктивтратитипоразка，ВоляВажкаспробувати，type=${throwable.safeLogType()}"
                         }
                     }
                 }
@@ -1159,7 +1159,7 @@ internal object BreenoHooks {
         if (!pendingAckRetryBudget.tryAcquire()) {
             pendingAckRetryScheduled.set(false)
             logger.warnThrottled("breeno_ack_retry_exhausted") {
-                "Breeno: Agent 结果确认重试已达上限，等待后续事件继续处理"
+                "Breeno: Agent вузолфруктиправильнорозпізнатиВажкаспробувативжедосяжністьначальникаобмеження，чекатилікуватиназадПродовженнярічштукслідуватиПродовженнявпричина"
             }
             return
         }
@@ -1173,7 +1173,7 @@ internal object BreenoHooks {
         if (!posted) {
             pendingAckRetryScheduled.set(false)
             logger.warnThrottled("breeno_ack_retry_post_failed") {
-                "Breeno: 无法调度 Agent 结果确认重试"
+                "Breeno: немаєЗаконмелодіявитрачати Agent вузолфруктиправильнорозпізнатиВажкаспробувати"
             }
         }
     }
@@ -1188,7 +1188,7 @@ internal object BreenoHooks {
             true
         } catch (_: RejectedExecutionException) {
             logger.warnThrottled(rejectionKey) {
-                "Breeno: Agent 后台队列已满，已跳过非关键任务"
+                "Breeno: Agent назадвежакомандаСписоквжеПовний，вжеСтрибокПаснемаєзакритиключпризначитиобслуговування"
             }
             false
         }
@@ -1441,7 +1441,7 @@ internal object BreenoHooks {
             }.getOrElse { throwable ->
                 disabled = true
                 logger.warnThrottled("breeno_stream_injection_failed") {
-                    "Breeno: 流式注入失败，回退最终注入，type=${throwable.safeLogType()}"
+                    "Breeno: потікРежимПриміткавведітьвтратитипоразка，поверненнявідступбільшістькінецьПриміткавведіть，type=${throwable.safeLogType()}"
                 }
                 false
             }
@@ -1595,7 +1595,7 @@ internal object BreenoHooks {
             val roomId = request.roomId.ifBlank { currentRoomId(classLoader) }
             if (roomId.isBlank()) {
                 logger.warnThrottled("breeno_history_room_missing") {
-                    "Breeno: 跳过历史写入，roomId 为空"
+                    "Breeno: СтрибокПаскалендарісторіїНапишітьвведіть，roomId длянульовий"
                 }
                 onFinished(false)
                 return
@@ -1657,14 +1657,14 @@ internal object BreenoHooks {
                             logger.debug { "Breeno history persisted" }
                         } else {
                             logger.warnThrottled("breeno_history_persist_rejected") {
-                                "Breeno: 服务端未完整保存历史记录"
+                                "Breeno: Одягобслуговуваннякінецьще нізакінченовсезберегтижитикалендарісторіїзапам'ятатизапис"
                             }
                         }
                         onFinished(historySaved)
                     }
                 }.onFailure { throwable ->
                     logger.warnThrottled("breeno_history_answer_dispatch_failed") {
-                        "Breeno: 提交回答历史失败，type=${throwable.safeLogType()}"
+                        "Breeno: нестиплатитиповерненнявідповідькалендарісторіївтратитипоразка，type=${throwable.safeLogType()}"
                     }
                     onFinished(false)
                 }
@@ -1672,7 +1672,7 @@ internal object BreenoHooks {
             logger.debug { "Breeno history persist requested" }
         }.onFailure { throwable ->
             logger.warnThrottled("breeno_history_persist_failed") {
-                "Breeno: 写入历史记录失败，type=${throwable.safeLogType()}"
+                "Breeno: Напишітьвведітькалендарісторіїзапам'ятатизаписвтратитипоразка，type=${throwable.safeLogType()}"
             }
             onFinished(false)
         }
@@ -1696,7 +1696,7 @@ internal object BreenoHooks {
                 ackRuntimeResult(logger, runId)
             } else {
                 logger.warnThrottled("breeno_history_pending_${runId.hashCode()}") {
-                    "Breeno: 历史保存未完成，保留 Runtime 结果以便恢复"
+                    "Breeno: календарісторіїзберегтижитище нізакінченостати，зберегтиТримайте Runtime вузолфруктизазручнийвідновитискладні"
                 }
             }
         }
@@ -1977,16 +1977,16 @@ internal object BreenoHooks {
             }
             BreenoRequestImages.SnapshotCache.StoreResult.STORED_FAILURE ->
                 logger.warnThrottled("breeno_image_cache_size_limit") {
-                    "Breeno: 图片引用缓存数据超过上限，已保存显式失败状态"
+                    "Breeno: малюнокшматокпривестивикористовуватиповільнийжитиномервідповідно дообганятиПасначальникаобмеження，вжезберегтижитишоуРежимвтратитипоразкаформустан"
                 }
             BreenoRequestImages.SnapshotCache.StoreResult.EMPTY -> Unit
             BreenoRequestImages.SnapshotCache.StoreResult.TOO_MANY_ALIASES ->
                 logger.warnThrottled("breeno_image_cache_alias_limit") {
-                    "Breeno: 图片引用缓存别名超过上限，已拒绝缓存"
+                    "Breeno: малюнокшматокпривестивикористовуватиповільнийжитине требаназваобганятиПасначальникаобмеження，вжевідхилитиАбсолютноповільнийжити"
                 }
             BreenoRequestImages.SnapshotCache.StoreResult.TOO_LARGE ->
                 logger.warnThrottled("breeno_image_cache_size_limit") {
-                    "Breeno: 图片引用缓存容量不足，无法保存失败状态"
+                    "Breeno: малюнокшматокпривестивикористовуватиповільнийжитиДозволитикількістьнемаєстопа，немаєЗаконзберегтижитивтратитипоразкаформустан"
                 }
         }
     }
@@ -2015,19 +2015,19 @@ internal object BreenoHooks {
             }
             BreenoRequestImages.SnapshotCache.StoreResult.STORED_FAILURE ->
                 logger.warnThrottled("breeno_pending_image_cache_size_limit") {
-                    "Breeno: 多图查询引用超过暂存上限，已保存显式失败状态"
+                    "Breeno: багатомалюнокперевіритиЗапитуйтепривестивикористовуватиобганятиПастимчасовожитиначальникаобмеження，вжезберегтижитишоуРежимвтратитипоразкаформустан"
                 }
             BreenoRequestImages.SnapshotCache.StoreResult.EMPTY ->
                 logger.warnThrottled("breeno_pending_image_missing") {
-                    "Breeno: 多图查询中没有可暂存的图片引用"
+                    "Breeno: багатомалюнокперевіритиЗапитуйтесерединабезматиможетимчасовожитизмалюнокшматокпривестивикористовувати"
                 }
             BreenoRequestImages.SnapshotCache.StoreResult.TOO_MANY_ALIASES ->
                 logger.warnThrottled("breeno_pending_image_alias_limit") {
-                    "Breeno: 多图查询缓存别名超过上限，已拒绝缓存"
+                    "Breeno: багатомалюнокперевіритиЗапитуйтеповільнийжитине требаназваобганятиПасначальникаобмеження，вжевідхилитиАбсолютноповільнийжити"
                 }
             BreenoRequestImages.SnapshotCache.StoreResult.TOO_LARGE ->
                 logger.warnThrottled("breeno_pending_image_cache_size_limit") {
-                    "Breeno: 多图查询缓存容量不足，无法保存失败状态"
+                    "Breeno: багатомалюнокперевіритиЗапитуйтеповільнийжитиДозволитикількістьнемаєстопа，немаєЗаконзберегтижитивтратитипоразкаформустан"
                 }
         }
     }

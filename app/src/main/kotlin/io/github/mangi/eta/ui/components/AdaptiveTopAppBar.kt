@@ -10,7 +10,7 @@ import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 宽屏固定小标题，手机使用可折叠大标题。 */
+/** Виправлені субтитри для широкоформатних і великі складні заголовки для мобільних телефонів.*/
 @Composable
 fun AdaptiveTopAppBar(
     title: String,

@@ -15,14 +15,14 @@ internal object HyperOsLegacyGesture {
         if (type == null || !View::class.java.isAssignableFrom(type) || touch?.declaringClass != type ||
             touch.returnType != Boolean::class.javaPrimitiveType
         ) {
-            hooks.missing("hyperos.legacy-touch", "NavStubView.onTouchEvent", "HyperOS: 未找到旧版导航视图触摸入口")
+            hooks.missing("hyperos.legacy-touch", "NavStubView.onTouchEvent", "HyperOS: ще ніспробуйте знайтиприбутистарийверсіякерівництвовітрилодивмалюнокдотикдотиквведітьрот")
             return
         }
         if (HookSupport.findField(type, "mCheckLongPress") != null) {
-            hooks.skipped("hyperos.legacy-touch", "NavStubView.onTouchEvent", "HyperOS: 桌面已有长按检测但回调未知，保留原生手势")
+            hooks.skipped("hyperos.legacy-touch", "NavStubView.onTouchEvent", "HyperOS: стіллокшинавжематидовговідповідно доперевірититесталеповерненнямелодіяще нізнати，зберегтиТримайтеОригіналнародивсярукупотенціал")
             return
         }
-        // View 回调在所属 UI 线程串行执行；弱键和值中的弱引用共同避免已销毁视图泄漏。
+        // Зворотні виклики перегляду виконуються послідовно в потоці користувальницького інтерфейсу власника; слабкі ключі та слабкі посилання в значеннях разом запобігають витоку знищених представлень.
         val gestures = WeakHashMap<View, HyperOsLongPressGesture>()
         hooks.intercept("hyperos.legacy-touch", touch, "NavStubView.onTouchEvent") { chain ->
             val view = chain.getThisObject() as View
@@ -35,7 +35,7 @@ internal object HyperOsLegacyGesture {
                             current.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                         } catch (exception: Exception) {
                             hooks.logger.warnThrottled("hyperos_haptic_failed") {
-                                "HyperOS: 长按反馈失败，type=${exception.safeLogType()}"
+                                "HyperOS: довговідповідно допротилежністьгодувативтратитипоразка，type=${exception.safeLogType()}"
                             }
                         }
                     }
@@ -63,7 +63,7 @@ internal object HyperOsLegacyGesture {
                 else chain.proceed()
             }
         } else {
-            hooks.skipped("hyperos.legacy-recents", "NavStubView.startRecentsAnimationPre", "HyperOS: 未提供最近任务预启动入口")
+            hooks.skipped("hyperos.legacy-recents", "NavStubView.startRecentsAnimationPre", "HyperOS: ще нінестидлябільшістьзакритипризначитиобслуговуванняпопередньопочатокрухатисявведітьрот")
         }
     }
 }

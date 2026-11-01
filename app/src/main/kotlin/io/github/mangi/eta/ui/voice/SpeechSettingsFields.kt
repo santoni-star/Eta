@@ -60,7 +60,7 @@ internal fun TtsProvider.label(): String = stringResource(
     },
 )
 
-/** 卡片下方的辅助说明，与分组标题使用同一套留白。 */
+/** У допоміжних інструкціях під карткою використовується той самий набір пробілів, що й у назвах груп.*/
 @Composable
 internal fun SpeechNote(text: String, modifier: Modifier = Modifier) {
     Text(
@@ -71,7 +71,7 @@ internal fun SpeechNote(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** 配置读取期间显示加载指示，读取失败时换成带图标的错误说明，两种状态不再长得一样。 */
+/** Відображати інструкції із завантаження під час читання конфігурації та замінювати їх інструкціями про помилки з піктограмами, якщо читання не вдається. Два штати вже не виглядають однаково.*/
 @Composable
 internal fun SpeechLoadingState(failure: String?) {
     if (failure != null) {
@@ -86,7 +86,7 @@ internal fun SpeechLoadingState(failure: String?) {
     }
 }
 
-/** 卡片内的表单字段块，与 Provider 配置页使用同一套内边距与字段间距。 */
+/** Для блоків полів форми на картці використовується той самий набір заповнення та інтервалів між полями, що й на сторінці конфігурації постачальника.*/
 @Composable
 internal fun SpeechFieldColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
@@ -132,7 +132,7 @@ internal fun SpeechField(
     )
 }
 
-/** 页面底部的保存主按钮与结果反馈，对齐 Provider 配置页的操作分层。 */
+/** Основна кнопка збереження та відгук про результати внизу сторінки узгоджуються з ієрархією операцій на сторінці конфігурації постачальника.*/
 @Composable
 internal fun SpeechSaveBlock(store: SpeechSettingsStore, validate: () -> Unit) {
     Column(

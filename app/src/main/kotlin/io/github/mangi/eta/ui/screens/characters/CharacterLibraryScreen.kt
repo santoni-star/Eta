@@ -60,14 +60,14 @@ internal fun CharacterLibraryScreen(
         onNavigate(AppRoute.CharacterEditor())
     }
     MiuixScaffoldPage(
-        title = "角色",
+        title = "рігколір",
         onBack = onBack,
         actions = {
             IconButton(onClick = importCard, enabled = !store.busy) {
-                Icon(Icons.Rounded.FileUpload, contentDescription = "导入角色卡")
+                Icon(Icons.Rounded.FileUpload, contentDescription = "керівництвовведітьрігколіркартка")
             }
             IconButton(onClick = createCharacter, enabled = !store.busy) {
-                Icon(Icons.Rounded.Add, contentDescription = "创建角色")
+                Icon(Icons.Rounded.Add, contentDescription = "створитивстановитирігколір")
             }
         },
     ) {
@@ -77,7 +77,7 @@ internal fun CharacterLibraryScreen(
                     .fillMaxWidth()
                     .padding(horizontal = CharacterCardPadding)
                     .padding(top = 4.dp, bottom = 12.dp),
-                // 去掉组件自带的横向内边距，让搜索框与下方卡片左右对齐。
+                // Видаліть горизонтальну прокладку, яка постачається з компонентом, і вирівняйте поле пошуку ліворуч і праворуч із карткою нижче.
                 insideMargin = DpSize(0.dp, 0.dp),
                 expanded = false,
                 onExpandedChange = {},
@@ -88,7 +88,7 @@ internal fun CharacterLibraryScreen(
                         onSearch = { store.query = it },
                         expanded = false,
                         onExpandedChange = {},
-                        label = "搜索名称或标签",
+                        label = "пошукОтженазвасказатиабознакзнак",
                     )
                 },
                 content = {},
@@ -108,18 +108,18 @@ internal fun CharacterLibraryScreen(
             store.characters.isEmpty() -> {
                 item(key = "empty-library") {
                     ListEmptyState(
-                        title = "还没有角色",
-                        summary = "创建一个角色，或导入 PNG、JSON 角色卡开始对话",
+                        title = "поверненнябезматирігколір",
+                        summary = "створитивстановитиодиніндивідуальнийрігколір，абокерівництвовведіть PNG、JSON рігколіркарткаВІДЧИНЕНОпочатокправильноговорити",
                         icon = Icons.Rounded.TheaterComedy,
                         action = {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 EtaTextButton(
-                                    text = "恢复默认角色",
+                                    text = "відновитискладнімовчазнийрозпізнатирігколір",
                                     onClick = { store.restoreDefaultCharacter() },
                                     enabled = !store.busy,
                                 )
                                 EtaTextButton(
-                                    text = "创建角色",
+                                    text = "створитивстановитирігколір",
                                     onClick = createCharacter,
                                     colors = ButtonDefaults.textButtonColorsPrimary(),
                                 )
@@ -131,15 +131,15 @@ internal fun CharacterLibraryScreen(
             store.filteredCharacters.isEmpty() -> {
                 item(key = "empty-search") {
                     ListEmptyState(
-                        title = "没有找到匹配的角色",
-                        summary = "换个关键词试试，搜索会匹配名称与标签",
+                        title = "безматиспробуйте знайтиприбутиматчматчзрігколір",
+                        summary = "Змінаіндивідуальнийзакритиключсловоспробуватиспробувати，пошукОтжезасіданняматчматчназвасказатиізнакзнак",
                         icon = Icons.Rounded.SearchOff,
                     )
                 }
             }
         }
-        // 两列竖版卡片：每行一个 Lazy 项，长列表仍按行组合。未搜索时末尾追加一张新建卡，
-        // 既补齐单数时的空位，也让创建与导入在网格中就近可达。
+        // Два стовпці вертикальних карток: по одному ледачому елементу на рядок, довгі списки все ще згруповані в рядки. Якщо пошук не здійснюється, нова картка додається в кінці.
+        // Це не тільки заповнює прогалини в непарних числах, але також робить створення та імпорт доступними в сітці.
         val showAddTile = store.query.isBlank() && store.characters.isNotEmpty()
         val tiles: List<CharacterProfile?> = store.filteredCharacters + if (showAddTile) listOf(null) else emptyList()
         val rows = tiles.chunked(2)
@@ -171,13 +171,13 @@ internal fun CharacterLibraryScreen(
                 if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
-        item(key = "persona-title") { EtaPreferenceGroupTitle("我的") }
+        item(key = "persona-title") { EtaPreferenceGroupTitle("яз") }
         item(key = "persona") {
             EtaPreferenceGroup {
                 EtaArrowPreference(
-                    title = "我的人设",
+                    title = "язлюдейналаштувати",
                     startAction = { EtaPreferenceIcon(Icons.Rounded.Face, tint = EtaPreferenceColors.Blue) },
-                    summary = "角色对你的称呼与你在故事中的身份",
+                    summary = "рігколірправильновизсказативикликівиіснуютьтомурічсерединазтілочастка",
                     onClick = { onNavigate(AppRoute.CharacterPersona) },
                 )
             }

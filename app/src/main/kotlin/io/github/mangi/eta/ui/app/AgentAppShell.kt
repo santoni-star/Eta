@@ -74,12 +74,12 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowListPopup
 
 /**
- * Agent App 统一壳层。
+ * Уніфікована оболонка Agent App.
  *
- * - 负责全局 Scaffold、状态栏/横向安全边距、顶层工具栏。
- * - 首页工具栏只保留历史入口与溢出菜单，保持聊天舞台干净。
- * - 非首页子路由统一提供返回按钮与标题，避免每个页面各自像独立设置页。
- * - Settings 由标准二级页骨架自己提供 TopAppBar，壳层在此路由不重复绘制。
+ * - Відповідає за глобальний каркас, рядок стану/горизонтальний запас безпеки та панель інструментів верхнього рівня.
+ * - Панель інструментів домашньої сторінки зберігає лише історичні записи та додаткове меню, щоб підтримувати чат у чистоті.
+ * - Підмаршрути недомашньої сторінки однаково надають кнопки повернення та заголовки, щоб кожна сторінка не виглядала як незалежна сторінка налаштувань.
+ * - Параметри надаються самим стандартним скелетом вторинної сторінки TopAppBar, і шар оболонки не малюється повторно в цьому маршруті.
  */
 @Composable
 internal fun AgentAppShell(
@@ -215,7 +215,7 @@ private fun AgentTopBar(
                         contentDescription = stringResource(R.string.action_conversation_history),
                     )
                 }
-                // 角色对话的身份标识放在顶栏左侧，点按进入角色详情；普通对话保持空标题。
+                // Ідентичність діалогу персонажа розміщена зліва на верхній панелі. Натисніть, щоб ввести деталі персонажа; заголовок звичайного діалогу залишається порожнім.
                 homeCharacter?.let { character ->
                     CharacterTopBarIdentity(character = character, onClick = onOpenCharacter)
                 }
@@ -239,8 +239,8 @@ private fun AgentTopBar(
         }
     }
 
-    // 首页聊天舞台与终端这类整屏工具页没有可驱动折叠的滚动列表，大标题会一直展开、
-    // 白占一屏顶部；它们使用紧凑标题，其余二级内容页统一使用可折叠大标题。
+    // Повноекранні сторінки інструментів, такі як етап чату на домашній сторінці та термінал, не мають списку прокручування, який можна згорнути. Велика назва завжди розширюватиметься.
+    // Білий простір займає верхню частину екрана; вони використовують компактні заголовки, а решта сторінок вторинного вмісту використовують великі заголовки, що згортаються.
     val compactTitle = isHome || route is AppRoute.Terminal
     if (compactTitle) {
         SmallTopAppBar(
@@ -264,8 +264,8 @@ private fun AgentTopBar(
 private val TopBarMenuIconSize = 20.dp
 
 /**
- * 首页顶栏溢出菜单。WindowListPopup 以父布局为锚点，因此与触发按钮包在同一个 Box 中，
- * 弹层从按钮下方右对齐展开。
+ * Додаткове меню у верхній панелі домашньої сторінки. WindowListPopup прив’язаний до батьківського макета, тому він загорнутий у той самий блок, що й кнопка запуску.
+ * Спливаючий шар вирівнюється та розгортається від нижньої частини кнопки.
  */
 @Composable
 private fun TopBarOverflowMenu(
@@ -425,11 +425,11 @@ private fun titleForRoute(route: AppRoute?): String = when (route) {
     is AppRoute.WebToolsSettings -> stringResource(R.string.web_tools_settings_title)
     is AppRoute.Skills -> stringResource(R.string.route_skills)
     is AppRoute.Subagents -> "Subagent"
-    is AppRoute.Characters -> "角色"
-    is AppRoute.CharacterDetail -> "角色详情"
-    is AppRoute.CharacterEditor -> "编辑角色"
-    is AppRoute.CharacterPersona -> "我的人设"
-    is AppRoute.CharacterMemory -> "剧情记忆"
+    is AppRoute.Characters -> "рігколір"
+    is AppRoute.CharacterDetail -> "рігколірдокладноПрихильність"
+    is AppRoute.CharacterEditor -> "компілюватиредагуватирігколір"
+    is AppRoute.CharacterPersona -> "язлюдейналаштувати"
+    is AppRoute.CharacterMemory -> "драмаПрихильністьзапам'ятативідкликати"
     is AppRoute.Permissions -> stringResource(R.string.route_permissions)
     is AppRoute.SystemEnhance -> stringResource(R.string.route_system_enhancements)
     is AppRoute.Settings -> stringResource(R.string.route_settings)
@@ -445,8 +445,8 @@ private fun titleForRoute(route: AppRoute?): String = when (route) {
     is AppRoute.SharedFolders -> stringResource(R.string.route_shared_folders)
     is AppRoute.LinuxFiles -> stringResource(R.string.route_linux_files)
     is AppRoute.ModelProviders -> stringResource(R.string.route_model_providers)
-    is AppRoute.CommunityCatalog -> "从目录添加"
-    is AppRoute.CommunityCatalogProvider -> "选择模型"
+    is AppRoute.CommunityCatalog -> "відГоловазаписдодатидодати"
+    is AppRoute.CommunityCatalogProvider -> "вибративибратицвільтипу"
     is AppRoute.McpServers -> stringResource(R.string.route_mcp_servers)
     is AppRoute.McpServerDetail -> stringResource(R.string.route_mcp_server_detail)
     is AppRoute.ModelProviderDetail -> stringResource(R.string.route_provider_details)

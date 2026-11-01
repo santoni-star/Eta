@@ -88,8 +88,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     ): JSONObject {
         val systemParts = mutableListOf<String>()
         val anthropicMessages = JSONArray()
-        // 当前轮（最后一条真实用户消息之后）的助手消息都原样带回签名块：工具循环中逐轮保持
-        // 同一前缀，缓存才能在每一轮续用；更早轮次统一去掉思考，形态在各轮之间同样稳定。
+        // Повідомлення помічника в поточному раунді (після останнього реального повідомлення користувача) повертаються до блоку підписів як є: зберігаються цикл за раундом у циклі інструментів.
+        // Тільки з тим самим префіксом можна продовжувати кеш у кожному раунді; якщо мислення рівномірно видаляється в попередніх раундах, форма буде однаково стабільною між раундами.
         val currentTurnStart = (messages.length() - 1 downTo 0).firstOrNull { index ->
             messages.optJSONObject(index)?.let { it.optString("role") == "user" && !it.optBoolean("_eta_observation") } == true
         } ?: -1
@@ -150,8 +150,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     }
 
     /**
-     * Anthropic 只缓存显式标记的前缀。工具目录与系统提示各设一个断点，跨会话复用；
-     * 最后一条消息再设一个随轮前移的断点，下一轮按最长匹配前缀读取，覆盖整个工具循环。
+     * Anthropic кешує лише явно позначені префікси. Встановіть точку зупинки в каталозі інструментів і системні підказки для повторного використання в сесіях;
+     * Встановіть точку зупинки для останнього повідомлення, яке просувається вперед із раундом. Наступний раунд читатиметься на основі найдовшого відповідного префікса, що охоплює весь цикл інструменту.
      */
     private fun cacheBreakpoint(block: JSONObject): JSONObject =
         block.put("cache_control", JSONObject().put("type", "ephemeral"))
@@ -159,7 +159,7 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     private fun markConversationBreakpoint(messages: JSONArray) {
         val content = messages.optJSONObject(messages.length() - 1)?.optJSONArray("content") ?: return
         val blocks = (0 until content.length()).mapNotNull(content::optJSONObject)
-        // 观察截图只活一轮，断点落在它之前才能被下一轮命中；思考块不可标记，空文本标记会被拒绝。
+        // Скріншоти спостереження живуть лише протягом одного раунду, а контрольна точка падає перед ним, перш ніж її можна буде досягти в наступному раунді; блоки мислення не можна позначати, а порожні текстові позначки будуть відхилені.
         val target = blocks.lastOrNull { block ->
             !block.optBoolean(TRANSIENT_BLOCK) && when (block.optString("type")) {
                 "text" -> block.optString("text").isNotEmpty()
@@ -168,7 +168,7 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
             }
         }
         target?.let(::cacheBreakpoint)
-        // 标记只服务于选断点，发送前从所有消息中清除。
+        // Позначки обслуговують лише вибрані точки зупину та видаляються з усіх повідомлень перед надсиланням.
         for (message in 0 until messages.length()) {
             val blocksOfMessage = messages.optJSONObject(message)?.optJSONArray("content") ?: continue
             for (block in 0 until blocksOfMessage.length()) blocksOfMessage.optJSONObject(block)?.remove(TRANSIENT_BLOCK)
@@ -176,8 +176,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     }
 
     /**
-     * 同一批工具结果、随后的观察图片与用户补充必须落在同一条 user 消息里，且 tool_result 在前。
-     * 官方接口会合并连续同角色消息，但兼容端点不一定这样做，会把第二条 tool_result 判为孤立块。
+     * Той самий пакет результатів інструменту, наступні зображення спостережень і додатки користувача повинні входити в те саме повідомлення користувача, а tool_result стоїть першим.
+     * Офіційний інтерфейс об’єднає послідовні повідомлення з тією самою роллю, але сумісна кінцева точка може цього не зробити, і другий tool_result вважатиметься блоком, що не працює.
      */
     private fun appendTurn(target: JSONArray, role: String, content: JSONArray) {
         val previous = target.optJSONObject(target.length() - 1)
@@ -260,8 +260,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     }
 
     /**
-     * input_schema 顶层不接受 oneOf/anyOf/allOf，否则整个请求 400。只在发送副本上移除；
-     * 参数交给对应工具执行，执行结果随工具回合返回模型。
+     * Верхній рівень input_schema не приймає oneOf/anyOf/allOf, інакше весь запит матиме значення 400. Видалити лише під час надсилання копії;
+     * Параметри передаються відповідному інструменту для виконання, а результати виконання повертаються до моделі разом із інструментом.
      */
     private fun inputSchema(parameters: JSONObject?): JSONObject {
         parameters ?: return JSONObject().put("type", "object")
@@ -320,15 +320,15 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
             }
             !sawMessageStop
         }
-        if (!sawMessageStop) throw AgentModelFailure.incompleteStream("Anthropic SSE 流未正常结束")
+        if (!sawMessageStop) throw AgentModelFailure.incompleteStream("Anthropic SSE потікще ніпросточастовузолпучок")
         if (blocks.values.any { it.type in setOf("text", "thinking", "redacted_thinking", "tool_use") && !it.stopped }) {
-            throw AgentModelFailure.incompleteStream("Anthropic SSE 内容块未正常结束")
+            throw AgentModelFailure.incompleteStream("Anthropic SSE ВсерединіДозволитишматокще ніпросточастовузолпучок")
         }
         val toolCalls = blocks.values
             .filter { it.type == "tool_use" && it.name.isNotBlank() }
             .sortedBy { it.index }
         if (toolCalls.isNotEmpty() && blocks.values.any { it.type == "thinking" && it.signature.isEmpty() }) {
-            throw AgentModelFailure.incompleteStream("Anthropic SSE 工具回合缺少思考签名")
+            throw AgentModelFailure.incompleteStream("Anthropic SSE працюватиІнструментповерненнякомбайнвідсутністьмалодумаюТестзнакназва")
         }
 
         return JSONObject()
@@ -396,7 +396,7 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
         return when (type) {
             "error" -> throw AgentModelFailure.stream(
                 json.optJSONObject("error") ?: JSONObject(),
-                "Anthropic SSE 返回错误",
+                "Anthropic SSE поверненняповерненнянеправильнопомилка",
             )
             "message_start" -> {
                 EventResult(usage = parseUsage(json.optJSONObject("message")?.optJSONObject("usage")))
@@ -558,8 +558,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     )
 
     /**
-     * Anthropic 不返回 total_tokens；本次请求实际占用的上下文是未缓存输入与缓存读写之和，
-     * 自动压缩与输入框用量都以它为准。
+     * Anthropic не повертає total_tokens; фактичний контекст, який займає цей запит, є сумою некешованого введення та кешованого читання та запису.
+     * Автоматичне стиснення та використання поля введення залежать від цього.
      */
     private fun parseUsage(usage: JSONObject?): AgentTokenUsage? {
         usage ?: return null
@@ -576,8 +576,8 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
     }
 
     /**
-     * message_start 给出输入用量，message_delta 给出累计输出，部分兼容端点只在 delta 中补发部分字段；
-     * 后到的非空字段覆盖先到的，避免输出用量把输入与上下文占用清空。
+     * message_start дає дані про використання вхідних даних, message_delta дає кумулятивний вихід, а деякі сумісні кінцеві точки лише повторно видають деякі поля в дельті;
+     * Непорожні поля, які надходять пізніше, перезаписують ті, які надходять першими, щоб запобігти використанню вихідних даних для очищення введення та зайнятості контексту.
      */
     private fun AgentTokenUsage.mergedWith(later: AgentTokenUsage) = AgentTokenUsage(
         contextTokens = later.contextTokens ?: contextTokens,
@@ -612,7 +612,7 @@ internal object AnthropicMessagesProvider : AgentProviderClient {
 
 }
 
-/** 只在当前 Agent run 的工具回合保留 Anthropic 签名块；稳定会话 DTO 不序列化该字段。 */
+/** Зберігати блоки сигнатур Anthropic лише під час ходу інструменту для поточного запуску агента; DTO стабільного сеансу не серіалізують це поле.*/
 internal object AnthropicEphemeralState {
     private const val CONTENT_BLOCKS_KEY = "_eta_anthropic_content_blocks"
 

@@ -2,11 +2,11 @@ package io.github.mangi.eta.core
 
 private const val UNKNOWN_LOG_TOKEN = "unknown"
 
-/** 返回不会携带异常消息或运行时数据的稳定异常类型。 */
+/** Повертає стабільний тип винятку, який не містить повідомлень про винятки чи даних виконання.*/
 internal fun Throwable.safeLogType(): String =
     javaClass.simpleName.takeIf { it.isNotBlank() } ?: Throwable::class.java.simpleName
 
-/** 保留失败位置与原因类型，禁止异常消息、载荷或 suppressed 内容进入诊断日志。 */
+/** Зберігайте місце помилки та тип причини, а також забороняйте повідомлення про винятки, корисні навантаження або пригнічений вміст від входу в журнал діагностики.*/
 internal fun Throwable.safeStackTrace(): String = buildString {
     var failure: Throwable? = this@safeStackTrace
     val visited = java.util.IdentityHashMap<Throwable, Boolean>()
@@ -27,10 +27,10 @@ internal fun Throwable.safeStackTrace(): String = buildString {
 }
 
 /**
- * 将外部或模型生成的标识约束为低基数、单行的日志 token。
+ * Обмеження зовнішніх або згенерованих моделлю маркерів однорядковими маркерами журналу з низькою кардинальністю.
  */
 internal fun String?.toSafeLogToken(maxLength: Int = 64): String {
-    require(maxLength > 0) { "maxLength 必须大于 0" }
+    require(maxLength > 0) { "maxLength повиненОбов'язкововеликийна 0" }
     val value = this ?: return UNKNOWN_LOG_TOKEN
     if (value.isEmpty() || value.length > maxLength) return UNKNOWN_LOG_TOKEN
     return value.takeIf { token ->

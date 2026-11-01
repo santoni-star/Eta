@@ -6,7 +6,7 @@ import java.io.InterruptedIOException
 import java.net.ProtocolException
 import javax.net.ssl.SSLException
 
-/** Provider 边界只分类失败；重试预算与上下文由 Loop 持有。 */
+/** Межі постачальника лише класифікують невдачі; бюджет повторної спроби та контекст утримуються Loop.*/
 internal class AgentModelFailure(
     val code: String,
     val retryable: Boolean,
@@ -34,25 +34,25 @@ internal class AgentModelFailure(
             }
             authenticationFailure(error)?.let { return it }
             if (isContextOverflow(error)) return AgentModelFailure(
-                "CONTEXT_OVERFLOW", false, "模型上下文超过容量限制。",
+                "CONTEXT_OVERFLOW", false, "цвільтипуначальникавнизмистецтваобганятиПасДозволитикількістьобмеженнясистема。",
             )
             val permanent = isPermanent(error, body)
             if (status == 400 && includeParameterDetails && !permanent) {
                 ProviderParameterDiagnostics.describe(error)?.let { details ->
-                    return AgentModelFailure("HTTP_400", false, "模型请求参数无效（HTTP 400；$details），请检查模型配置。")
+                    return AgentModelFailure("HTTP_400", false, "цвільтипубудь ласкапроситиженьшеньномернемаєефект（HTTP 400；$details），будь ласкаперевіритиперевіритицвільтипуматчвстановити。")
                 }
             }
             return AgentModelFailure(
                 code = "HTTP_$status",
                 retryable = status in transientStatus && !permanent,
-                message = if (permanent) "模型接口额度或计费受限（HTTP $status），请检查服务商账户。"
+                message = if (permanent) "цвільтипузловитиротЛобвитрачатиаборозраховуватигонорарзаобмеження（HTTP $status），будь ласкаперевіритиперевіритиОдягобслуговуваннябізнесрахунокпобутові。"
                 else when (status) {
-                    400 -> "模型请求参数无效（HTTP 400），请检查模型配置。"
-                    401 -> "模型接口认证失败（HTTP 401），请检查 API Key。"
-                    403 -> "模型接口拒绝访问（HTTP 403），请检查账户与模型权限。"
-                    404 -> "模型接口或模型不存在（HTTP 404），请检查接口地址与模型名称。"
-                    429 -> "模型接口暂时限流（HTTP 429）。"
-                    else -> "模型接口返回 HTTP $status"
+                    400 -> "цвільтипубудь ласкапроситиженьшеньномернемаєефект（HTTP 400），будь ласкаперевіритиперевіритицвільтипуматчвстановити。"
+                    401 -> "цвільтипузловитиротрозпізнатисертифікатвтратитипоразка（HTTP 401），будь ласкаперевіритиперевірити API Key。"
+                    403 -> "цвільтипузловитиротвідхилитиАбсолютновідвідатизапитати（HTTP 403），будь ласкаперевіритиперевіритирахунокпобутовііцвільтипуправильнообмеження。"
+                    404 -> "цвільтипузловитиротабоцвільтипунемаєжитиіснують（HTTP 404），будь ласкаперевіритиперевіритизловитиротземлісайтіцвільтипуназвасказати。"
+                    429 -> "цвільтипузловитироттимчасовогодинаобмеженняпотік（HTTP 429）。"
+                    else -> "цвільтипузловитиротповерненняповернення HTTP $status"
                 },
             )
         }
@@ -60,7 +60,7 @@ internal class AgentModelFailure(
         fun stream(error: JSONObject, message: String): AgentModelFailure {
             authenticationFailure(error)?.let { return it }
             if (isContextOverflow(error)) return AgentModelFailure(
-                "CONTEXT_OVERFLOW", false, "模型上下文超过容量限制。",
+                "CONTEXT_OVERFLOW", false, "цвільтипуначальникавнизмистецтваобганятиПасДозволитикількістьобмеженнясистема。",
             )
             val codes = listOf(
                 error.optString("code"),
@@ -82,12 +82,12 @@ internal class AgentModelFailure(
             is AgentModelFailure -> failure
             is InterruptedIOException -> AgentModelFailure(
                 "MODEL_TIMEOUT", true,
-                "模型请求等待超时（连接或写入超时，或读取响应等待超过 ${AgentHttpClient.MODEL_READ_TIMEOUT_MS / 60_000} 分钟）。",
+                "цвільтипубудь ласкапроситичекатилікуватиобганятигодина（навітьзловитиабоНапишітьвведітьобганятигодина，абочитатиВиберітькільцевідповідьчекатилікуватиобганятиПас ${AgentHttpClient.MODEL_READ_TIMEOUT_MS / 60_000} точкадзвоник）。",
                 failure,
             )
             is SSLException, is ProtocolException -> null
             is IOException -> AgentModelFailure(
-                "MODEL_CONNECTION_FAILED", true, "模型连接中断或暂时无法建立，请检查网络与服务商状态。", failure,
+                "MODEL_CONNECTION_FAILED", true, "цвільтипунавітьзловитисерединаперервааботимчасовогодинанемаєЗаконвстановитистояти，будь ласкаперевіритиперевіритичистиймережііОдягобслуговуваннябізнесформустан。", failure,
             )
             else -> null
         }
@@ -110,7 +110,7 @@ internal class AgentModelFailure(
                 details?.optJSONObject(index)?.optString("reason") in invalidApiKeyReasons
             }
             return if (invalidKey || error.optString("status") == "UNAUTHENTICATED") {
-                AgentModelFailure("PROVIDER_AUTH_FAILED", false, "模型接口认证失败，请检查 API Key。")
+                AgentModelFailure("PROVIDER_AUTH_FAILED", false, "цвільтипузловитиротрозпізнатисертифікатвтратитипоразка，будь ласкаперевіритиперевірити API Key。")
             } else null
         }
 

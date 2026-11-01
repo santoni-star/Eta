@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.device
 
-/** 从 dumpsys window 中提取精确前台包，避免 `contains` 把相似包名判成同一 App。 */
+/** Витягніть точний інтерфейсний пакунок із вікна dumpsys, щоб уникнути оцінки «містить» імен пакетів, подібних до тієї самої програми.*/
 internal object FocusedWindowParser {
     data class Result(
         val packageName: String,

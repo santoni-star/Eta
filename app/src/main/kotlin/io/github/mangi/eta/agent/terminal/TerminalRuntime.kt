@@ -11,7 +11,7 @@ internal enum class LinuxExecutionBackend(val wireName: String) {
     PROOT("proot"),
 }
 
-/** App 进程的终端运行条件；读取能力不会触发 su 授权。 */
+/** Термінальні умови роботи процесу програми; можливість читання не активує авторизацію su.*/
 internal object TerminalRuntime {
     const val ROOT_WORKSPACE_PATH = "/data/local/tmp/eta"
     const val LINUX_WORKSPACE_PATH = "/workspace"

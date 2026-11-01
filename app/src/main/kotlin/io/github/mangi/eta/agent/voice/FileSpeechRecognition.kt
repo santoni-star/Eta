@@ -19,7 +19,7 @@ internal suspend fun recognizeSpeechFile(context: Context, settings: SpeechSetti
     withTimeout(300_000) {
         val base = speechBaseUrl(settings.qwenAsr.endpoint())
         if (settings.asr == AsrProvider.QWEN_FLASH) {
-            onProgress("正在识别")
+            onProgress("простоіснуютьзнанняне треба")
             val options = JSONObject().put("enable_itn", true)
             settings.language.takeIf(String::isNotBlank)?.let { options.put("language", it) }
             val body = JSONObject().put("model", "qwen3-asr-flash").put("stream", false)
@@ -30,7 +30,7 @@ internal suspend fun recognizeSpeechFile(context: Context, settings: SpeechSetti
             val response = SpeechHttp.json(SpeechHttp.jsonRequest("$base/compatible-mode/v1/chat/completions", credentials.qwenAsr, body).build())
             response.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim()
         } else {
-            onProgress("正在上传录音")
+            onProgress("простоіснуютьначальникапропускзаписзвук")
             SpeechOssUpload(context).withAudio(settings.oss, credentials, wav) { audioUrl ->
                 val parameters = JSONObject().put("channel_id", JSONArray().put(0)).put("enable_itn", true)
                 settings.language.takeIf(String::isNotBlank)?.let { parameters.put("language", it) }
@@ -39,8 +39,8 @@ internal suspend fun recognizeSpeechFile(context: Context, settings: SpeechSetti
                 val submitted = SpeechHttp.json(SpeechHttp.jsonRequest("$base/api/v1/services/audio/asr/transcription",
                     credentials.qwenAsr, body).header("X-DashScope-Async", "enable").build())
                 val task = submitted.getJSONObject("output").getString("task_id")
-                if (!Regex("[A-Za-z0-9_-]+").matches(task)) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "文件转写任务编号无效")
-                onProgress("正在等待文件转写，可随时取消")
+                if (!Regex("[A-Za-z0-9_-]+").matches(task)) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "мистецтваштукзмінитиНапишітьпризначитиобслуговуваннякомпілюватиНомернемаєефект")
+                onProgress("простоіснуютьчекатилікуватимистецтваштукзмінитиНапишіть，можеСлідуйтегодинаВиберітьвидалити")
                 while (true) {
                     delay(1500)
                     val result = SpeechHttp.json(Request.Builder().url("$base/api/v1/tasks/$task")
@@ -50,12 +50,12 @@ internal suspend fun recognizeSpeechFile(context: Context, settings: SpeechSetti
                         "SUCCEEDED" -> {
                             val url = result.getJSONObject("result").getString("transcription_url")
                                 .toHttpUrl().newBuilder().scheme("https").build()
-                            // 下载签名结果链接时不附带百炼认证，避免凭据随跨域请求外传。
+                            // Сертифікація Bailian не включається під час завантаження посилання результату підпису, щоб запобігти передачі облікових даних із міждоменними запитами.
                             val transcription = SpeechHttp.json(Request.Builder().url(url).build())
                             return@withAudio fileTranscript(transcription)
                         }
-                        "FAILED", "CANCELED", "UNKNOWN" -> throw SpeechFailure(SpeechErrorCode.SERVER, "千问文件转写失败，请检查服务权限")
-                        else -> throw SpeechFailure(SpeechErrorCode.PROTOCOL, "文件转写返回未知任务状态")
+                        "FAILED", "CANCELED", "UNKNOWN" -> throw SpeechFailure(SpeechErrorCode.SERVER, "тисячізапитатимистецтваштукзмінитиНапишітьвтратитипоразка，будь ласкаперевіритиперевіритиОдягобслуговуванняправильнообмеження")
+                        else -> throw SpeechFailure(SpeechErrorCode.PROTOCOL, "мистецтваштукзмінитиНапишітьповерненняповерненняще нізнатипризначитиобслуговуванняформустан")
                     }
                 }
                 @Suppress("UNREACHABLE_CODE")

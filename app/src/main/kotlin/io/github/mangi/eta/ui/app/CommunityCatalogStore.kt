@@ -25,7 +25,7 @@ internal class CommunityCatalogViewModel(application: Application) : AndroidView
     val store = CommunityCatalogStore(application, viewModelScope)
 }
 
-/** 目录浏览页和模型选择页共用同一份已读取数据，避免导航时重新请求。 */
+/** Сторінка перегляду каталогу та сторінка вибору моделі мають однакові дані для читання, щоб уникнути повторного запиту під час навігації.*/
 internal class CommunityCatalogStore(
     context: Context,
     private val scope: CoroutineScope,
@@ -92,7 +92,7 @@ internal class CommunityCatalogStore(
     }
 
     suspend fun importProvider(provider: CommunityCatalogProvider, modelIds: Set<String>): String {
-        check(!importing) { "目录导入正在进行" }
+        check(!importing) { "ГоловазапискерівництвовведітьпростоіснуютьВведітьдобре" }
         importing = true
         try {
             val added = ProviderRepository.addProvider(
@@ -135,19 +135,19 @@ internal class CommunityCatalogStore(
     }
 
     private fun Throwable.catalogErrorMessage(): String {
-        val status = Regex("^目录更新失败：HTTP ([0-9]{3})$")
+        val status = Regex("^ГоловазаписНавітьновийвтратитипоразка：HTTP ([0-9]{3})$")
             .matchEntire(message.orEmpty())
             ?.groupValues
             ?.get(1)
         return when {
-            status != null -> "目录服务返回 HTTP $status"
-            this is SocketTimeoutException -> "连接目录服务超时"
-            this is UnknownHostException -> "无法解析目录服务地址"
-            this is SSLException -> "目录服务安全连接失败"
-            message == "模型目录超出大小限制" -> "目录文件超出大小限制"
-            this is org.json.JSONException || this is IllegalArgumentException -> "目录格式无效"
-            this is IOException -> "网络连接或本地缓存写入失败"
-            else -> "更新失败，请稍后重试"
+            status != null -> "ГоловазаписОдягобслуговуванняповерненняповернення HTTP $status"
+            this is SocketTimeoutException -> "навітьзловитиГоловазаписОдягобслуговуванняобганятигодина"
+            this is UnknownHostException -> "немаєЗаконрозв'язатианалізуватиГоловазаписОдягобслуговуванняземлісайт"
+            this is SSLException -> "ГоловазаписОдягобслуговуваннявстановитиПовнийнавітьзловитивтратитипоразка"
+            message == "цвільтипуГоловазаписобганятипозавеликийМаленькийобмеженнясистема" -> "ГоловазаписмистецтваштукобганятипозавеликийМаленькийобмеженнясистема"
+            this is org.json.JSONException || this is IllegalArgumentException -> "ГоловазаписсіткаРежимнемаєефект"
+            this is IOException -> "чистиймережінавітьзловитиабокнигаземліповільнийжитиНапишітьвведітьвтратитипоразка"
+            else -> "Навітьновийвтратитипоразка，будь ласкатрохиназадВажкаспробувати"
         }
     }
 }

@@ -130,8 +130,8 @@ internal object AgentModelClient {
         )
         if (rewriteReply) {
             messages.put(messages.length() - 1, AgentConversationCodec.userTextMessage(
-                "请只改写下面这条角色回复，保持已有事实与实际工具结果，以当前角色设定改善表达。" +
-                    "这不是重新执行任务；不得调用任何工具、重读设备、更新记忆或编造缺失证据。只输出替代正文。\n" +
+                "будь ласкаТількизмінитиНапишітьвнизлокшинацесмужкарігколірповерненняскладні，зберегтиутримувативжематирічРеальністьіРеальністьміжнароднийпрацюватиІнструментвузолфрукти，заколивпередрігколірналаштуватиЗвичайнозмінитидобреповерхнідосяжність。" +
+                    "ценемаєтакВажкановийВиконатидобрепризначитиобслуговування；немаєповиннімелодіявикористовуватипризначитищопрацюватиІнструмент、ВажкачитатиналаштуватиПриготуйте、Навітьновийзапам'ятативідкликатиабокомпілюватизробитивідсутністьвтратитисертифікатвідповідно до。Тількивтратитипозадляпоколінняпростомистецтва。\n" +
                     "<reply_to_rewrite>\n$prompt\n</reply_to_rewrite>",
             ))
         } else if (!compactOnly) {
@@ -143,7 +143,7 @@ internal object AgentModelClient {
         }
         if (compactOnly) messages.remove(messages.length() - 1)
         val transcript = JSONArray()
-        // 旧 history 中的无效消息可能在组装时被跳过，系统边界不能由 history 条数倒推。
+        // Недійсні повідомлення в старій історії можуть бути пропущені під час збирання, а межі системи не можна визначити за кількістю записів історії.
         val systemCount = AgentPromptBuilder.buildSystemMessages(
             config, skillContext, memoryContext, initialCapabilities.rootAvailable, roleplayContext, executionContext,
         ).length()
@@ -176,8 +176,8 @@ internal object AgentModelClient {
                 terminalTools = config.terminalTools
             )
         )
-        // 工具目录与系统提示都是请求前缀，按轮重算会让一次瞬时状态抖动废掉整段缓存。
-        // Root 授权真正变化时整体重建；其余能力只增不减：短暂不可用的工具仍保留，执行时自行报告错误码。
+        // Каталог інструментів і системні підказки є префіксами запитів, і циклічний перерахунок спричинить тремтіння тимчасового стану, щоб знищити весь кеш.
+        // Коренева авторизація повністю перебудовується, коли коренева авторизація фактично змінюється; інші можливості лише збільшуються: інструменти, які тимчасово недоступні, все ще зберігаються, а коди помилок повідомляються самостійно під час виконання.
         var promptRootAvailable = initialCapabilities.rootAvailable
         var publishedTools = tools
         fun toolsForRound(): JSONArray {
@@ -213,8 +213,8 @@ internal object AgentModelClient {
             messages = messages,
             tools = tools,
             provider = provider,
-            // 目录在运行内只增不减，可见不再等于可用：执行前用同一规则复核，
-            // 中途失去的能力返回与目录过滤一致的错误码，而不是让底层接口给出含糊的失败。
+            // Під час роботи каталог тільки збільшується, але не зменшується. Видимість більше не означає доступність: використовуйте те саме правило для перегляду перед виконанням.
+            // Можливість втратити на півдорозі повертає код помилки, що відповідає фільтруванню каталогу, замість того, щоб базовий інтерфейс видавав неоднозначну помилку.
             toolExecutor = AgentModelClient.ToolExecutor { call ->
                 val unavailable = AgentToolRequirements.find(call.name)
                     ?.let { capabilitiesProvider().unavailableCode(call.name) }
@@ -223,7 +223,7 @@ internal object AgentModelClient {
                 } else {
                     ToolResult(
                         JSONObject().put("ok", false).put("code", unavailable)
-                            .put("message", "该工具当前不可用（$unavailable），本次未执行").toString(),
+                            .put("message", "СлідпрацюватиІнструментколивпереднемаєможевикористовувати（$unavailable），книгаДругосортнийще ніВиконатидобре").toString(),
                     )
                 }
             },
@@ -267,24 +267,24 @@ internal object AgentModelClient {
         (0 until tools.length()).mapNotNullTo(mutableSetOf()) { toolName(tools.getJSONObject(it)) }
 
     private fun ModelConfig.validate() {
-        require(baseUrl.isNotBlank()) { "请先配置 API 地址" }
+        require(baseUrl.isNotBlank()) { "будь ласкапершематчвстановити API землісайт" }
         when {
-            authMode == ProviderAuthModes.API_KEY -> require(apiKey.isNotBlank()) { "请先配置 API Key" }
+            authMode == ProviderAuthModes.API_KEY -> require(apiKey.isNotBlank()) { "будь ласкапершематчвстановити API Key" }
             ProviderAuthModes.isOAuth(authMode) -> {
-                require(providerId.isNotBlank()) { "账号登录缺少服务商标识，请重新选择服务商" }
-                require(apiKey.isEmpty()) { "账号登录配置不能包含 API Key" }
+                require(providerId.isNotBlank()) { "рахунокНомердошказаписвідсутністьмалоОдягобслуговуваннябізнесзнакзнання，будь ласкаВажкановийвибративибратиОдягобслуговуваннябізнес" }
+                require(apiKey.isEmpty()) { "рахунокНомердошказаписматчвстановитинемаєздатнийСумкаМістить API Key" }
             }
-            else -> error("不支持的服务商认证方式")
+            else -> error("немаєвідділенняутримуватизОдягобслуговуваннябізнесрозпізнатисертифікатплощіРежим")
         }
-        require(model.isNotBlank()) { "请先配置模型名" }
+        require(model.isNotBlank()) { "будь ласкапершематчвстановитицвільтипуназва" }
         require(
             reasoningCapabilities?.mandatory != true ||
                 effectiveReasoningEffort != ReasoningEffort.OFF
-        ) { "当前模型强制启用思考，不能选择 Off 或禁用思考权限" }
+        ) { "коливпередцвільтипупотужнийсистемапочатоквикористовуватидумаюТест，немаєздатнийвибративибрати Off абозаборонавикористовуватидумаюТестправильнообмеження" }
         if (extraBodyJson.isNotBlank()) {
             runCatching { JSONObject(extraBodyJson) }
                 .getOrElse { throwable ->
-                    error("额外请求体 JSON 无效：${throwable.message ?: throwable.javaClass.simpleName}")
+                    error("Лобназовнібудь ласкапросититіло JSON немаєефект：${throwable.message ?: throwable.javaClass.simpleName}")
                 }
         }
     }
@@ -348,7 +348,7 @@ internal object AgentModelClient {
         val effectiveReasoningEffort: ReasoningEffort
             get() = reasoningEffort ?: ReasoningEffort.fromLegacy(thinkingEnabled)
 
-        /** 未知窗口不阻断对话：只关闭依赖窗口的自动压缩，手动压缩与服务商溢出错误照常可用。 */
+        /** Невідомі вікна не блокують розмови: вимкнено лише автоматичне стиснення залежних вікон, все ще доступні ручне стиснення та помилки переповнення постачальника послуг.*/
         val knownContextWindow: Int?
             get() = contextWindow?.takeIf { it > 0 }
     }
@@ -382,14 +382,14 @@ internal object AgentModelClient {
         val content: String,
         val images: List<ModelImage> = emptyList(),
         /**
-         * 敏感结果仍会供当前 Agent loop 使用，但工具参数与原始结果不会进入持久会话。
-         * 最终 assistant 自己组织的答复不受此标记影响。
+         * Конфіденційні результати все ще будуть доступні для поточного циклу агента, але параметри інструментів і необроблені результати не потраплять у постійний сеанс.
+         * Цей прапорець не впливає на власні організовані відповіді помічника.
          */
         val sensitive: Boolean = false,
         val command: String? = null,
     )
 
-    /** 图片引用：入口侧可为本地 URI/路径，进入模型协议前必须解析为远程 URL 或 data URL。 */
+    /** Посилання на зображення: стороною входу може бути локальний URI/шлях, який має бути розв’язаний у віддалену URL-адресу або URL-адресу даних перед входом у протокол моделі.*/
     data class ModelImage(
         val reference: String,
         val mimeType: String,
@@ -397,7 +397,7 @@ internal object AgentModelClient {
         val width: Int? = null,
         val height: Int? = null,
         val source: String = "unknown",
-        /** 截图已具有可上传编码，跨进程物化时保留字节，不走附件转码。 */
+        /** Знімки екрана вже мають кодування, яке можна завантажити, байти зберігаються, коли матеріалізуються в різних процесах, а вкладення не перекодуються.*/
         val preserveOriginal: Boolean = false,
     )
 

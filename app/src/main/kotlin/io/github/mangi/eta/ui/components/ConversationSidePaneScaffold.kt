@@ -190,8 +190,8 @@ fun ConversationSidePaneScaffold(
             }
         }
 
-        // NavDisplay 的退出条目在转场期间仍会保留组合；仅允许已稳定显示的首页
-        // 处理侧栏返回，避免它抢先消费二级页面的第一次返回事件。
+        // Записи виходу NavDisplay залишаються згрупованими під час переходів; дозволені лише домашні сторінки зі стабілізованим відображенням
+        // Обробляйте повернення бічної панелі, щоб запобігти випереджаючому використанню першої події повернення додаткової сторінки.
         NavigationBackHandler(
             state = navigationEventState,
             isBackEnabled = isRevealed &&
@@ -204,7 +204,7 @@ fun ConversationSidePaneScaffold(
             modifier = Modifier.fillMaxSize()
                 .clipToBounds()
                 .background(conversationPaneContainerColor())
-                // 手势由共同容器拥有，侧栏和聊天舞台均可拖动；子级先处理滚动与选择。
+                // Жести належать спільному контейнеру, а бічну панель і сцену чату можна перетягувати; діти першими займаються прокручуванням і виділенням.
                 .anchoredDraggable(
                     state = paneDragState,
                     reverseDirection = false,
@@ -215,8 +215,8 @@ fun ConversationSidePaneScaffold(
                 ),
             contentAlignment = AbsoluteAlignment.TopLeft,
         ) {
-            // 两个槽位并排测量和放置，由同一位移推移；不在聊天内容下面叠放侧栏。
-            // 侧栏保留组合，避免每次起手重新创建列表和搜索框。
+            // Обидва слоти вимірюються та розташовуються поруч і штовхаються на однакове зміщення; не кладіть бічну панель під вміст чату.
+            // Бічна панель зберігає комбінацію, щоб уникнути кожного разу повторного створення списку та вікна пошуку.
             Layout(
                 modifier = Modifier.fillMaxSize(),
                 content = {
@@ -279,7 +279,7 @@ fun ConversationSidePaneScaffold(
                     Constraints.fixed(constraints.maxWidth, constraints.maxHeight),
                 )
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    // 物理左侧是会话区；不随 RTL 改变两个槽位的关系。
+                    // Фізична ліва сторона - це зона сеансу; зв'язок між двома слотами не змінюється з RTL.
                     val motion = conversationPaneMotion(paneDragState.offset, paneWidthPx)
                     val offset = motion.foregroundOffset.roundToInt()
                     panel.placeWithLayer(offset - panel.width, 0)

@@ -31,7 +31,7 @@ internal object RoleplayConversationReducer {
                 state.messages.filterIsInstance<AgentMessageUi>()
                     .filter { it.id == entry.messageId || it.id.startsWith("${entry.messageId}-") }
                     .forEachIndexed { index, message ->
-                        // 展示窗口可能从同批正文中间开始，既有块序号不能按窗口下标重新编号。
+                        // Вікно відображення може починатися з середини тієї самої групи тексту, і існуючі порядкові номери блоків не можна перенумерувати відповідно до індексу вікна.
                         links.putIfAbsent(message.id, RoleplayMessageLink(entry.messageId, index))
                     }
             }
@@ -82,7 +82,7 @@ internal object RoleplayConversationReducer {
             },
             roleplayMessages = state.roleplayMessages.copy(revisions = state.roleplayMessages.revisions + (id to revision)),
         )
-        // 编辑旧正文后从完整历史重建模型投影，原 journal 和真实工具批次保持不变。
+        // Проекція моделі реконструюється з повної історії після редагування старого тексту, а вихідний журнал і реальні партії інструментів залишаються незмінними.
         val history = projectJournal(updated) ?: return null
         return decorate(updated.copy(history = history))
     }
@@ -108,19 +108,19 @@ internal object RoleplayConversationReducer {
             val grouped = state.roleplayMessages.links.entries.groupBy { it.value.transcriptMessageId }
             val journal = state.journal.ifEmpty { state.history }
             if (journal.any { it.contextSummary }) add(ConversationMessage(
-                role = "system", content = "早期历史仅保留摘要；正文修订只应用于仍有原文的消息，不能恢复已缺失的历史。",
+                role = "system", content = "ранокОчікуйтекалендарісторіїтількизберегтиТримайтевибратихочуть；простомистецтвабудуватипорядокТількивідповідьвикористовуватинадосіматиОригіналмистецтвазвидалитиінтерес，немаєздатнийвідновитискладнівжевідсутністьвтратитизкалендарісторії。",
             ))
             journal.forEach { entry ->
                 val links = grouped[entry.messageId].orEmpty().sortedBy { it.value.blockOrder }
                 val changed = links.any { it.key in state.roleplayMessages.revisions }
                 if (!changed) add(entry) else {
                     val body = links.map { (id, _) ->
-                        // 缺失块意味着本轮投影无法完整重建，不能把剩余片段冒充完整正文。
+                        // Відсутні блоки означають, що проекцію епіциклу неможливо повністю реконструювати, а фрагменти, що залишилися, не можуть бути видані за повний текст.
                         state.messageContent(id) ?: return null
                     }.joinToString("\n\n")
                     if (entry.role == "user") add(ConversationMessage(
                         role = "system",
-                        content = "以下历史用户正文经用户修订；后续已有工具记录来自原请求，不能视为修订后请求已被执行。",
+                        content = "завнизкалендарісторіївикористовуватипобутовіпростомистецтвачерезвикористовуватипобутовібудуватипорядок；назадПродовженнявжематипрацюватиІнструментзапам'ятатизаписприходьоскількиОригіналбудь ласкапросити，немаєздатнийдивдлябудуватипорядокназадбудь ласкапроситивжековдраВиконатидобре。",
                     ))
                     add(entry.copy(content = body, contentJson = ""))
                 }
@@ -158,7 +158,7 @@ internal object RoleplayConversationReducer {
         val base = edited ?: state
         val messages = if (edited != null) base.messages else base.messages + SystemNoticeMessageUi(
             id = "rewrite-result-$runId", code = SystemNoticeCode.RuntimeFailed,
-            detail = result.error ?: "重新生成未完成，已保留原回复。",
+            detail = result.error ?: "Важкановийнародивсястатище нізакінченостати，вжезберегтиТримайтеОригіналповерненняскладні。",
         )
         return base.copy(
             messages = messages,

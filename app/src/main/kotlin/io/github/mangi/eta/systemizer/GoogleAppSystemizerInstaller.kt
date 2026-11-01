@@ -84,7 +84,7 @@ internal class GoogleAppSystemizerInstaller(
                     "Google App systemizer action=prepare outcome=failed " +
                         "errorType=${it.safeLogType()}"
                 )
-                return SystemizerInstallResult.Failed("模块资源准备失败")
+                return SystemizerInstallResult.Failed("цвільшматокКапіталджерелодозволяютьПриготуйтевтратитипоразка")
             }
 
         val command = buildInstallCommand(rootManager, moduleZip.absolutePath)
@@ -101,7 +101,7 @@ internal class GoogleAppSystemizerInstaller(
                     "rootManager=$rootManager exitCode=${result.exitCode} outputChars=${result.output.length}"
             )
             SystemizerInstallResult.Failed(
-                message = "模块安装失败",
+                message = "цвільшматоквстановитиупаковкавтратитипоразка",
                 commandOutput = result.output.takeLast(1200),
             )
         }
@@ -168,7 +168,7 @@ internal class GoogleAppSystemizerInstaller(
         if (!finished) {
             process.destroyForcibly()
             reader.join(1000)
-            return RootCommandResult(exitCode = -2, output = "命令执行超时")
+            return RootCommandResult(exitCode = -2, output = "життязробитиВиконатидобреобганятигодина")
         }
 
         reader.join(1000)

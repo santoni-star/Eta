@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.accessibility
 
-/** 按 Android 文本选区（UTF-16 offset）生成一次真实“键入”后的内容与光标位置。 */
+/** Створення вмісту та положення курсору після справжнього «набору тексту» відповідно до виділеного тексту Android (зсув UTF-16).*/
 internal object TextEditPlanner {
     data class Plan(
         val text: String,
@@ -16,7 +16,7 @@ internal object TextEditPlanner {
     ): Boolean {
         if (password || !textAvailable || textLength < 0) return false
         if (selectionStart in 0..textLength && selectionEnd in 0..textLength) return true
-        // 部分空输入控件以 -1 表示尚未创建光标；空文本仍只有插入点 0。
+        // Частково порожні елементи керування введенням позначені -1, щоб вказати, що курсор не було створено; порожній текст все ще має лише точку вставки 0.
         return textLength == 0 && selectionStart <= 0 && selectionEnd <= 0
     }
 

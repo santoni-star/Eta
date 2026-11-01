@@ -16,7 +16,7 @@ import io.github.mangi.eta.ui.components.EtaPreferenceGroup
 import io.github.mangi.eta.ui.components.EtaPreferenceGroupTitle
 import top.yukonga.miuix.kmp.basic.DropdownItem
 
-/** 播报音色：预设音色或自定义音色 ID。 */
+/** Тон сповіщення: попередньо встановлений тон або індивідуальний ідентифікатор тону.*/
 @Composable
 internal fun SpeechVoiceSection(store: SpeechSettingsStore) {
     val settings = store.settings

@@ -18,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Skills 管理页状态：列表、开关、删除与本地 ZIP 安装的二次确认流程。 */
+/** Статус сторінки керування навичками: список, перемикання, видалення та вторинний процес підтвердження для локального встановлення ZIP.*/
 internal class AgentSkillsStore(
     context: Context,
     private val scope: CoroutineScope,

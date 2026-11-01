@@ -5,29 +5,29 @@ import android.content.SharedPreferences
 import io.github.libxposed.service.XposedService
 
 /**
- * 模块配置中枢。
+ * Центр налаштування модулів.
  *
- * - Hook 进程（system_server / SystemUI / Google / 系统助手等）在模块加载时调用
- *   [attachRemote]，缓存框架提供的只读 [SharedPreferences]；之后所有拦截回调用 [isEnabled]
- *   读取当前进程持有的 remote preferences。
- * - Eta Runtime 自己消费的开关保存在 App 私有配置中，不依赖 Xposed Service。
- * - Hook 消费的开关通过 [remotePreferencesForUi] 写入 RemotePreferences；
- *   XposedService 未就绪时不提供本地假 fallback。
+ * - Процес підключення (system_server/SystemUI/Google/System Assistant тощо) викликається під час завантаження модуля
+ * [attachRemote], доступний лише для читання [SharedPreferences], наданий структурою кешу; усі наступні зворотні виклики перехоплення [isEnabled]
+ * Прочитати віддалені параметри поточного процесу.
+ * - Перемикачі, які використовує Eta Runtime, зберігаються в приватній конфігурації програми та не залежать від служби Xposed.
+ * - Перемикач, який використовує Hook, записується в RemotePreferences через [remotePreferencesForUi];
+ * Не забезпечує локальний хибний резерв, коли XposedService не готовий.
  *
- * 基于 libxposed API 102 的 [io.github.libxposed.api.XposedInterface.getRemotePreferences]
- * 与 service 102 的 [XposedService.getRemotePreferences]，两端共用同一 group。
+ * На основі libxposed API 102 [io.github.libxposed.api.XposedInterface.getRemotePreferences]
+ * За допомогою [XposedService.getRemotePreferences] служби 102 обидва кінці спільно використовують ту саму групу.
  */
 internal object Prefs {
 
-    /** 远程配置组名，UI 写入与 Hook 读取必须一致。 */
+    /** Ім’я групи віддаленої конфігурації, запис інтерфейсу користувача та зчитування Hook мають узгоджуватися.*/
     const val GROUP = "eta_prefs"
 
     private const val LOCAL_AGENT_GROUP = "eta_agent_preferences"
 
-    /** 所有功能开关 key。默认值按功能风险独立定义。 */
+    /** Усі клавіші перемикання функцій. Значення за замовчуванням визначаються незалежно функціональним ризиком.*/
     object Keys {
         const val POWER_KEY_ASSISTANT_TARGET = "power_key_assistant_target"
-        // 兼容旧版布尔协议；新 UI 不再写入，缺少三态配置时 true 仍表示 Gemini。
+        // Сумісність із застарілими булевими протоколами; новий користувальницький інтерфейс більше не пишеться, істина все ще означає Gemini, якщо конфігурація трьох станів відсутня.
         const val POWER_KEY_TAKEOVER = "power_key_takeover"
         const val ASSISTANT_AUTO_CONFIG = "assistant_auto_config"
         const val HOTWORD_SELF_HEAL = "hotword_self_heal"
@@ -47,7 +47,7 @@ internal object Prefs {
         const val AGENT_SUBAGENT_ENABLED = "agent_subagent_enabled"
         const val AGENT_RUNTIME_CONFIG_JSON = "agent_runtime_config_json"
 
-        /** 全部布尔开关及其默认值。 */
+        /** Усі логічні перемикачі та їхні значення за замовчуванням.*/
         val BOOLEAN_DEFAULTS: Map<String, Boolean> = mapOf(
             POWER_KEY_TAKEOVER to false,
             ASSISTANT_AUTO_CONFIG to false,
@@ -68,7 +68,7 @@ internal object Prefs {
             AGENT_SUBAGENT_ENABLED to true,
         )
 
-        /** 由 Eta Runtime 最终裁决、不要求 Xposed 框架在线的开关。 */
+        /** Остаточне рішення Eta Runtime, комутатор, який не вимагає доступу до мережі Xposed.*/
         val LOCAL_AGENT_KEYS: Set<String> = setOf(
             AGENT_TERMINAL_TOOLS,
             AGENT_BROWSER_TOOLS,
@@ -81,14 +81,14 @@ internal object Prefs {
         )
     }
 
-    /** Hook 进程缓存的只读 remote preferences，由 ModuleMain 在 onModuleLoaded 注入。 */
+    /** Перехоплюючий процес кешує віддалені налаштування лише для читання, введені ModuleMain у onModuleLoaded.*/
     @Volatile
     private var remote: SharedPreferences? = null
 
     @Volatile
     private var localAgent: SharedPreferences? = null
 
-    /** App 进程调用：初始化不依赖 Xposed Service 的 Agent 配置。 */
+    /** Виклик процесу програми: ініціалізація конфігурації агента, яка не залежить від служби Xposed.*/
     fun initLocal(context: Context) {
         if (localAgent == null) {
             synchronized(this) {
@@ -102,12 +102,12 @@ internal object Prefs {
         }
     }
 
-    /** Hook 进程调用：缓存框架提供的只读 SharedPreferences。 */
+    /** Виклик процесу-перехоплювача: SharedPreferences лише для читання, надані структурою кешу.*/
     fun attachRemote(prefs: SharedPreferences?) {
         remote = prefs
     }
 
-    /** Hook 进程监听框架下发的配置变化；listener 必须由调用方在进程生命周期内强引用。 */
+    /** Процес підключення прослуховує зміни конфігурації, видані фреймворком; слухач повинен бути сильно посилався абонентом протягом життєвого циклу процесу.*/
     fun registerRemoteListener(listener: SharedPreferences.OnSharedPreferenceChangeListener): Boolean {
         val preferences = remote ?: return false
         preferences.registerOnSharedPreferenceChangeListener(listener)
@@ -115,8 +115,8 @@ internal object Prefs {
     }
 
     /**
-     * 读取布尔开关。remote 不可用（框架未注入或调用失败）时回退各功能自己的默认值；
-     * 默认值与设置页展示保持一致。
+     * Прочитайте логічний перемикач. Коли віддалений доступ недоступний (фреймворк не впроваджено або виклик не вдається), кожна функція повертається до власного значення за замовчуванням;
+     * Значення за замовчуванням відповідає відображенню сторінки налаштувань.
      */
     fun isEnabled(key: String): Boolean {
         val default = Keys.BOOLEAN_DEFAULTS[key] ?: true
@@ -142,20 +142,20 @@ internal object Prefs {
     }
 
     /**
-     * UI 进程获取可写的 RemotePreferences。
+     * Процес інтерфейсу користувача отримує доступні для запису RemotePreferences.
      *
-     * [XposedService.getRemotePreferences] 的 commit 会同步等待 binder 提交到 LSPosed
-     * 数据库，失败返回 false；service 未就绪时返回 null，让 UI 保持不可写。
+     * Комміт [XposedService.getRemotePreferences] синхронно чекатиме, поки підшивка буде надіслана до LSPosed
+     * База даних, повертає false у разі помилки; повертає null, коли служба не готова, залишаючи UI неможливим для запису.
      */
     fun remotePreferencesForUi(service: XposedService?): SharedPreferences? =
         runCatching { service?.getRemotePreferences(GROUP) }.getOrNull()
 
-    /** Eta 设置页与 Runtime 使用的本地 Agent 配置，不依赖 LSPosed。 */
+    /** Локальна конфігурація агента, яка використовується сторінкою налаштувань Eta та середовищем виконання, не залежить від LSPosed.*/
     fun localAgentPreferences(): SharedPreferences? = localAgent
 
     /**
-     * 首次升级优先把已有 RemotePreferences 值迁入本地；之后本地值是事实源，并在框架
-     * 可用时回写远端，让仍在目标进程中组装请求的 Hook 入口拿到一致的初始配置。
+     * Для першого оновлення пріоритет надається перенесенню існуючих значень RemotePreferences на локальний; після цього місцеві цінності є джерелом факту і є
+     * Зверніться до віддаленого кінця, якщо це доступно, щоб запис Hook, який все ще збирає запит у цільовому процесі, отримав узгоджену початкову конфігурацію.
      */
     fun reconcileAgentPreferences(service: XposedService?) {
         val local = localAgent ?: return

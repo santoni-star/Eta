@@ -78,8 +78,8 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 private enum class MemoryViewMode { Preview, Edit }
 
 /**
- * 记忆页：顶部是开关与预算，下方 MEMORY.md 以“文档”形式占满剩余高度。
- * 默认渲染 Markdown 便于阅读，切到编辑后是无边框的整页编辑区；只有存在未保存修改时才浮出保存栏。
+ * Сторінка пам’яті: угорі перемикач і бюджет, а MEMORY.md нижче займає решту висоти у формі «документа».
+ * Розмітка відображається за замовчуванням для зручності читання. Після переходу в режим редагування з’являється повносторінкова область редагування без рамок; панель збереження з’явиться лише за наявності незбережених змін.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -89,7 +89,7 @@ internal fun AgentMemoryScreen(
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
     var mode by rememberSaveable { mutableStateOf<MemoryViewMode?>(null) }
-    // 首次读到内容前不决定模式：空记忆直接进入编辑，已有内容先给出可读的预览。
+    // Режим не визначається до того, як вміст буде прочитано вперше: порожня пам’ять переходить безпосередньо до редагування, а наявний вміст спочатку отримує доступ для читання.
     LaunchedEffect(state.isLoading) {
         if (!state.isLoading && mode == null) {
             mode = if (state.savedContent.isBlank()) MemoryViewMode.Edit else MemoryViewMode.Preview
@@ -128,7 +128,7 @@ internal fun AgentMemoryScreen(
                 .imePadding()
                 .navigationBarsPadding(),
         ) {
-            // 键盘弹出时收起设置区，把有限高度全部让给正在编辑的文档。
+            // Коли клавіатура висувається, область налаштування втягується, а документу, який редагується, надається обмежена висота.
             AnimatedVisibility(
                 visible = !imeVisible,
                 enter = fadeIn() + expandVertically(),
@@ -215,7 +215,7 @@ private fun MemorySettingsGroup(
     }
 }
 
-/** 文档卡片：标题栏承载文件名、体积与预览/编辑切换，正文区占满卡片剩余高度并独立滚动。 */
+/** Картка документа: рядок заголовка містить назву файлу, обсяг і перемикання попереднього перегляду/редагування. Текстова область займає решту висоти картки та прокручується незалежно.*/
 @Composable
 private fun MemoryDocumentCard(
     state: AgentMemoryUiState,
@@ -320,7 +320,7 @@ private fun MemoryPreview(content: String, onStartEditing: () -> Unit) {
     }
 }
 
-/** 无边框整页编辑：与卡片同色，不再嵌一层灰色输入框；点到空白处也能把光标落进正文。 */
+/** Повносторінкове редагування без полів: той самий колір, що й картка, жодних вбудованих сірих полів для введення; ви також можете розмістити курсор у тексті, клацнувши на порожньому місці.*/
 @Composable
 private fun MemoryEditor(
     value: String,
@@ -359,7 +359,7 @@ private fun MemoryEditor(
 @Composable
 private fun MemoryTextStyle() = MiuixTheme.textStyles.body2.copy(lineHeight = 22.sp)
 
-/** 轻量分段切换：两个选项常驻可见，选中项用浮起的胶囊表示，比整行 TabRow 更贴合卡片标题栏。 */
+/** Полегшене перемикання сегментів: дві опції завжди видимі, а вибраний елемент представлено плаваючою капсулою, яка краще підходить до рядка заголовка картки, ніж до всього рядка TabRow.*/
 @Composable
 private fun MemoryModeSwitch(
     mode: MemoryViewMode,
@@ -398,7 +398,7 @@ private fun MemoryModeSwitch(
     }
 }
 
-/** 有未保存修改或超限时才出现：左侧说明状态，右侧放弃与保存，避免常驻一个灰掉的保存按钮。 */
+/** З’являється, лише коли є незбережені зміни або перевищено ліміт: ліва сторона пояснює статус, а права сторона відмовляється та зберігає, щоб уникнути сірої кнопки збереження.*/
 @Composable
 private fun MemorySaveBar(
     state: AgentMemoryUiState,

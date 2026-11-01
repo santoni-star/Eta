@@ -12,7 +12,7 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.LocalContentColor
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 长列表保持逐项组合，只对分组首尾绘制外侧圆角。 */
+/** Довгі списки залишаються згрупованими по елементах, а на початку та в кінці групи малюються лише зовнішні закруглені кути.*/
 @Composable
 internal fun EtaPreferenceGroupItem(
     isFirst: Boolean,

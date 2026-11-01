@@ -131,7 +131,7 @@ internal fun decodeDataUrlBitmap(dataUrl: String): ImageBitmap? {
 }
 
 /**
- * 等待首个文本片段时的轻量反馈。
+ * Легкий зворотній зв'язок під час очікування першого фрагмента тексту.
  */
 @Composable
 fun AITypingIndicator(modifier: Modifier = Modifier) {
@@ -163,8 +163,8 @@ fun AITypingIndicator(modifier: Modifier = Modifier) {
 }
 
 /**
- * 只有正在执行的状态才持有无限动画。历史思考和工具条目保持静态，避免长会话里
- * 每个已完成节点都持续产生帧时钟与状态更新。
+ * Лише стан виконання містить нескінченну анімацію. Історичні роздуми та записи інструментів залишаються статичними, щоб уникнути довгих сеансів
+ * Кожен завершений вузол продовжує генерувати кадрові годинники та оновлення статусу.
  */
 @Composable
 internal fun rememberActivePulse(
@@ -284,7 +284,7 @@ internal fun ChatMessageItem(
     }
 }
 
-// ── 用户消息：轻盈美观气泡 ──────────────────────────────────────────────
+// ── Повідомлення користувача: легкі та красиві бульбашки ────────────────────────────────────────────
 
 @Composable
 private fun UserMessageBubble(
@@ -377,7 +377,7 @@ private fun UserMessageBubble(
                                 color = MiuixTheme.colorScheme.surfaceContainerHigh,
                                 topStart = 20.dp,
                                 topEnd = 20.dp,
-                                // 描边只支持统一圆角，编辑态收起气泡尾角，让描边与填充贴合。
+                                // Обведення підтримує лише єдині округлені кути. У режимі редагування хвостові кути міхура закриті, щоб штрих і заливка збігалися.
                                 bottomEnd = if (isEditing) 20.dp else 6.dp,
                                 bottomStart = 20.dp,
                             )
@@ -464,7 +464,7 @@ private fun MessageTooltipAction(
     ) {
         Icon(
             imageVector = icon,
-            // 下方文字已经命名该操作，图标不再重复朗读。
+            // У наведеному нижче тексті операція вже названа, і піктограма не читатиме її знову.
             contentDescription = null,
             modifier = Modifier.size(16.dp),
             tint = MiuixTheme.colorScheme.onSurface,
@@ -477,11 +477,11 @@ private fun MessageTooltipAction(
     }
 }
 
-// ── 上下文压缩：时间线中的轻量胶囊标记 ─────────────────────────────────
+// ── Стиснення контексту: легка розмітка капсули на часовій шкалі ───────────────────────────────────
 
 /**
- * 压缩不是一轮对话结果，而是上下文维护事件；用居中胶囊标记与助手正文区分，
- * 进行中通过图标脉冲反馈，结束后保留压缩前后的 token 信息。
+ * Стиснення не є результатом раунду діалогу, а подією підтримки контексту; Використовуйте позначку капсули по центру, щоб відрізнити її від корпусу асистента.
+ * Зворотний зв’язок забезпечується через імпульси піктограм під час процесу, а інформація про маркер до та після стиснення зберігається після завершення.
  */
 @Composable
 private fun ContextCompactionMarker(
@@ -532,7 +532,7 @@ private fun ContextCompactionMarker(
     }
 }
 
-// ── Agent 结果 ───────────────────────────────────────────────────────
+// ── Результати агента ─────────────────────────────────────────────────────
 
 @Composable
 private fun AgentMessageBlock(
@@ -561,8 +561,8 @@ private fun AgentMessageBlock(
     var streamingRevealComplete by remember(message.id) {
         mutableStateOf(!keepStreamingMarkdown)
     }
-    // 渲染会话由列表层按 message.id 持有，item 滚出视口被销毁后滑回时复用同一
-    // 会话；没有外部持有者时（如嵌套条目）退回组合内 remember，行为与之前一致。
+    // Сеанс візуалізації утримується за допомогою message.id на рівні списку, і той самий елемент повторно використовується, коли він викочується з вікна перегляду, знищується, а потім повертається назад.
+    // сесія; коли немає зовнішнього власника (наприклад, вкладених записів), поверніться до комбінації запам’ятати, і поведінка буде такою ж, як і раніше.
     val streamingState = if (keepStreamingMarkdown) {
         retainedStreamingState ?: remember(message.id) { StreamingMarkdownState() }
     } else {
@@ -636,7 +636,7 @@ private fun AgentMessageBlock(
             SearchSuggestionsView(html = html, modifier = Modifier.padding(top = 8.dp))
         }
 
-        // 回答显现完成后才出现操作行；淡入展开避免贴底滚动时整页突然跳动一行高度。
+        // Операційний рядок з'являється лише після виведення відповіді; Розгортання з поступовою затуханням запобігає раптовому переходу всієї сторінки на один рядок під час прокручування донизу.
         AnimatedVisibility(
             visible = showCopyAction &&
                 !message.isStreaming &&
@@ -648,7 +648,7 @@ private fun AgentMessageBlock(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    // 抵消按钮的居中留白，与工作过程标题图标共用左侧中心线。
+                    // Центр кнопки зсуву залишається порожнім, і ліва центральна лінія співпадає зі значком заголовка робочого процесу.
                     .offset(x = -AnswerActionCenterOffset)
                     .padding(top = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -707,12 +707,12 @@ private fun AgentMessageBlock(
     }
 }
 
-/** 开场白消息由开始对话时写入，标识前缀与写入方保持一致。 */
+/** Початкове повідомлення пишеться під час початку розмови, а ідентифікаційний префікс узгоджується з тим, хто пише.*/
 private const val GreetingMessagePrefix = "greeting-"
 
 /**
- * 角色回复的署名行：小头像加角色名，开场白额外标注“故事开始”。
- * 正文保持与普通回答同宽，避免为头像缩进后长段落在窄屏上过于拥挤。
+ * Рядок підпису відповіді персонажа: маленький аватар плюс ім’я персонажа, а початковий рядок додатково позначено «Історія починається».
+ * Тримайте текст тієї ж ширини, що й звичайна відповідь, щоб уникнути переповнення довгих абзаців на вузьких екранах після відступу аватара.
  */
 @Composable
 private fun CharacterReplyHeader(character: RoleplayChatUi, isGreeting: Boolean) {
@@ -751,15 +751,15 @@ private fun CharacterReplyHeader(character: RoleplayChatUi, isGreeting: Boolean)
     }
 }
 
-/** 思考卡片与运行记录等全宽描边卡片共用的圆角与描边强度，相邻时轮廓一致。 */
+/** Закруглені кути та сила штриха, спільні для карток мислення та повношироких карт штрихів, таких як рекорди бігу, мають однаковий контур, якщо вони розташовані поруч.*/
 private val ChatCardCorner = 12.dp
 private const val ChatCardOutlineAlpha = 0.5f
 
-/** 回答操作按钮的触控尺寸；行整体左移半个尺寸减去图标半宽，使图标落在工作过程图标的中心线上。 */
+/** Відповідь на сенсорний розмір кнопки операції; перемістіть весь рядок ліворуч на половину розміру мінус половину ширини піктограми, щоб піктограма припадала на центральну лінію піктограми робочого процесу.*/
 internal val AnswerActionSize = 36.dp
 private val AnswerActionCenterOffset = 11.dp
 
-/** 回答下方的轻量操作：图标显式着色，因此禁用态需要自己换成禁用色，否则看起来仍可点。 */
+/**Відповідь на наведену нижче спрощену операцію: піктограма явно забарвлена, тому вимкнений стан потрібно змінити на вимкнений колір самостійно, інакше вона все ще виглядатиме доступною для натискання.*/
 @Composable
 internal fun AnswerActionButton(
     icon: ImageVector,
@@ -825,7 +825,7 @@ private fun CandidateSwitcher(
     }
 }
 
-// ── 思考过程 ─────────────────────────────────────────────────────────
+// ── Процес мислення ──────────────────────────────────────────────────────
 
 @Composable
 internal fun ThinkingRow(
@@ -838,7 +838,7 @@ internal fun ThinkingRow(
         retainedStreamingState?.attachContent()
         onDispose { retainedStreamingState?.detachContent() }
     }
-    // null 表示跟随思考生命周期；用户点过之后只认手动选择。
+    // Null означає слідувати життєвому циклу мислення; після того, як користувач клацне, розпізнається лише ручний вибір.
     var manualExpanded by rememberSaveable(message.id) { mutableStateOf<Boolean?>(null) }
     val keepStreamingMarkdown = remember(message.id) { message.isStreaming }
     val streamingState = if (keepStreamingMarkdown) {
@@ -848,10 +848,10 @@ internal fun ThinkingRow(
     }
     val completedDocument = (streamingState ?: retainedStreamingState)
         ?.snapshot?.completedDocumentFor(message.content)
-    // 展开态必须在组合期同步推导：若经 LaunchedEffect 晚一帧收起，思考结束的那一帧尾部窗口
-    // 已解除而正文仍展开，会以全文高度闪现一帧，再从该高度执行收起动画。
+    // Розгорнутий стан має бути виведений синхронно протягом періоду комбінування: якщо він закритий на один кадр пізніше за допомогою LaunchedEffect, розгляньте хвостове вікно кадру, де воно закінчується
+    // Якщо його було відпущено, а текст все ще розгорнуто, він блиматиме протягом одного кадру на висоті повного тексту, а потім виконає анімацію згортання з цієї висоти.
     val expanded = manualExpanded ?: message.isStreaming
-    // 自动模式下高度上限覆盖到收起动画结束，退出过程不会先撑开再收拢。
+    // В автоматичному режимі верхня межа висоти покривається до кінця анімації згортання, і процес виходу не розширюється, а потім згортається.
     val tailWindow = manualExpanded == null
 
     val pulseAlpha = rememberActivePulse(
@@ -859,7 +859,7 @@ internal fun ThinkingRow(
         label = "thinking_pulse",
     )
 
-    // compact 模式渲染在工作过程时间线内，节点徽章已承担图标，这里只保留文字与展开控制。
+    // Компактний режим відображається на часовій шкалі робочого процесу, значок вузла прийняв значок, і тут зберігаються лише текст і елементи керування розширенням.
     val containerModifier = if (compact) {
         modifier.fillMaxWidth()
     } else {
@@ -883,7 +883,7 @@ internal fun ThinkingRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
                 .clickable {
-                    // 尾部窗口下点击视为要看全文，保持展开并放开高度限制。
+                    // Натискання нижнього вікна означає прочитання повного тексту, збереження його розгорнутим і зняття обмеження висоти.
                     manualExpanded = (tailWindow && expanded) || !expanded
                 }
                 .then(
@@ -987,8 +987,8 @@ internal fun ThinkingRow(
 }
 
 /**
- * 进行中的思考只露出最近几行：内容按底部对齐超出部分向上裁掉，顶部渐隐提示还有更早内容。
- * 高度封顶后增量不再推高工作过程卡片，列表也不必随每次思考快照重新跟底。
+ * Відображаються лише найновіші рядки поточної думки: вміст вирівнюється знизу та обрізається вгору, а верхній зникає, щоб вказати на попередній вміст.
+ * Після обмеження висоти приріст більше не буде піднімати картку робочого процесу, і список не потрібно буде скидати донизу з кожним знімком мислення.
  */
 @Composable
 private fun ThinkingTailWindow(
@@ -1007,7 +1007,7 @@ private fun ThinkingTailWindow(
         modifier = modifier
             .heightIn(max = maxHeight)
             .clipToBounds()
-            // 离屏合成只覆盖这块有界区域，用于让渐隐遮罩作用在文字 alpha 上。
+            // Компонування поза екраном охоплює лише цю обмежену область, дозволяючи масці зникнення діяти на альфа-версію тексту.
             .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
             .drawWithContent {
                 drawContent()
@@ -1034,7 +1034,7 @@ private fun ThinkingTailWindow(
 
 private const val THINKING_TAIL_WINDOW_LINES = 4
 
-// ── Run trace：轻量入口行 ─────────────────────────────────────────────
+// ──Пробіг: легка лінія входу ────────────────────────────────────────────
 
 @Composable
 private fun RunTraceRow(
@@ -1078,7 +1078,7 @@ private fun RunTraceRow(
     }
 }
 
-// ── 工具摘要 ──────────────────────────────────────────────────────────
+// ──Резюме інструменту───────────────────────────────────────────────────────
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -1124,7 +1124,7 @@ private fun ToolSummaryInline(
     }
 }
 
-// ── 建议语 ────────────────────────────────────────────────────────────
+// ── Пропозиції ───────────────────────────────────────────────────────
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

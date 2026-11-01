@@ -206,7 +206,7 @@ internal fun EtaVoicePanel(
                     else tween(220, easing = LinearOutSlowInEasing))
             }
         }
-        // 焦点会主动唤起 IME；必须等显现和位移都结束，不能在仍透明时交出输入焦点。
+        // Фокус автоматично викликає IME; ви повинні дочекатися завершення візуалізації та зміщення, і ви не можете передати фокус введення, поки він все ще прозорий.
         contentReady()
     }
 
@@ -336,7 +336,7 @@ private fun BoxScope.AssistantPanel(
     var thresholdHapticSent by remember { mutableStateOf(false) }
     var keepBottomAnchored by remember { mutableStateOf(true) }
     var fittedReplyId by remember { mutableStateOf<String?>(null) }
-    // 满高时把手与状态栏之间的空间有限，需在扣除触摸 slop 后仍能完成过顶手势。
+    // На повну висоту простір між ручкою та рядком стану обмежений, і жест зверху потрібно завершити після вирахування нахилу дотику.
     val handoffThresholdPx = with(density) { 24.dp.toPx() }
     val dismissThresholdPx = with(density) { 92.dp.toPx() }
     val autoSettleTolerancePx = with(density) { 8.dp.toPx() }
@@ -387,9 +387,9 @@ private fun BoxScope.AssistantPanel(
             (maxContentHeightPx - imeOverlapPx).coerceAtLeast(0f),
         )
     val nearFullscreen = sheetHeightPx >= maxContentHeightPx * 0.88f
-    // 接管只认把手发起的过顶拉取：列表滚动与惯性 fling 不再触发，避免读回复时误入本体。
+    // Візьміть на себе контроль і розпізнавайте лише висунення, ініційоване маркером: прокручування списку та інерційне перекидання більше не активуються, щоб уникнути випадкового входу в основну частину під час читання відповіді.
     val handoffReady = canOpenConversation && nearFullscreen && handoffPullPx >= handoffThresholdPx
-    // 过顶拉取的橡皮筋位移要肉眼可见，用户才知道继续拉会进入本体。
+    // Зміщення гумової стрічки, натягнутої над головою, повинно бути видно неозброєним оком, щоб користувач знав, що якщо її продовжувати тягнути, вона увійде в основний корпус.
     val sheetTranslationPx = dismissPullPx * 0.28f - (handoffPullPx * 0.36f)
         .coerceAtMost(with(density) { 40.dp.toPx() })
 
@@ -406,7 +406,7 @@ private fun BoxScope.AssistantPanel(
     LaunchedEffect(state.phase, latestMessageId) {
         if (state.phase == EtaVoicePhase.PROCESSING) fittedReplyId = null
     }
-    // 回复中按真实溢出逐级升高；回复结束且全部条目可测量时交给一次性内容拟合。
+    // Під час відповіді реальне переповнення поступово збільшується; коли відповідь завершена і всі елементи можна виміряти, вона передається на одноразову підбірку вмісту.
     LaunchedEffect(hasMessages, state.phase, latestMessageId, keyboardVisible, baseContentHeightPx, maxContentHeightPx, listState) {
         if (!hasMessages || keyboardVisible) return@LaunchedEffect
         snapshotFlow {
@@ -439,7 +439,7 @@ private fun BoxScope.AssistantPanel(
                 if (nextHeight != null) settledHeightPx = nextHeight
             }
     }
-    // 完成排版后本轮只拟合一次；列表的旧滚动偏移不能把它再次推回高档。
+    // Цей цикл підходить лише один раз після завершення макета; зсув старого прокручування списку не може знову підняти його назад.
     LaunchedEffect(hasMessages, state.phase, latestMessageId, keyboardVisible, maxContentHeightPx, listState) {
         if (!hasMessages || state.phase == EtaVoicePhase.PROCESSING || keyboardVisible) return@LaunchedEffect
         snapshotFlow {
@@ -520,7 +520,7 @@ private fun BoxScope.AssistantPanel(
         val current = draggedHeightPx ?: currentAnimatedHeight.value
         when {
             commit && dismissPullPx >= dismissThresholdPx -> onClose()
-            // 松手可能与最后一个位移在同一帧内到达，直接读取状态，不依赖重组后的派生值。
+            // Випуск може надійти в тому ж кадрі, що й останнє зміщення, і стан зчитується безпосередньо, не покладаючись на реорганізоване похідне значення.
             commit && allowHandoff && canOpenConversation &&
                 current >= maxContentHeightPx && handoffPullPx >= handoffThresholdPx -> triggerHandoff()
             else -> {
@@ -538,7 +538,7 @@ private fun BoxScope.AssistantPanel(
         }
     }
 
-    // 局部函数引用的相等判断不包含捕获值，不能直接作为结构相等 State 的回调值。
+    // Оцінка рівності посилання на локальну функцію не включає отримане значення та не може використовуватися безпосередньо як значення зворотного виклику стану структурної рівності.
     val stopAutoExpandState = rememberUpdatedState { stopAutoExpand() }
     val startDragState = rememberUpdatedState {
         stopAutoExpand()
@@ -609,7 +609,7 @@ private fun BoxScope.AssistantPanel(
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
-            // IME 已由系统逐帧插值；布局阶段直接消费，避免组合阶段旧值或二次动画造成追赶。
+            // IME було інтерпольовано системою кадр за кадром; він споживається безпосередньо на етапі макета, щоб уникнути наздоганяння, викликаного старими значеннями або другорядними анімаціями на етапі комбінування.
             .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
             .offset(y = with(density) { sheetTranslationPx.toDp() })
             .clip(sheetShape)
@@ -636,7 +636,7 @@ private fun BoxScope.AssistantPanel(
                 colors = colors,
                 handoffReady = handoffReady,
                 modifier = Modifier.pointerInput(baseContentHeightPx, maxContentHeightPx) {
-                    // 回复完成会改变接管资格；更新回调而不重启正在进行的手势。
+                    // Відповідь на завершення змінює право на поглинання; оновлення зворотного виклику не перезапускає поточний жест.
                     detectVerticalDragGestures(
                         onDragStart = { startDragState.value() },
                         onVerticalDrag = { change, dragAmount ->
@@ -711,7 +711,7 @@ private fun DragHandle(
     handoffReady: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // 把手是接管的唯一入口：拉到阈值时变宽并染成主色，配合触觉反馈提示松手进入本体。
+    // Ручка — це єдиний вхід, який можна взяти на себе: коли її підтягнути до порога, вона розширюється й забарвлюється в основний колір, а також взаємодіє з тактильним зворотним зв’язком, щоб спонукати вас відпустити й увійти в тіло.
     val handleWidth by animateDpAsState(
         targetValue = if (handoffReady) 52.dp else 36.dp,
         animationSpec = tween(160),
@@ -754,6 +754,6 @@ private fun assistantBaseHeightPx(
     density: Float,
 ): Float {
     if (messages.isEmpty()) return 0f
-    // 回复增量只改变列表内容，不重新估算浮窗高度，避免与跟底滚动互相追赶。
+    // Приріст відповіді змінює лише вміст списку та не переоцінює висоту плаваючого вікна, щоб уникнути прокручування внизу.
     return (304f * density).coerceAtMost(maxHeightPx)
 }

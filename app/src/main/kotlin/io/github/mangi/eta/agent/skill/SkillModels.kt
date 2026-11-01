@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.skill
 import androidx.compose.runtime.Immutable
 
 /**
- * 技能索引条目——对应磁盘上一个 [SKILL.md] 文件的元信息。
+ * Запис індексу навичок - відповідає метаінформації файлу [SKILL.md] на диску.
  */
 @Immutable
 data class SkillIndexEntry(
@@ -24,7 +24,7 @@ data class SkillIndexEntry(
 )
 
 /**
- * 已解析的技能上下文——包含 SKILL.md 正文和附属目录路径。
+ * Вирішений контекст навичок — містить шляхи основного та супутникового каталогу SKILL.md.
  */
 @Immutable
 data class ResolvedSkillContext(
@@ -45,7 +45,7 @@ data class SkillCompatibilityResult(
 )
 
 /**
- * 单次 Agent 运行中解析出的技能上下文集合。
+ * Набір контекстів навичок, аналізованих під час одного запуску агента.
  */
 @Immutable
 data class SkillContext(
@@ -56,7 +56,7 @@ data class SkillContext(
     }
 }
 
-/** SKILL.md 文件解析结果。 */
+/** Результати аналізу файлу SKILL.md.*/
 internal data class ParsedSkillFile(
     val frontmatter: Map<String, String>,
     val body: String,

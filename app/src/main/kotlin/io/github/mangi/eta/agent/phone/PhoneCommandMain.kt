@@ -6,7 +6,7 @@ import android.os.Process
 import kotlin.system.exitProcess
 import org.json.JSONObject
 
-/** 由 Eta 的已授权 Root 执行器启动；仅接受固定业务动作，正文只走 stdin。 */
+/** Запущено уповноваженим корінним виконавцем Eta; приймає лише фіксовані бізнес-дій, а головне тіло переходить лише до stdin.*/
 internal object PhoneCommandMain {
     const val MARKER = "ETA_PHONE_RESULT:"
 
@@ -15,15 +15,15 @@ internal object PhoneCommandMain {
     fun main(arguments: Array<String>) {
         val result =
             try {
-                if (Process.myUid() != 0) PhoneOperation.error("ROOT_REQUIRED", "需要 Root 身份")
+                if (Process.myUid() != 0) PhoneOperation.error("ROOT_REQUIRED", "потребахочуть Root тілочастка")
                 val input = System.`in`.readNBytes(128 * 1024 + 1)
-                if (input.size > 128 * 1024) PhoneOperation.error("PHONE_INPUT_LIMIT", "请求超过大小限制")
+                if (input.size > 128 * 1024) PhoneOperation.error("PHONE_INPUT_LIMIT", "будь ласкапроситиобганятиПасвеликийМаленькийобмеженнясистема")
                 val request = JSONObject(input.toString(Charsets.UTF_8))
                 if (request.optInt("version") != 1)
-                    PhoneOperation.error("PHONE_PROTOCOL_UNSUPPORTED", "请求协议不兼容")
+                    PhoneOperation.error("PHONE_PROTOCOL_UNSUPPORTED", "будь ласкапроситиоб'єднанняобговоритинемаєодночаснийДозволити")
                 val tool = PhoneOperation.text(request, "tool", true, 80)!!
                 if (tool !in PhoneOperation.tools && tool != "capabilities")
-                    PhoneOperation.error("UNKNOWN_TOOL", "未知一方应用操作")
+                    PhoneOperation.error("UNKNOWN_TOOL", "ще нізнатиодинплощівідповідьвикористовуватиТримайтеробити")
                 val userId = PhoneOperation.integer(request, "user_id", 0, 21474).toInt()
                 if (Looper.getMainLooper() == null) Looper.prepareMainLooper()
                 val activityThread = Class.forName("android.app.ActivityThread")
@@ -73,16 +73,16 @@ internal object PhoneCommandMain {
                         access,
                     )
             } catch (failure: PhoneOperationFailure) {
-                PhoneOperation.failure(failure.code, failure.message ?: "请求无效")
+                PhoneOperation.failure(failure.code, failure.message ?: "будь ласкапроситинемаєефект")
             } catch (_: Throwable) {
-                PhoneOperation.failure("PHONE_BRIDGE_UNAVAILABLE", "当前系统无法启动原生应用操作通道")
+                PhoneOperation.failure("PHONE_BRIDGE_UNAVAILABLE", "коливпередКраваткасистеманемаєЗаконпочатокрухатисяОригіналнародивсявідповідьвикористовуватиТримайтеробитиПасдорога")
             }
         val encoded = result.toString()
         println(
             MARKER +
                 if (encoded.toByteArray(Charsets.UTF_8).size <= 512 * 1024) encoded
                 else
-                    PhoneOperation.failure("PHONE_OUTPUT_LIMIT", "结果超过大小限制，请先查询当前状态")
+                    PhoneOperation.failure("PHONE_OUTPUT_LIMIT", "вузолфруктиобганятиПасвеликийМаленькийобмеженнясистема，будь ласкапершеперевіритиЗапитуйтеколивпередформустан")
                         .put("status", "unconfirmed")
         )
         exitProcess(0)

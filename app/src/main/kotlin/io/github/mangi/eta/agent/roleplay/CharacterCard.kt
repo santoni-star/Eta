@@ -14,12 +14,12 @@ internal data class RoleplayBinding(
     val cardSnapshotJson: String,
     val characterName: String,
     val avatarPath: String? = null,
-    val userName: String = "用户",
+    val userName: String = "використовуватипобутові",
     val userDescription: String = "",
 )
 
 @Serializable
-internal data class UserPersona(val name: String = "用户", val description: String = "")
+internal data class UserPersona(val name: String = "використовуватипобутові", val description: String = "")
 
 internal enum class CharacterCardFormat { PNG, JSON }
 
@@ -33,7 +33,7 @@ internal data class CharacterProfile(
 
 internal data class CharacterDepthPrompt(val prompt: String, val depth: Int, val role: String)
 
-/** 原始树保留未实现的字段，界面编辑仅覆盖所属字段。 */
+/** Оригінальне дерево зберігає нереалізовані поля, а редагування інтерфейсу охоплює лише відповідні поля.*/
 internal data class CharacterCard(val raw: JsonObject) {
     val data: JsonObject get() = raw["data"] as? JsonObject ?: raw
     val name get() = data.text("name")
@@ -52,7 +52,7 @@ internal data class CharacterCard(val raw: JsonObject) {
     val nickname get() = data.text("nickname").ifBlank { name }
     val characterBook get() = data["character_book"] as? JsonObject
     val extensions get() = data["extensions"] as? JsonObject ?: JsonObject(emptyMap())
-    /** 收藏与原版一致记在 extensions.fav；旧卡可能只有顶层 fav，读取时一并兼容。 */
+    /** Колекція відповідає оригінальній версії та записана в extensions.fav; стара картка може мати лише фав верхнього рівня, який сумісний під час читання.*/
     val favorite: Boolean
         get() = (extensions["fav"] as? JsonPrimitive)?.booleanOrNull
             ?: (raw["fav"] as? JsonPrimitive)?.booleanOrNull

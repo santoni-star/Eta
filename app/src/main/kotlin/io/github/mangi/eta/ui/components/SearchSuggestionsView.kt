@@ -28,7 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import io.github.mangi.eta.agent.runtime.SearchSuggestionsPayload
 import java.io.ByteArrayInputStream
 
-/** 官方建议保留原始 HTML/CSS，仅在独立、无脚本的展示视图中加载。 */
+/** Офіційна рекомендація полягає в тому, щоб зберегти оригінальний HTML/CSS і завантажувати його лише в автономному режимі презентації без сценаріїв.*/
 @Composable
 internal fun SearchSuggestionsView(html: String, modifier: Modifier = Modifier) {
     if (!SearchSuggestionsPayload.isValidHtml(html)) return
@@ -96,9 +96,9 @@ internal class SearchSuggestionsWebView(
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         })
                     } catch (_: ActivityNotFoundException) {
-                        Toast.makeText(context, "没有可打开链接的浏览器", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "безматиможебитиВІДЧИНЕНОланцюгзловитизпереглядатиПереглянутипристрій", Toast.LENGTH_SHORT).show()
                     } catch (_: SecurityException) {
-                        Toast.makeText(context, "当前无法打开链接", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "коливпереднемаєЗаконбитиВІДЧИНЕНОланцюгзловити", Toast.LENGTH_SHORT).show()
                     }
                 }
                 return true
@@ -112,7 +112,7 @@ internal class SearchSuggestionsWebView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // WebView 的正文高度在布局后才能确定；只在实际改变时异步通知 Compose，避免绘制时写状态。
+        // Висоту тексту WebView можна визначити лише після компонування; Компонент сповіщається лише асинхронно, коли його фактично змінено, щоб уникнути стану запису під час малювання.
         if (!released && !heightReportPending && contentHeightPx != reportedHeight) {
             heightReportPending = true
             post(reportHeight)

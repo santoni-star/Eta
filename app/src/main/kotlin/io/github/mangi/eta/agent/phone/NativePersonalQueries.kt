@@ -6,7 +6,7 @@ import java.time.OffsetDateTime
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 原始个人数据使用固定字段与绑定参数；调用方不能提供 URI 或 SQL。 */
+/** Необроблені персональні дані використовують фіксовані поля та прив’язані параметри; абонент не може надати URI або SQL.*/
 internal class NativePersonalQueries(
     private val resolver: PhoneProviderAccess,
     private val userId: Int,
@@ -24,13 +24,13 @@ internal class NativePersonalQueries(
     fun execute(tool: String, args: JSONObject): JSONObject {
         if (args.has("current_only")) PhoneOperation.boolean(args, "current_only")
         if (args.has("match") && args.optString("match") != "name")
-            PhoneOperation.error("INVALID_ARGUMENT", "当前数据源不支持此检索方式")
+            PhoneOperation.error("INVALID_ARGUMENT", "коливпередномервідповідно доджерелонемаєвідділенняутримуватицеперевіритиОтжеплощіРежим")
         val source = sources.getValue(tool)
         val query = PhoneOperation.text(args, "query", false, 200)
         val limit = PhoneOperation.integer(args, "limit", 1, 30, 10).toInt()
         val offset = PhoneOperation.integer(args, "offset", 0, 10000, 0).toInt()
         val sort = PhoneOperation.text(args, "sort", false, 10) ?: "newest"
-        if (sort !in setOf("newest", "oldest")) PhoneOperation.error("INVALID_ARGUMENT", "sort 无效")
+        if (sort !in setOf("newest", "oldest")) PhoneOperation.error("INVALID_ARGUMENT", "sort немаєефект")
         val clauses = mutableListOf<String>()
         val values = mutableListOf<String>()
         source.where?.let(clauses::add)
@@ -51,9 +51,9 @@ internal class NativePersonalQueries(
                 OffsetDateTime.parse(it).toInstant()
             }
         if (start != null && end != null && end <= start)
-            PhoneOperation.error("INVALID_ARGUMENT", "结束时间必须晚于开始")
+            PhoneOperation.error("INVALID_ARGUMENT", "вузолпучокгодинаміжповиненОбов'язковонічнаВІДЧИНЕНОпочаток")
         if (source.time.isBlank() && (start != null || end != null))
-            PhoneOperation.error("TIME_FILTER_UNSUPPORTED", "此来源没有可靠的时间字段")
+            PhoneOperation.error("TIME_FILTER_UNSUPPORTED", "цеприходьджерелобезматиможеЗалежить відзгодинаміжхарактерчастина")
         val bounds =
             (if (source.millis) PersonalContextTimeUnit.MILLISECONDS
                 else PersonalContextTimeUnit.SECONDS)
@@ -76,7 +76,7 @@ internal class NativePersonalQueries(
                 clauses.takeIf { it.isNotEmpty() }?.joinToString(" AND "),
                 values.toTypedArray(),
                 order,
-            ) ?: PhoneOperation.error("PERSONAL_DATA_UNAVAILABLE", "个人数据源没有返回可读取结果")
+            ) ?: PhoneOperation.error("PERSONAL_DATA_UNAVAILABLE", "індивідуальнийлюдейномервідповідно доджерелобезматиповерненняповерненняможечитатиВиберітьвузолфрукти")
         val items = JSONArray()
         var more = false
         var truncated = false
@@ -124,7 +124,7 @@ internal class NativePersonalQueries(
     }
 
     private fun parseTime(value: String) = try { OffsetDateTime.parse(value).toInstant() } catch (_: java.time.DateTimeException) {
-        PhoneOperation.error("INVALID_ARGUMENT", "时间必须是带偏移的 ISO 8601 格式")
+        PhoneOperation.error("INVALID_ARGUMENT", "годинаміжповиненОбов'язковотакпринестичастковийзміназ ISO 8601 сіткаРежим")
     }
 
     fun probe(tool: String): Boolean {

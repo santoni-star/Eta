@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-/** 刷新锁只合并同一账号的网络请求；注销不等待网络，并使旧请求的回写失效。 */
+/** Блокування оновлення об’єднує лише мережеві запити для одного облікового запису; вихід із системи не чекає мережі та робить зворотний запис старих запитів недійсним.*/
 internal class ProviderCredentialSessions(
     private val storage: ProviderCredentialStorage,
     private val oauth: ProviderOAuthClient,
@@ -51,7 +51,7 @@ internal class ProviderCredentialSessions(
         controller.throwIfCancelled()
         val saved = session.stateLock.withLock {
             controller.throwIfCancelled()
-            // 浏览器登录尚未成功时，原会话仍可刷新；取消登录不能丢掉已经轮换的凭据。
+            // Якщо вхід у веб-переглядач не був успішним, оригінальний сеанс усе одно можна оновити; скасування входу не втрачає змінені облікові дані.
             requireGeneration(session.loginGeneration, loginGeneration)
             storage.write(providerId, credential)
             ++session.generation
@@ -75,7 +75,7 @@ internal class ProviderCredentialSessions(
             if (!rejected && !expiresSoon && credential.expiresAt > now()) return credential.accessToken
             if (credential.refreshToken.isBlank()) {
                 invalidate(providerId, session, generation)
-                throw ProviderAuthException("oauth_session_expired", "登录已失效，请重新登录")
+                throw ProviderAuthException("oauth_session_expired", "дошказаписвжевтратитиефект，будь ласкаВажкановийдошказапис")
             }
             val refreshed = try {
                 oauth.refresh(credential, controller)
@@ -83,7 +83,7 @@ internal class ProviderCredentialSessions(
                 if (error.code == "oauth_session_expired") invalidate(providerId, session, generation)
                 throw error
             }
-            // 轮换已在服务端完成，即使调用方刚取消，也先保存有效结果，避免丢失新的 refresh token。
+            // Ротацію завершено на стороні сервера. Навіть якщо абонент щойно скасував, дійсні результати спочатку зберігаються, щоб уникнути втрати нового маркера оновлення.
             session.stateLock.withLock {
                 requireGeneration(session.generation, generation)
                 storage.write(providerId, refreshed)
@@ -129,19 +129,19 @@ internal class ProviderCredentialSessions(
 
     private fun requireCredential(credential: ProviderCredential?, authMode: String): ProviderCredential {
         if (credential == null || credential.subject == null || credential.authMode != authMode || credential.accessToken.isBlank()) {
-            throw ProviderAuthException("oauth_login_required", "请先登录此服务商账号")
+            throw ProviderAuthException("oauth_login_required", "будь ласкапершедошказаписцеОдягобслуговуваннябізнесрахунокНомер")
         }
-        if (!credential.planEnabled) throw ProviderAuthException("oauth_plan_permission_required", "账号凭据不能用于当前订阅连接，请重新登录")
+        if (!credential.planEnabled) throw ProviderAuthException("oauth_plan_permission_required", "рахунокНомерзавідповідно донемаєздатнийвикористовуватинаколивпередпорядокчитатинавітьзловити，будь ласкаВажкановийдошказапис")
         return credential
     }
 
     private fun session(providerId: String): Session {
-        if (providerId.isBlank()) throw ProviderAuthException("oauth_provider_missing", "服务商连接不存在")
+        if (providerId.isBlank()) throw ProviderAuthException("oauth_provider_missing", "Одягобслуговуваннябізнеснавітьзловитинемаєжитиіснують")
         return sessions.computeIfAbsent(providerId) { Session() }
     }
 
     private fun requireGeneration(current: Long, expected: Long) {
-        if (current != expected) throw ProviderAuthException("oauth_session_changed", "登录状态已变更，请重试")
+        if (current != expected) throw ProviderAuthException("oauth_session_changed", "дошказаписформустанвжеЗмінаНавіть，будь ласкаВажкаспробувати")
     }
 
     private companion object { const val REFRESH_MARGIN_MS = 60_000L }

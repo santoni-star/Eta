@@ -12,10 +12,10 @@ import android.os.Looper
 import java.io.Closeable
 import kotlinx.coroutines.CancellationException
 
-/** 只协调本进程的录音和播放；所有入口共用一个租约，资源仍由入口生命周期持有。 */
+/** Лише координує запис і відтворення цього процесу; усі портали спільно орендують, і ресурси все ще утримуються протягом життєвого циклу порталу.*/
 /**
- * [interruptOnScreenOff] 为 false 时锁屏不打断：聊天朗读需要在锁屏和后台继续，
- * 录音与助手浮窗仍随熄屏结束。
+ * Якщо [interruptOnScreenOff] має значення false, екран блокування не перериватиметься: читання чату має тривати на екрані блокування та у фоновому режимі.
+ * Спливаюче вікно запису та помічника закривається, коли екран вимикається.
  */
 internal class SpeechAudioLease(
     private val context: Context,
@@ -54,7 +54,7 @@ internal class SpeechAudioLease(
         if (current !== this) throw CancellationException("Speech owner replaced")
         beforeFocus()
         focused = manager.requestAudioFocus(focus) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        if (!focused) throw SpeechFailure(SpeechErrorCode.AUDIO, "当前无法获得音频焦点，请稍后重试")
+        if (!focused) throw SpeechFailure(SpeechErrorCode.AUDIO, "коливпереднемаєЗаконотриматиповиннізвукчастотафокусточка，будь ласкатрохиназадВажкаспробувати")
     }
 
     override fun close() {

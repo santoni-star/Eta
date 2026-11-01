@@ -18,7 +18,7 @@ internal enum class GuiControlStatus(val wireValue: String) {
     }
 }
 
-/** 手机界面只有一个操作所有者；锁只保护所有权，模型推理和工具执行不在锁内运行。 */
+/** Мобільний інтерфейс має лише одного власника операції; блокування захищає лише право власності, висновок моделі та виконання інструментів не виконуються в межах блокування.*/
 internal class GuiControlCoordinator {
     data class State(val ownerRunId: String? = null, val userPaused: Boolean = false)
 

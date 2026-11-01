@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.device
 
-/** 明确暴露另一滚动轴时禁止手势兜底，避免把滚动误变成列表项侧滑。 */
+/** Забороняється використовувати жести, коли інша вісь прокручування чітко відкрита, щоб уникнути помилкового перетворення прокручування на бокове ковзання елементів списку.*/
 internal object ScrollAxisContract {
     fun exposesOnlyOppositeAxis(
         requestedAxis: ScrollAxis,
@@ -11,7 +11,7 @@ internal object ScrollAxisContract {
         ScrollAxis.HORIZONTAL -> hasVerticalActions && !hasHorizontalActions
     }
 
-    /** FORWARD/BACKWARD 没有轴语义；仅在已有明确纵向且无横向证据时可作纵向兼容。 */
+    /** FORWARD/BACKWARD не має осьової семантики; вертикальна сумісність можлива лише тоді, коли є чіткі вертикальні та відсутні горизонтальні докази.*/
     fun mayTreatLegacyActionsAsVertical(
         requestedAxis: ScrollAxis,
         hasVerticalActions: Boolean,

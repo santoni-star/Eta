@@ -4,7 +4,7 @@ import android.content.Context
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
-/** 同一角色的会话共享剧情记忆；现实 MEMORY.md 始终使用独立存储。 */
+/** Сеанси з одним і тим же персонажем ділять сюжетну пам'ять; реалістичний MEMORY.md завжди використовує незалежне сховище.*/
 internal object CharacterMemoryRepository {
     private val stores = ConcurrentHashMap<String, AgentMemoryStore>()
 
@@ -36,14 +36,14 @@ internal object CharacterMemoryRepository {
     ): AgentMemoryWriteResult = store(context, characterId).replaceAllIfRevision(content, revision)
 
     fun discard(context: Context, characterId: String) {
-        require(characterId.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "角色记忆标识无效" }
+        require(characterId.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "рігколірзапам'ятативідкликатизнакзнаннянемаєефект" }
         val root = File(context.applicationContext.filesDir, "roleplay/$characterId").canonicalFile
         stores.remove(root.path)
         root.deleteRecursively()
     }
 
     private fun store(context: Context, characterId: String): AgentMemoryStore {
-        require(characterId.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "角色记忆标识无效" }
+        require(characterId.matches(Regex("[A-Za-z0-9_-]{1,128}"))) { "рігколірзапам'ятативідкликатизнакзнаннянемаєефект" }
         val root = File(context.applicationContext.filesDir, "roleplay/$characterId").canonicalFile
         return stores.getOrPut(root.path) { AgentMemoryStore(root) }
     }

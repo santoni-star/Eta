@@ -12,11 +12,11 @@ internal enum class PersonalContextTimeUnit(val unitsPerSecond: Long, val requir
     SECONDS(1),
     TEXT_MILLISECONDS(1_000, requiresNumericCast = true);
 
-    /** 整数时间戳的左右边界都取 ceil，才能精确保留原始左闭右开区间。 */
+    /** Ліва та права межі цілочисельної мітки часу є граничними, так що вихідний лівий закритий і правий відкритий інтервали можуть бути точно збережені.*/
     fun toBounds(start: Instant?, end: Instant?): PersonalContextTimeBounds = try {
         PersonalContextTimeBounds(start?.let(::ceiling), end?.let(::ceiling))
     } catch (_: ArithmeticException) {
-        throw PersonalContextArgumentException("时间范围超出数据源支持的整数范围")
+        throw PersonalContextArgumentException("годинаміжвентилятороточуютьобганятипозаномервідповідно доджереловідділенняутримуватизвсеномервентилятороточують")
     }
 
     private fun ceiling(value: Instant): Long {
@@ -66,7 +66,7 @@ internal data class PersonalContextSource(
 
     fun field(logicalName: String): PersonalContextField? = fields.firstOrNull { it.logicalName == logicalName }
 
-    /** 所有 action 都必须先确认这些列，不能因保护列缺失而移除过滤条件。 */
+    /** Усі дії мають спочатку підтверджувати ці стовпці, а умови фільтра неможливо видалити через відсутність стовпців захисту.*/
     val probeRequired: List<PersonalContextField> get() = fields.filter { it.required }
     val exposedFields: List<PersonalContextField> get() = fields.filter { it.exposed }
     val sortField: String? get() = timeField ?: field("indexed_time")?.logicalName
@@ -85,7 +85,7 @@ internal object PersonalContextSources {
 
     val all: List<PersonalContextSource> = listOf(
         source(
-            "photos", "照片与截图", "gallery",
+            "photos", "Відповідно дошматоківирізатималюнок", "gallery",
             listOf(
                 integer("origin_id", "media_idCom", required = true), text("uri", "uriCom"),
                 text("title", "titleCom"), text("text", "ocrCom"),
@@ -94,141 +94,141 @@ internal object PersonalContextSources {
                 protection("_media_type", "typeCom"), time("time", "date_modifiedCom", PersonalContextTimeUnit.SECONDS),
                 time("taken_time", "datetakenCom"),
             ), listOf("text", "caption", "tags", "location", "album"), "time", PersonalContextTimeUnit.SECONDS,
-            "系统索引中的图片修改时间，单位为秒；拍摄时间另见 taken_time，不代表当前媒体库状态", listOf(equal("_media_type", 1)),
+            "КраваткасистемаОтжепривестисерединазмалюнокшматокбудуватизмінитигодинаміж，одинбітдлядруге；стрілятифотографіягодинаміжіншедив taken_time，немаєпоколінняповерхніколивпередЗМІтілоБібліотекаформустан", listOf(equal("_media_type", 1)),
         ),
         source(
-            "notes", "便签", "com.coloros.note#note",
+            "notes", "зручнийзнак", "com.coloros.note#note",
             listOf(
                 text("origin_id", "local_idCom"), text("title", "titleCom"), text("text", "textCom"),
                 text("folder", "folder_nameCom"), time("created_time", "create_timeCom"), time("time", "update_timeCom"),
                 protection("_recycled", "recycle_timeCom"), protection("_encrypted", "encryptedCom"),
-            ), listOf("title", "text", "folder"), "time", PersonalContextTimeUnit.MILLISECONDS, "便签最后编辑时间",
+            ), listOf("title", "text", "folder"), "time", PersonalContextTimeUnit.MILLISECONDS, "зручнийзнакбільшістьназадкомпілюватиредагуватигодинаміж",
             listOf(equal("_recycled", 0), equal("_encrypted", 0)),
         ),
         source(
-            "recordings", "录音", "recorder",
+            "recordings", "записзвук", "recorder",
             listOf(
                 integer("origin_id", "idCom"), text("title", "display_nameCom"), text("audio_path", "media_pathCom"),
                 text("transcript_path", "text_pathCom"), integer("duration_ms", "durationCom"), text("folder", "bucketCom"),
                 integer("has_transcript", "supportContentCom"), integer("has_summary", "summary_text_flagCom"),
                 time("time", "date_modifiedCom"),
-            ), listOf("title", "folder"), "time", PersonalContextTimeUnit.MILLISECONDS, "录音最后修改时间；转写路径不等于转写正文",
+            ), listOf("title", "folder"), "time", PersonalContextTimeUnit.MILLISECONDS, "записзвукбільшістьназадбудуватизмінитигодинаміж；змінитиНапишітьдорогашляхнемаєчекатиназмінитиНапишітьпростомистецтва",
         ),
         source(
-            "calendar", "日程", "calendar",
+            "calendar", "деньПроцедура", "calendar",
             listOf(
                 text("origin_id", "idCom"), text("title", "nameCom"), text("text", "descriptionCom"), text("location", "locationCom"),
                 time("time", "startTimeCom"), time("end_time", "endTimeCom"), text("timezone", "timezoneCom"),
                 text("recurrence", "isRepeatCom"), integer("all_day", "allDayIndexCom"),
             ), listOf("title", "text", "location"), "time", PersonalContextTimeUnit.MILLISECONDS,
-            "日程开始时间；重复实例是否展开取决于系统索引，返回 instance_id 时为具体实例；按 id 读取原始日程，不保证覆盖所有重复事件",
+            "деньПроцедураВІДЧИНЕНОпочатокгодинаміж；ВажкаскладніРеальністьприкладтакнемаєвиставкаВІДЧИНЕНОВиберітьвирішитинаКраваткасистемаОтжепривести，поверненняповернення instance_id годинадляІнструменттілоРеальністьприклад；відповідно до id читатиВиберітьОригіналпочатокденьПроцедура，немаєзберегтисертифікаткришкабудуватиМісцематиВажкаскладнірічштук",
         ),
         source(
-            "calendar_todos", "日历待办", "calendarTodo",
+            "calendar_todos", "денькалендарлікуватиуправляти", "calendarTodo",
             listOf(
                 text("origin_id", "idCom"), text("text", "contentCom"), text("source_package", "create_packageCom"),
                 time("time", "start_timeCom", PersonalContextTimeUnit.TEXT_MILLISECONDS),
                 time("planned_end_time", "finish_timeCom", PersonalContextTimeUnit.TEXT_MILLISECONDS),
                 text("recurrence", "rruleCom"), text("reminders", "remindTimesCom"), integer("starred", "starCom"),
-                time("source_created_time", "create_timeCom", PersonalContextTimeUnit.TEXT_MILLISECONDS, "来源提供的创建时间，不用于计划开始时间过滤"),
+                time("source_created_time", "create_timeCom", PersonalContextTimeUnit.TEXT_MILLISECONDS, "приходьджерелонестидлязстворитивстановитигодинаміж，немаєвикористовуватинарозраховуватирядокВІДЧИНЕНОпочатокгодинаміжПасфільтр"),
             ), listOf("text", "source_package"), "time", PersonalContextTimeUnit.TEXT_MILLISECONDS,
-            "待办计划开始时间；系统可能展开重复实例但不提供实例 ID，按 id 读取原始待办，不保证覆盖所有重复事件；计划结束时间不表示已完成",
+            "лікуватиуправлятирозраховуватирядокВІДЧИНЕНОпочатокгодинаміж；КраваткасистемаможездатнийвиставкаВІДЧИНЕНОВажкаскладніРеальністьприкладаленемаєнестидляРеальністьприклад ID，відповідно до id читатиВиберітьОригіналпочатоклікуватиуправляти，немаєзберегтисертифікаткришкабудуватиМісцематиВажкаскладнірічштук；розраховуватирядоквузолпучокгодинаміжнемаєповерхніПоказативжезакінченостати",
         ),
         source(
-            "todos", "待办记录", "com.oplus.deepthinker#donate_todo_record",
+            "todos", "лікуватиуправлятизапам'ятатизапис", "com.oplus.deepthinker#donate_todo_record",
             listOf(
                 text("origin_id", "idCom"), text("title", "todoTitleCom"), text("text", "todoDescriptionCom"),
                 text("context", "descriptionCom"), text("original_text", "originalTodoCom"), text("status", "statusCom"),
-                text("origin", "sourceCom"), time("time", "eventStartTimeMillisCom", description = "0 表示未识别明确开始时间"),
-                time("deadline", "todoDeadlineTimeCom", description = "小于或等于 0 表示没有明确截止时间"),
-                time("indexed_time", "creationTimestampMillisCom", description = "记录生成或抽取时间，不是活动发生时间"),
+                text("origin", "sourceCom"), time("time", "eventStartTimeMillisCom", description = "0 поверхніПоказатище нізнанняне требаяскравийправильноВІДЧИНЕНОпочатокгодинаміж"),
+                time("deadline", "todoDeadlineTimeCom", description = "Маленькийнаабочекатина 0 поверхніПоказатибезматияскравийправильновирізатикінецьгодинаміж"),
+                time("indexed_time", "creationTimestampMillisCom", description = "запам'ятатизаписнародивсястатиабодимВиберітьгодинаміж，немаєтакжитирухатисяволоссянародивсягодинаміж"),
             ), listOf("title", "text", "context", "original_text"), "time", PersonalContextTimeUnit.MILLISECONDS,
-            "识别出的待办开始时间；0 表示未知，按时间过滤不会补搜只写在文本中的日期",
+            "знанняне требапозазлікуватиуправлятиВІДЧИНЕНОпочатокгодинаміж；0 поверхніПоказатище нізнати，відповідно догодинаміжПасфільтрнемаєзасіданняремонтпошукТількиНапишітьіснуютьмистецтвакнигасерединазденьОчікуйте",
         ),
         source(
-            "memories", "系统记忆", "com.oplus.aimemory#donate_AIMemory",
+            "memories", "Краваткасистемазапам'ятативідкликати", "com.oplus.aimemory#donate_AIMemory",
             listOf(
                 text("origin_id", "memoryIdCom"), text("title", "titleCom"), text("text", "dataTextCom"),
                 text("summary", "summaryCom", "titleSummaryCom"), text("description", "descriptionCom"),
                 text("notes", "notesCom"), text("memory_type", "memoryTypeCom"), text("source_app", "appNameCom"),
                 time("time", "createdTimeCom"), time("updated_time", "updateTimeCom"),
-                time("indexed_time", "creationTimestampMillisCom", description = "系统索引写入时间，不是记忆创建时间"),
+                time("indexed_time", "creationTimestampMillisCom", description = "КраваткасистемаОтжепривестиНапишітьвведітьгодинаміж，немаєтакзапам'ятативідкликатистворитивстановитигодинаміж"),
                 protection("_recycled", "recycleTimeCom"),
             ), listOf("title", "text", "summary", "description", "notes", "source_app"), "time", PersonalContextTimeUnit.MILLISECONDS,
-            "记忆创建时间", listOf(nullOrEqual("_recycled", 0)),
+            "запам'ятативідкликатистворитивстановитигодинаміж", listOf(nullOrEqual("_recycled", 0)),
         ),
         source(
-            "bills", "账单", "com.oplus.aimemory#billsDonate_Bills",
+            "bills", "рахунокодин", "com.oplus.aimemory#billsDonate_Bills",
             listOf(
                 text("origin_id", "billIdCom"), text("title", "productNameCom"), text("merchant", "merchantNameCom"),
-                PersonalContextField("amount", listOf("amountCom"), PersonalContextFieldKind.DECIMAL, description = "金额单位为人民币元"),
+                PersonalContextField("amount", listOf("amountCom"), PersonalContextFieldKind.DECIMAL, description = "золотоЛободинбітдлялюдейцивільнийвалютаЮань"),
                 text("category", "categoryCom"), text("transaction_type", "transactionTypeCom"), text("transaction_status", "transactionStatusCom"),
                 time("transaction_time", "transactionTimeCom"), text("payment_source", "paymentSourceCom"),
                 protection("_recycled", "recycleTimeCom"),
             ), listOf("title", "merchant", "category", "transaction_status", "payment_source"), "transaction_time", PersonalContextTimeUnit.MILLISECONDS,
-            "账单记录的交易时间；交易状态仅按原文展示，不推断退款净额", listOf(nullOrEqual("_recycled", 0)),
+            "рахунокодинзапам'ятатизаписзплатитилегкогодинаміж；платитилегкоформустантількивідповідно доОригіналмистецтвавиставкаПоказати，немаєштовхатиперервавідступоплатачистийЛоб", listOf(nullOrEqual("_recycled", 0)),
         ),
         source(
-            "collections", "记忆合集", "com.oplus.aimemory#collectionDonate_Collection",
+            "collections", "запам'ятативідкликатикомбайнвстановити", "com.oplus.aimemory#collectionDonate_Collection",
             listOf(
                 text("origin_id", "collectionIdCom"), text("title", "collectionNameCom"), text("text", "collectionSummaryCom"),
                 text("summary_title", "collectionSummaryTitleCom"), text("member_ids", "memoryIdsCom"),
-                time("indexed_time", "creationTimestampMillisCom", description = "仅为索引写入时间，不能表示合集首次创建时间"),
+                time("indexed_time", "creationTimestampMillisCom", description = "тількидляОтжепривестиНапишітьвведітьгодинаміж，немаєздатнийповерхніПоказатикомбайнвстановитиголоваДругосортнийстворитивстановитигодинаміж"),
             ), listOf("title", "text", "summary_title"), null, null,
-            "没有已确认的业务时间字段；不支持按业务时间过滤",
+            "безмативжеправильнорозпізнатизПромисловістьобслуговуваннягодинаміжхарактерчастина；немаєвідділенняутримувативідповідно доПромисловістьобслуговуваннягодинаміжПасфільтр",
         ),
         source(
-            "events", "生活事件", "com.oplus.deepthinker#donate_daily_event",
+            "events", "народивсяжитирічштук", "com.oplus.deepthinker#donate_daily_event",
             listOf(text("title", "eventNameCom"), text("text", "eventDescriptionCom"), time("time", "startTimeMillisCom"),
-                time("end_time", "endTimeMillisCom", description = "空值或 0 可以表示进行中")),
-            listOf("title", "text"), "time", PersonalContextTimeUnit.MILLISECONDS, "事件开始时间；推断事件不是已确认事实",
+                time("end_time", "endTimeMillisCom", description = "нульовийзначенняабо 0 можезаповерхніПоказатиВведітьдобресередина")),
+            listOf("title", "text"), "time", PersonalContextTimeUnit.MILLISECONDS, "річштукВІДЧИНЕНОпочатокгодинаміж；штовхатиперерварічштукнемаєтаквжеправильнорозпізнатирічРеальність",
         ),
         source(
-            "notifications", "历史通知", "com.oplus.deepthinker#donate_notification",
+            "notifications", "календарісторіїПасзнати", "com.oplus.deepthinker#donate_notification",
             listOf(
                 text("origin_id", "notificationKeyCom"), text("title", "titleCom"), text("text", "descriptionCom"),
                 text("subtext", "subTextCom"), text("source_package", "packageNameCom"), text("channel", "channelIdCom"),
-                time("time", "eventTimeCom"), time("indexed_time", "createTimeCom", description = "系统索引创建时间，不是通知事件时间"),
+                time("time", "eventTimeCom"), time("indexed_time", "createTimeCom", description = "КраваткасистемаОтжепривестистворитивстановитигодинаміж，немаєтакПасзнатирічштукгодинаміж"),
             ), listOf("title", "text", "subtext", "source_package"), "time", PersonalContextTimeUnit.MILLISECONDS,
-            "历史通知事件时间；不代表当前通知栏或当前未读状态",
+            "календарісторіїПасзнатирічштукгодинаміж；немаєпоколінняповерхніколивпередПасзнатиколонкаабоколивпередще нічитатиформустан",
         ),
         source(
-            "files", "本地文件", "file",
+            "files", "книгаземлімистецтваштук", "file",
             listOf(
                 text("origin_id", "idCom"), text("name", "filenameCom"), text("title", "titleCom"), text("text", "highlight"),
                 text("path", "absolutePathCom"), integer("size_bytes", "sizeCom"), integer("file_type", "typeCom"), time("time", "lastModifiedCom"),
             ), listOf("name", "title", "text"), "time", PersonalContextTimeUnit.MILLISECONDS,
-            "索引中记录的文件最后修改时间；路径不证明文件当前仍存在",
+            "Отжепривестисерединазапам'ятатизаписзмистецтваштукбільшістьназадбудуватизмінитигодинаміж；дорогашляхнемаєсертифікатяскравиймистецтваштукколивпереддосіжитиіснують",
         ),
         source(
-            "app_files", "应用文件", "com.coloros.filemanager#third_app_file",
+            "app_files", "відповідьвикористовуватимистецтваштук", "com.coloros.filemanager#third_app_file",
             listOf(text("name", "nameCom"), text("source_package", "packageCom"), text("source_app", "source_nameCom"),
                 integer("size_bytes", "sizeCom"), time("time", "file_timeCom")),
-            listOf("name", "source_package", "source_app"), "time", PersonalContextTimeUnit.MILLISECONDS, "来源文件的文件系统时间",
+            listOf("name", "source_package", "source_app"), "time", PersonalContextTimeUnit.MILLISECONDS, "приходьджереломистецтваштукзмистецтваштукКраваткасистемагодинаміж",
         ),
         source(
-            "flights", "航班行程", "standard_data#flight",
+            "flights", "вітрилокласдобреПроцедура", "standard_data#flight",
             listOf(
                 text("origin_id", "idCom"), text("title", "titleCom"), text("text", "descriptionCom"), text("number", "flightNumberCom"),
                 text("carrier", "airlineNameCom"), text("departure", "departureAirportNameCom"), text("arrival", "arrivalAirportNameCom"),
                 text("status", "flightStatusCom"), time("time", "planDepartureTimestampCom"), time("arrival_time", "planArrivalTimestampCom"),
-            ), listOf("title", "text", "number", "carrier", "departure", "arrival"), "time", PersonalContextTimeUnit.MILLISECONDS, "计划起飞时间",
+            ), listOf("title", "text", "number", "carrier", "departure", "arrival"), "time", PersonalContextTimeUnit.MILLISECONDS, "розраховуватирядокпідніматисялітатигодинаміж",
         ),
         source(
-            "hotels", "酒店预订", "standard_data#hotel",
+            "hotels", "лікермагазинпопередньопорядок", "standard_data#hotel",
             listOf(
                 text("origin_id", "idCom"), text("title", "hotelNameCom"), text("text", "descriptionCom"), text("address", "addressCom"),
                 text("order_number", "orderNumberCom"), text("room_type", "room_typeCom"), text("status", "statusCom"),
                 time("time", "checkInTimestampCom"), time("checkout_time", "checkoutTimestampCom"),
-            ), listOf("title", "text", "address", "order_number"), "time", PersonalContextTimeUnit.MILLISECONDS, "预订入住时间",
+            ), listOf("title", "text", "address", "order_number"), "time", PersonalContextTimeUnit.MILLISECONDS, "попередньопорядоквведітьжитигодинаміж",
         ),
         source(
-            "trains", "火车行程", "standard_data#train",
+            "trains", "вогоньавтомобільдобреПроцедура", "standard_data#train",
             listOf(
                 text("origin_id", "idCom"), text("title", "titleCom"), text("text", "descriptionCom"), text("number", "trainNumberCom"),
                 text("departure", "departureStationNameCom"), text("arrival", "arrivalStationNameCom"), integer("status", "trainStatusCom"),
                 time("time", "planDepartureTimestampCom"), time("arrival_time", "planArrivalTimestampCom"),
-            ), listOf("title", "text", "number", "departure", "arrival"), "time", PersonalContextTimeUnit.MILLISECONDS, "计划出发时间",
+            ), listOf("title", "text", "number", "departure", "arrival"), "time", PersonalContextTimeUnit.MILLISECONDS, "розраховуватирядокпозаволоссягодинаміж",
         ),
     )
 

@@ -7,7 +7,7 @@ import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 读取聊天应用的图片缓存；系统个人数据由原生 Provider 通道负责。 */
+/** Читати кеш зображень програми чату; персональні дані системи обробляються рідним каналом постачальника.*/
 internal class ChatImageSearchTools(private val root: BoundedRootCommandExecutor) {
     fun execute(name: String, args: JSONObject): AgentModelClient.ToolResult? =
         when (name) {
@@ -23,7 +23,7 @@ internal class ChatImageSearchTools(private val root: BoundedRootCommandExecutor
             pathFilter =
                 "\\( -path '*/chatimg/*' -o -path '*/chatraw/*' -o -path '*/chatthumb/*' \\)",
             unavailableCode = "QQ_CHAT_IMAGES_UNAVAILABLE",
-            unavailableMessage = "QQ 聊天图片缓存暂时不可访问",
+            unavailableMessage = "QQ чатнебомалюнокшматокповільнийжититимчасовогодинанемаєможевідвідатизапитати",
             args = args,
             kind = ::qqImageKind,
         )
@@ -34,7 +34,7 @@ internal class ChatImageSearchTools(private val root: BoundedRootCommandExecutor
             directory = WECHAT_CHAT_IMAGES_DIRECTORY,
             pathFilter = "-path '*/image/*'",
             unavailableCode = "WECHAT_CHAT_IMAGES_UNAVAILABLE",
-            unavailableMessage = "微信聊天图片缓存暂时不可访问",
+            unavailableMessage = "Кеш зображень чату WeChat тимчасово недоступний",
             args = args,
             kind = { "image" },
         )

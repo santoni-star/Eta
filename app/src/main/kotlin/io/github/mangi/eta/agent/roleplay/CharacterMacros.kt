@@ -6,12 +6,12 @@ import java.util.Locale
 
 internal object CharacterMacros {
     const val MAX_EXPANDED_CHARS = 2 * 1024 * 1024
-    // Android 的 ICU 正则要求字面量右花括号也转义，否则对象初始化会失败。
+    // Регуляризація ICU Android вимагає, щоб закрита фігурна дужка літералу була екранована, інакше ініціалізація об’єкта не вдасться.
     private val token = Regex("\\{\\{([^{}]+)\\}\\}|<(USER|CHAR|BOT)>", RegexOption.IGNORE_CASE)
     private val opening = Regex("\\{\\{\\s*([^\\s:{}]+)")
 
     fun hasUnsupportedMacros(text: String, card: CharacterCard): Boolean {
-        val names = values(card, "用户", "", "").keys
+        val names = values(card, "використовуватипобутові", "", "").keys
         return token.findAll(text).any { match ->
             val key = (match.groups[1]?.value ?: match.groups[2]?.value.orEmpty()).trim().lowercase(Locale.ROOT)
             !key.startsWith("//") && key !in names
@@ -24,7 +24,7 @@ internal object CharacterMacros {
     fun expand(
         text: String,
         card: CharacterCard,
-        userName: String = "用户",
+        userName: String = "використовуватипобутові",
         userDescription: String = "",
         original: String = "",
     ): String {
@@ -59,7 +59,7 @@ internal object CharacterMacros {
 
     private fun checkSize(length: Number) {
         if (length.toLong() > MAX_EXPANDED_CHARS) {
-            throw CharacterCardException("CARD_MACRO_EXPANSION_LIMIT", "角色宏展开超过长度上限，请精简循环引用或重复宏")
+            throw CharacterCardException("CARD_MACRO_EXPANSION_LIMIT", "рігколірмакросвиставкаВІДЧИНЕНОобганятиПасдовговитрачатиначальникаобмеження，будь ласкаВишуканийпростийслідуватикільцепривестивикористовуватиабоВажкаскладнімакрос")
         }
     }
 
@@ -67,7 +67,7 @@ internal object CharacterMacros {
         val now = LocalDateTime.now()
         return mapOf(
             "char" to card.nickname,
-            "user" to userName.ifBlank { "用户" },
+            "user" to userName.ifBlank { "використовуватипобутові" },
             "bot" to card.nickname,
             "original" to original,
             "description" to card.description,
@@ -82,7 +82,7 @@ internal object CharacterMacros {
             "chardepthprompt" to card.depthPrompt?.prompt.orEmpty(),
             "group" to card.nickname,
             "charifnotgroup" to card.nickname,
-            "notchar" to userName.ifBlank { "用户" },
+            "notchar" to userName.ifBlank { "використовуватипобутові" },
             "date" to now.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "isodate" to now.format(DateTimeFormatter.ISO_LOCAL_DATE),
             "time" to now.format(DateTimeFormatter.ofPattern("HH:mm")),

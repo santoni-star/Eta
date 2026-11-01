@@ -50,7 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 终端入口：PTY 可用时默认进入交互式控制台，块式终端作为“跑一条命令看结果”的简洁模式。 */
+/** Вхід через термінал: увійдіть до інтерактивної консолі за замовчуванням, коли доступний PTY, а блоковий термінал служить простим режимом «виконайте команду та подивіться результати».*/
 @Composable
 internal fun TerminalEntryScreen(
     terminalStore: UserTerminalStore,
@@ -65,7 +65,7 @@ internal fun TerminalEntryScreen(
         consoleStore.probePtySupport()
     }
     when {
-        // 探测只检查随包组件，结果几乎立即返回；期间留白，避免先闪出块式终端再切换。
+        // Виявлення перевіряє лише упаковані компоненти, і результати повертаються майже негайно; залиште крапку порожньою, щоб уникнути вискакування терміналу блоку, а потім перемикання.
         consoleState.ptySupported == null -> Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,8 +90,8 @@ internal fun TerminalEntryScreen(
 }
 
 /**
- * 控制台：PTY 全屏视图，面向 TUI 与交互式 CLI。
- * 网格区域本身是输入目标，输入法与硬件键盘的输入直接编码为终端字节；键条补齐软键盘没有的按键。
+ * Консоль: повноекранний режим PTY для TUI та інтерактивного CLI.
+ * Сама область сітки є метою введення, а вхідні дані від методу введення та апаратної клавіатури безпосередньо кодуються як термінальні байти; панель клавіш заповнює клавіші, недоступні на програмній клавіатурі.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -221,7 +221,7 @@ internal fun ConsoleScreen(
 
 private val GRID_HORIZONTAL_PADDING = 8.dp
 
-/** 软键盘动画期间网格高度逐帧变化；停稳后再同步尺寸，避免程序被连续的 SIGWINCH 反复重绘。 */
+/** Під час анімації програмної клавіатури висота сітки змінюється кадр за кадром; розмір синхронізується після зупинки, щоб уникнути повторного перемальовування програми безперервним SIGWINCH.*/
 private const val RESIZE_SETTLE_MS = 120L
 
 @Composable

@@ -28,7 +28,7 @@ internal sealed interface KimiWebLaunchResult {
     data class Failed(val code: String) : KimiWebLaunchResult
 }
 
-/** 取得启动期前台引用，解析带 token 的本机地址后交给系统浏览器。 */
+/** Отримайте посилання на інтерфейс під час запуску, проаналізуйте локальну адресу за допомогою маркера та передайте її системному браузеру.*/
 internal class KimiWebLauncher(
     private val context: Context,
     private val daemonSupervisor: DetachedTaskSupervisor,

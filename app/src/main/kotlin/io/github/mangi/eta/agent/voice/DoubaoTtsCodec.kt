@@ -7,8 +7,8 @@ import java.nio.ByteOrder
 import java.util.zip.GZIPInputStream
 
 /**
- * 豆包双向流式合成的二进制帧。头部 4 字节：版本/头长、消息类型/标志、序列化/压缩、保留；
- * 带事件标志时依次是事件号、会话 ID（连接级事件改为连接 ID）、负载长度与负载，全部大端。
+ * Двійкові кадри, синтезовані двонаправленою потоковою передачею beanbao. Заголовок 4 байти: версія/довжина заголовка, тип повідомлення/прапорці, серіалізація/стиснення, збереження;
+ * З прапором події порядок: номер події, ідентифікатор сеансу (події на рівні з’єднання змінюються на ідентифікатор з’єднання), довжина корисного навантаження та корисне навантаження, все з порядком старшого порядку.
  */
 internal object DoubaoTtsCodec {
     const val START_CONNECTION = 1
@@ -53,7 +53,7 @@ internal object DoubaoTtsCodec {
     }
 
     fun decode(bytes: ByteArray): Frame {
-        fun invalid(): Nothing = throw SpeechFailure(SpeechErrorCode.PROTOCOL, "豆包语音合成返回了无效协议帧")
+        fun invalid(): Nothing = throw SpeechFailure(SpeechErrorCode.PROTOCOL, "квасоляСумкамовазвуккомбайнстатиповерненняповерненнязрозумівнемаєефектоб'єднанняобговоритирамка")
         if (bytes.size < 8) invalid()
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
         val version = buffer.get().toInt() and 0xff
@@ -76,7 +76,7 @@ internal object DoubaoTtsCodec {
         var event = 0
         if (flags and FLAG_WITH_EVENT != 0) {
             event = int()
-            // 连接级事件携带连接 ID，会话级事件携带会话 ID；两者长度前缀相同，都只需跳过。
+            // Події рівня з’єднання містять ідентифікатор з’єднання, а події рівня сеансу – ідентифікатор сеансу; обидва мають префікс однакової довжини, і їх потрібно лише пропустити.
             if (event != START_CONNECTION && event != FINISH_CONNECTION) sized()
         }
         var payload = sized()

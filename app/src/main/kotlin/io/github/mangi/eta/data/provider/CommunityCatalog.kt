@@ -33,7 +33,7 @@ internal data class CommunityCatalogModel(
     val supportsTemperature: Boolean?,
 )
 
-/** 社区目录仅负责候选项；Eta 的请求协议与认证地址由本地过滤规则决定。 */
+/** Каталог спільноти відповідає лише за кандидатів; Протокол запиту Eta та адреса автентифікації визначаються локальними правилами фільтрації.*/
 internal object CommunityCatalogParser {
     private const val COMPATIBLE_NPM = "@ai-sdk/openai-compatible"
     private val providerIdPattern = Regex("[a-z0-9][a-z0-9_-]{0,79}")
@@ -53,7 +53,7 @@ internal object CommunityCatalogParser {
                 parseProvider(id, item)?.let(::add)
             }
         }.sortedWith(compareBy(CommunityCatalogProvider::name, CommunityCatalogProvider::id))
-        require(providers.isNotEmpty()) { "目录中没有可导入的对话提供商" }
+        require(providers.isNotEmpty()) { "Головазаписсерединабезматиможекерівництвовведітьзправильноговоритинестидлябізнес" }
         return CommunityCatalog(providers, source, fetchedAt)
     }
 

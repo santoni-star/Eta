@@ -20,7 +20,7 @@ import io.github.mangi.eta.core.safeLogType
 import io.github.mangi.eta.ui.MainActivity
 import java.util.concurrent.atomic.AtomicLong
 
-/** 只在用户任务存活期间持有前台执行生命周期；进程被系统停止后不重放任务。 */
+/** Зберігає лише життєвий цикл виконання на передньому плані під час виживання завдання користувача; завдання не буде відтворено повторно після зупинки процесу системою.*/
 internal class AgentExecutionService : Service() {
     private val stopQueue = ExecutionStopQueue { failure ->
         AndroidAgentLogger.warn("Execution task stop failed: type=${failure.safeLogType()}")
@@ -71,7 +71,7 @@ internal class AgentExecutionService : Service() {
 
     override fun onDestroy() {
         if (instance === this) instance = null
-        // 销毁时同样收回本服务拥有的任务。回收在独立有界工作线程上完成，不阻塞 Main。
+        // Після знищення завдання, якими володіє ця служба, також будуть відновлені. Переробка виконується в окремому обмеженому робочому потоці та не блокує Main.
         stopQueue.close(leases.drainOwner(owner))
         super.onDestroy()
     }
@@ -112,18 +112,18 @@ internal class AgentExecutionService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .addAction(Notification.Action.Builder(null, getString(R.string.execution_stop), stop).build())
-        // 只有 Agent run 在跑时才申请提升为 Live Update；终端会话、Linux 启动等长驻任务不属于"正在进行、需要持续关注"的活动。
+        // Лише запуск агента застосовується для переходу до Live Update під час його роботи; довготермінові завдання, такі як термінальні сеанси та запуск Linux, не є діяльністю, яка «триває та вимагає постійної уваги».
         if (status != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             builder
                 .setStyle(Notification.ProgressStyle().setProgressIndeterminate(true))
                 .setShortCriticalText(status.shortText())
-            // 请求方法从 API 36.1 才公开；标准 extra 也可供支持该协议的 API 36 系统读取。
+            // Метод запиту надається лише з API 36.1; стандартні додаткові функції також читаються системами API 36, які підтримують протокол.
             builder.extras.putBoolean("android.requestPromotedOngoing", true)
         }
         return builder.build()
     }
 
-    /** 状态栏胶囊约 7 个字符可完整显示；更长时只取动作，工具名留在展开态。 */
+    /** Капсула рядка стану може повністю відображатися приблизно 7 символами; якщо воно довше, виконується лише дія, а назва інструмента залишається в розгорнутому стані.*/
     private fun AgentOverlayStatus.shortText(): String = when (this) {
         is AgentOverlayStatus.RunningTool, is AgentOverlayStatus.HostedToolRunning -> getString(R.string.execution_chip_running)
         AgentOverlayStatus.Paused -> getString(R.string.overlay_paused)
@@ -145,8 +145,8 @@ internal class AgentExecutionService : Service() {
         private var publishedStatusText: String? = null
 
         /**
-         * Agent run 的当前状态，供通知与状态栏胶囊展示；null 表示没有 Agent run 在跑。
-         * 只在显示文字变化时刷新通知，避免流式事件把通知更新频率推到系统限流。
+         * Поточний статус запуску агента для сповіщень і відображення капсули в рядку стану; null означає, що запуск агента не виконується.
+         * Оновлюйте сповіщення лише тоді, коли відображуваний текст змінюється, щоб уникнути збільшення частоти оновлення сповіщень до поточного ліміту потокових подій.
          */
         fun updateRunStatus(context: Context, status: AgentOverlayStatus?, activeRunCount: Int) {
             mainHandler.post {
@@ -169,7 +169,7 @@ internal class AgentExecutionService : Service() {
             }
         }
 
-        /** 必须从有效的用户入口取得引用，再创建会话或子进程；失败时调用方不启动任务。 */
+        /** Перед створенням сеансу або підпроцесу необхідно отримати посилання з дійсного запису користувача; абонент не розпочне виконання завдання, якщо воно не вдасться.*/
         fun acquire(
             context: Context,
             id: String,

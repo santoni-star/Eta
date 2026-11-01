@@ -10,27 +10,27 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
-/** Codex 账号目录是独立协议，不按公共 API 的预设或 supported_in_api 筛选。 */
+/** Каталог облікових записів Codex є незалежним протоколом і не фільтрується за замовчуванням або supported_in_api публічного API.*/
 internal object CodexModelCatalog {
     fun parse(entries: JsonArray): List<Model> = entries.mapIndexedNotNull { index, element ->
-        val item = element as? JsonObject ?: error("Codex 模型目录包含无效模型项")
+        val item = element as? JsonObject ?: error("Codex цвільтипуГоловазаписСумкаМіститьнемаєефектцвільтипупункт")
         when (item.string("visibility")) {
             "list" -> Unit
             "hide", "none" -> return@mapIndexedNotNull null
-            else -> error("Codex 模型目录缺少有效的可见性信息")
+            else -> error("Codex цвільтипуГоловазаписвідсутністьмаломатиефектзможедивсекслистінтерес")
         }
         val slug = item.string("slug")?.takeIf(String::isNotBlank)
-            ?: error("Codex 模型目录缺少模型标识")
+            ?: error("Codex цвільтипуГоловазаписвідсутністьмалоцвільтипузнакзнання")
         val levels = item["supported_reasoning_levels"]?.let { raw ->
-            require(raw is JsonArray) { "Codex 模型目录的推理档位无效" }
+            require(raw is JsonArray) { "Codex цвільтипуГоловазаписзштовхатипричинафайлибітнемаєефект" }
             raw.mapNotNull { option -> effort((option as? JsonObject)?.string("effort")) }.distinct()
         }.orEmpty()
         val default = effort(item.string("default_reasoning_level"))?.takeIf { it in levels }
         val reasoning = levels.filter { it != ReasoningEffort.OFF }
         val modalities = item["input_modalities"]?.let { raw ->
-            require(raw is JsonArray) { "Codex 模型目录的输入类型无效" }
+            require(raw is JsonArray) { "Codex цвільтипуГоловазаписзвтратитивведітьвидтипунемаєефект" }
             raw.map { value ->
-                require(value is JsonPrimitive && value.isString) { "Codex 模型目录的输入类型无效" }
+                require(value is JsonPrimitive && value.isString) { "Codex цвільтипуГоловазаписзвтратитивведітьвидтипунемаєефект" }
                 value.content
             }
         } ?: listOf(Model.TEXT_MODALITY, Model.IMAGE_MODALITY)

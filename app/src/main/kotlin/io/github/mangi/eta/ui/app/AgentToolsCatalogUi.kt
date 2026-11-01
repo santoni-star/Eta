@@ -86,8 +86,8 @@ internal fun buildToolsState(context: Context): AgentToolsUiState =
                 } + io.github.mangi.eta.agent.model.AgentPhoneToolCatalog.entries.filter { it.personal }.map {
                     ToolItemUi(it.name, it.title, it.description)
                 } + listOf(
-                    ToolItemUi("read_personal_item", "读取检索详情", "读取历史检索结果的完整条目。"),
-                    ToolItemUi("summarize_bills", "账单汇总", "按时间与关键词精确汇总账单索引。"),
+                    ToolItemUi("read_personal_item", "читатиВиберітьперевіритиОтжедокладноПрихильність", "читатиВиберітькалендарісторіїперевіритиОтжевузолфруктиззакінченовсесмужкаГолова。"),
+                    ToolItemUi("summarize_bills", "рахунокодинобмінвсього", "відповідно догодинаміжізакритиключсловоВишуканийправильнообмінвсьогорахунокодинОтжепривести。"),
                     ToolItemUi("read_sms_code", context.getString(R.string.tool_ui_read_verification_code_7d1121), context.getString(R.string.tool_ui_only_extract_verification_codes_from_recent_sms__0fb8c1)),
                     ToolItemUi("recent_notifications", context.getString(R.string.tool_ui_read_notification_7fdc09), context.getString(R.string.tool_ui_read_the_current_notification_title_and_text_0faee7)),
                     ToolItemUi("search_notification_history", context.getString(R.string.tool_ui_notification_history_95d015), context.getString(R.string.tool_ui_retrieve_the_last_7_days_of_notifications_saved__643e43)),
@@ -130,8 +130,8 @@ internal fun buildToolsState(context: Context): AgentToolsUiState =
                 tools = listOf(
                     ToolItemUi("memory_get", context.getString(R.string.tool_ui_read_memory_979135), context.getString(R.string.tool_ui_paged_to_read_or_retrieve_long_term_memory_in_me_88afc4)),
                     ToolItemUi("memory_write", context.getString(R.string.tool_ui_organize_memory_2b08eb), context.getString(R.string.tool_ui_partially_update_append_or_clear_long_term_memor_c1bab6)),
-                    ToolItemUi("character_memory_get", "读取剧情记忆", "仅角色会话可用，读取当前角色的长期剧情和关系。"),
-                    ToolItemUi("character_memory_write", "整理剧情记忆", "仅角色会话可用，更新当前角色的剧情记忆，不写入现实 MEMORY.md。"),
+                    ToolItemUi("character_memory_get", "читатиВиберітьдрамаПрихильністьзапам'ятативідкликати", "тількирігколірзасіданняговоритиможевикористовувати，читатиВиберітьколивпередрігколірздовгоОчікуйтедрамаПрихильністьізакритиКраватка。"),
+                    ToolItemUi("character_memory_write", "всепричинадрамаПрихильністьзапам'ятативідкликати", "тількирігколірзасіданняговоритиможевикористовувати，НавітьновийколивпередрігколірздрамаПрихильністьзапам'ятативідкликати，немаєНапишітьвведітьзаразРеальність MEMORY.md。"),
                 ),
             ),
             ToolGroupUi(

@@ -13,7 +13,7 @@ import io.github.mangi.eta.ui.components.EtaPreferenceGroup
 import io.github.mangi.eta.ui.components.EtaPreferenceGroupTitle
 import io.github.mangi.eta.ui.components.MiuixScaffoldPage
 
-/** 自有 OSS 配置只做保存不做整体校验，允许先存存储配置再补齐识别配置。 */
+/** Власна конфігурація OSS зберігається лише без повної перевірки. Дозволяється спочатку зберегти конфігурацію сховища, а потім завершити конфігурацію ідентифікації.*/
 @Composable
 internal fun SpeechOssScreen(onBack: () -> Unit) {
     val context = LocalContext.current

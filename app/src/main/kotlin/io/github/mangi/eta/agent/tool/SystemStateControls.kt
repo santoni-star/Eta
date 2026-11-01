@@ -9,7 +9,7 @@ import io.github.mangi.eta.agent.device.BoundedRootCommandExecutor
 import io.github.mangi.eta.agent.device.DeviceToolContract
 import org.json.JSONObject
 
-/** 有明确系统语义的开关；不把模型提供的设置键或命令作为执行入口。 */
+/** Є перемикачі з чіткою системною семантикою; клавіші налаштування або команди, надані моделлю, не використовуються як точки входу для виконання.*/
 internal class SystemStateControls(
     private val context: Context,
     private val execute: (String) -> BoundedRootCommandExecutor.Result,
@@ -51,9 +51,9 @@ internal class SystemStateControls(
     fun set(target: String, enabled: Boolean): JSONObject {
         val command =
             command(target, enabled, DeviceToolContract.appUserId(context))
-                ?: return DeviceToolContract.failure("INVALID_ARGUMENT", "不支持的系统开关")
+                ?: return DeviceToolContract.failure("INVALID_ARGUMENT", "немаєвідділенняутримуватизКраваткасистемаВІДЧИНЕНОзакрити")
         if (target == "nfc" && NfcAdapter.getDefaultAdapter(context) == null)
-            return DeviceToolContract.failure("DEVICE_UNSUPPORTED", "设备不支持 NFC")
+            return DeviceToolContract.failure("DEVICE_UNSUPPORTED", "налаштуватиПриготуйтенемаєвідділенняутримувати NFC")
         val before = read(target)
         if (before == enabled)
             return DeviceMutationResult.observed(

@@ -4,7 +4,7 @@ import io.github.mangi.eta.data.repository.AgentMemoryStore
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 声明持久记忆的有界读取与原子局部更新工具。 */
+/** Оголошення обмежених читань і атомарних засобів локального оновлення для постійної пам'яті.*/
 internal object AgentMemoryToolCatalog {
     fun appendTo(tools: JSONArray, writable: Boolean = true) {
         tools
@@ -47,7 +47,7 @@ internal object AgentMemoryToolCatalog {
             .put(
                 AgentToolSchema.function(
                     name = "memory_write",
-                    description = "Atomically update persistent MEMORY.md. Store only durable cross-conversation facts, preferences, relationships, and ongoing project context; never store secrets, credentials, verification codes, or transient requests. Keep '# 核心记忆' concise, correct stale facts, and prefer replacing an existing section over blindly appending duplicates. Use the revision from the most recent memory_write or memory_get result, or the session memory snapshot if neither has run.",
+                    description = "Atomically update persistent MEMORY.md. Store only durable cross-conversation facts, preferences, relationships, and ongoing project context; never store secrets, credentials, verification codes, or transient requests. Keep '# ядернийсерцезапам'ятативідкликати' concise, correct stale facts, and prefer replacing an existing section over blindly appending duplicates. Use the revision from the most recent memory_write or memory_get result, or the session memory snapshot if neither has run.",
                     parameters = JSONObject()
                         .put("type", "object")
                         .put(

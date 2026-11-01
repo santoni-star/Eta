@@ -13,7 +13,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * App 侧只表达保护开关与恢复请求；Secure Settings 始终由 system_server 后端维护。
+ * Сторона програми лише виражає перемикання захисту та запити на відновлення; Безпечні параметри завжди підтримуються серверною частиною system_server.
  */
 internal object AccessibilityProtectionClient {
     private const val PREFERENCES_NAME = "accessibility_protection"
@@ -95,7 +95,7 @@ internal object AccessibilityProtectionClient {
         scheduler: Handler,
         onResult: (ControlResult) -> Unit,
     ) {
-        // 保护后端依赖 API 34 的发送者身份，旧系统不能以包名或额外字段替代 UID 校验。
+        // Сервер захисту покладається на ідентифікатор відправника API 34, і застарілі системи не можуть замінити перевірку UID іменами пакетів або додатковими полями.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             scheduler.post { onResult(ControlResult(ControlStatus.UNAVAILABLE, enabled = false)) }
             return
@@ -123,7 +123,7 @@ internal object AccessibilityProtectionClient {
         }
 
         try {
-            // Android 14 起广播默认不共享发送者身份；保护后端必须取得真实 UID 才接受请求。
+            // Починаючи з Android 14, за замовчуванням трансляції не передають дані про відправника; сервер захисту повинен отримати справжній UID перед тим, як прийняти запит.
             val options = BroadcastOptions.makeBasic()
                 .setShareIdentityEnabled(true)
                 .toBundle()

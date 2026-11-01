@@ -3,7 +3,7 @@ package io.github.mangi.eta.agent.terminal
 import java.io.File
 import org.json.JSONObject
 
-/** 同一次运行固定目录和 Linux 环境；Android 默认身份根据已确认的授权选择。 */
+/** Запуск фіксованого каталогу та середовища Linux одночасно; Стандартний ідентифікатор Android вибирається на основі підтвердженої авторизації.*/
 internal data class TerminalExecutionContext(
     val linuxEnvironment: TerminalEnvironment,
     val linuxRootfsPath: String?,
@@ -50,12 +50,12 @@ internal data class TerminalExecutionContext(
         if (environment.isLinux) linuxIdentity else if (rootAvailable) "root" else "user"
 
     fun description(rootAvailable: Boolean): String = buildString {
-        append("本次运行的命令和文件工具共用默认执行上下文：environment=android，identity=")
+        append("книгаДругосортнийтранспортдобрезжиттязробитиімистецтваштукпрацюватиІнструментпоширенийвикористовуватимовчазнийрозпізнатиВиконатидобреначальникавнизмистецтва：environment=android，identity=")
         append(identityFor(TerminalEnvironment.ANDROID, rootAvailable))
-        append("，工作区=")
+        append("，працюватиробитирайон=")
         append(JSONObject.quote(androidWorkspacePath))
-        append("。已授权 Root 时直接使用 Root，未确认授权时使用 App 身份。identity=user 可显式选择普通身份；工作目录不因身份变化而移动。\n")
-        append("environment=linux 使用已选择的 ")
+        append("。вженавчатиправильно Root годинапрямозловитизробитивикористовувати Root，ще ніправильнорозпізнатинавчатиправильногодиназробитивикористовувати App тілочастка。identity=user можешоуРежимвибративибратизагальнийПастілочастка；працюватиробитиГоловазаписнемаєтому щотілочасткаЗміназмінитиізмінарухатися。\n")
+        append("environment=linux зробитивикористовувативжевибративибратиз ")
         append(linuxEnvironment.wireName)
         append("，backend=")
         append(linuxBackend.wireName)
@@ -67,11 +67,11 @@ internal data class TerminalExecutionContext(
         append(linuxCommonToolsReady)
         append("，profiles=")
         append(linuxInstalledProfiles.ifEmpty { listOf("none") }.joinToString("/"))
-        append("。Linux 工作区 ")
+        append("。Linux працюватиробитирайон ")
         append(JSONObject.quote(linuxWorkspacePath))
-        append(" 映射宿主目录 ")
+        append(" відображатистрілятипроживанняхостГоловазапис ")
         append(JSONObject.quote(linuxHostWorkspacePath))
-        append("；只有宿主目录相同时才与默认 Android 工作区共享文件。Linux 路径按 Linux 环境解释。")
+        append("；ТількиматипроживанняхостГоловазаписВзаємноте самегодинаталантімовчазнийрозпізнати Android працюватиробитирайонпоширенийНасолоджуйтесьмистецтваштук。Linux дорогашляхвідповідно до Linux кільцетериторіїрозв'язатиреліз。")
     }
 
     private companion object {

@@ -49,7 +49,7 @@ internal class RootShellTerminalController(
         "terminal" -> terminal(args)
         "terminal_job" -> terminalJob(args)
         "terminal_daemon" -> terminalDaemon(args)
-        else -> errorJson("UNKNOWN_TOOL", "未知终端工具：$name")
+        else -> errorJson("UNKNOWN_TOOL", "ще нізнатикінецькінецьпрацюватиІнструмент：$name")
     }
 
     private fun terminal(args: JSONObject): String = when (args.optString("action", "exec").lowercase()) {
@@ -68,29 +68,29 @@ internal class RootShellTerminalController(
             sessionId = args.optString("session_id").ifBlank { null },
         )
         "close" -> closeTerminal(args.optString("session_id"))
-        else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal action 仅支持 exec/open/close")
+        else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal action тількивідділенняутримувати exec/open/close")
     }
 
     private fun terminalJob(args: JSONObject): String {
-        val jobs = backgroundJobs ?: return errorJson("BACKGROUND_UNAVAILABLE", "后台命令宿主不可用")
+        val jobs = backgroundJobs ?: return errorJson("BACKGROUND_UNAVAILABLE", "назадвежажиттязробитипроживанняхостнемаєможевикористовувати")
         return when (args.optString("action").lowercase()) {
             "start" -> {
-                if (processSupervisor.isClosing) return errorJson("TERMINAL_CLOSED", "当前运行已结束，不能再启动任务")
-                val launcher = detachedSupervisor ?: return errorJson("BACKGROUND_UNAVAILABLE", "后台进程宿主不可用")
+                if (processSupervisor.isClosing) return errorJson("TERMINAL_CLOSED", "коливпередтранспортдобревжевузолпучок，немаєздатнийЗновупочатокрухатисяпризначитиобслуговування")
+                val launcher = detachedSupervisor ?: return errorJson("BACKGROUND_UNAVAILABLE", "назадвежаВведітьПроцедурапроживанняхостнемаєможевикористовувати")
                 val environment = normalizeEnvironment(args.optString("environment", "android"))
                 val identity = normalizeIdentity(args.optString("identity").ifBlank { defaultIdentity(environment) })
                 environmentPreflight(identity, environment)?.let { return it }
                 val cwd = normalizeCwd(args.optString("cwd").ifBlank { null }, environment, identity)
                 val command = args.requiredText("command")
-                if (command.isBlank()) return errorJson("INVALID_ARGUMENT", "command 不能为空")
+                if (command.isBlank()) return errorJson("INVALID_ARGUMENT", "command немаєздатнийдлянульовий")
                 jobs.start(launcher, command, cwd, identity, environment,
-                    args.optString("description", "后台命令"), args.optLong("timeout_ms", 600_000))
+                    args.optString("description", "назадвежажиттязробити"), args.optLong("timeout_ms", 600_000))
             }
             "list" -> jobs.list(args.optBoolean("active_only", true))
             "read" -> jobs.read(args.requiredText("job_id"), args.optInt("max_bytes", 16_000))
             "wait" -> jobs.waitFor(args.requiredText("job_id"), args.optLong("wait_ms", 30_000)) { processSupervisor.isClosing }
             "stop" -> jobs.stop(args.requiredText("job_id"))
-            else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal_job action 仅支持 start/list/read/wait/stop")
+            else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal_job action тількивідділенняутримувати start/list/read/wait/stop")
         }
     }
 
@@ -104,7 +104,7 @@ internal class RootShellTerminalController(
         "list" -> daemonList()
         "logs" -> daemonLogs(args.optString("task_id"))
         "stop" -> daemonStop(args.optString("task_id"))
-        else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal_daemon action 仅支持 start/list/logs/stop")
+        else -> errorJson("UNSUPPORTED_TERMINAL_ACTION", "terminal_daemon action тількивідділенняутримувати start/list/logs/stop")
     }
 
     private fun openSession(identity: String, cwd: String?, environment: String): String {
@@ -117,7 +117,7 @@ internal class RootShellTerminalController(
         val process = startSessionProcess(normalizedIdentity, normalizedEnvironment, sessionRootfs)
             ?: return errorJson(
                 "PROCESS_START_FAILED",
-                "无法启动 ${normalizedEnvironment.wireName}/$normalizedIdentity terminal session",
+                "немаєЗаконпочатокрухатися ${normalizedEnvironment.wireName}/$normalizedIdentity terminal session",
             )
         val stdout = ByteArrayOutputCollector()
         val stderr = ByteArrayOutputCollector()
@@ -147,7 +147,7 @@ internal class RootShellTerminalController(
             }
         ) {
             processSupervisor.terminateProcessTree(process)
-            return errorJson("TERMINAL_CLOSED", "terminal controller 已关闭")
+            return errorJson("TERMINAL_CLOSED", "terminal controller вжезакритизакрити")
         }
 
         val mkdirDefault = if (safeCwd == androidWorkspace()) "mkdir -p ${shellQuote(safeCwd)} && " else ""
@@ -186,7 +186,7 @@ internal class RootShellTerminalController(
     ): String {
         val session = sessionId?.takeIf { it.isNotBlank() }?.let { id ->
             synchronized(sessions) { sessions[id] }
-                ?: return errorJson("SESSION_NOT_FOUND", "未找到 terminal session：$id")
+                ?: return errorJson("SESSION_NOT_FOUND", "ще ніспробуйте знайтиприбути terminal session：$id")
         }
         val effectiveEnvironment = session?.environment ?: normalizeEnvironment(environment)
         val effectiveIdentity = session?.identity ?: normalizeIdentity(identity.ifBlank { defaultIdentity(effectiveEnvironment) })
@@ -217,9 +217,9 @@ internal class RootShellTerminalController(
         environment: String,
     ): String {
         val supervisor = detachedSupervisor
-            ?: return errorJson("DAEMON_UNAVAILABLE", "守护任务宿主不可用")
+            ?: return errorJson("DAEMON_UNAVAILABLE", "зберегтизахиститипризначитиобслуговуванняпроживанняхостнемаєможевикористовувати")
         val trimmed = command.trim()
-        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command 不能为空")
+        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command немаєздатнийдлянульовий")
         val normalizedEnvironment = normalizeEnvironment(environment)
         val normalizedIdentity = normalizeIdentity(identity.ifBlank { defaultIdentity(normalizedEnvironment) })
         environmentPreflight(normalizedIdentity, normalizedEnvironment)?.let { return it }
@@ -241,7 +241,7 @@ internal class RootShellTerminalController(
 
     private fun daemonList(): String {
         val supervisor = detachedSupervisor
-            ?: return errorJson("DAEMON_UNAVAILABLE", "守护任务宿主不可用")
+            ?: return errorJson("DAEMON_UNAVAILABLE", "зберегтизахиститипризначитиобслуговуванняпроживанняхостнемаєможевикористовувати")
         val statuses = supervisor.list().filterNot { it.task.commandTask }
         val tasks = JSONArray()
         statuses.forEach { status ->
@@ -269,8 +269,8 @@ internal class RootShellTerminalController(
 
     private fun daemonLogs(taskId: String): String {
         val supervisor = detachedSupervisor
-            ?: return errorJson("DAEMON_UNAVAILABLE", "守护任务宿主不可用")
-        if (taskId.isBlank()) return errorJson("INVALID_ARGUMENT", "task_id 不能为空")
+            ?: return errorJson("DAEMON_UNAVAILABLE", "зберегтизахиститипризначитиобслуговуванняпроживанняхостнемаєможевикористовувати")
+        if (taskId.isBlank()) return errorJson("INVALID_ARGUMENT", "task_id немаєздатнийдлянульовий")
         val result = supervisor.readLogs(taskId)
         if (!result.ok) {
             return errorJson(result.code.ifBlank { "LOGS_UNAVAILABLE" }, result.message)
@@ -287,12 +287,12 @@ internal class RootShellTerminalController(
 
     private fun daemonStop(taskId: String): String {
         val supervisor = detachedSupervisor
-            ?: return errorJson("DAEMON_UNAVAILABLE", "守护任务宿主不可用")
-        if (taskId.isBlank()) return errorJson("INVALID_ARGUMENT", "task_id 不能为空")
-        val task = supervisor.findTask(taskId) ?: return errorJson("TASK_NOT_FOUND", "未找到守护任务：$taskId")
-        if (task.identity == "root" && !rootAvailable()) return errorJson("ROOT_REQUIRED", "Root 授权不可用")
+            ?: return errorJson("DAEMON_UNAVAILABLE", "зберегтизахиститипризначитиобслуговуванняпроживанняхостнемаєможевикористовувати")
+        if (taskId.isBlank()) return errorJson("INVALID_ARGUMENT", "task_id немаєздатнийдлянульовий")
+        val task = supervisor.findTask(taskId) ?: return errorJson("TASK_NOT_FOUND", "ще ніспробуйте знайтиприбутизберегтизахиститипризначитиобслуговування：$taskId")
+        if (task.identity == "root" && !rootAvailable()) return errorJson("ROOT_REQUIRED", "Root навчатиправильнонемаєможевикористовувати")
         if (!supervisor.stop(taskId)) {
-            return errorJson("DAEMON_STOP_FAILED", "守护任务停止失败，请重试")
+            return errorJson("DAEMON_STOP_FAILED", "зберегтизахиститипризначитиобслуговуванняСТІЙкінецьвтратитипоразка，будь ласкаВажкаспробувати")
         }
         return JSONObject()
             .put("ok", true)
@@ -303,8 +303,8 @@ internal class RootShellTerminalController(
     }
 
     private fun closeTerminal(sessionId: String): String {
-        if (sessionId.isBlank()) return errorJson("INVALID_ARGUMENT", "关闭会话需要 session_id")
-        if (!closeSession(sessionId)) return errorJson("SESSION_NOT_FOUND", "未找到 terminal session：$sessionId")
+        if (sessionId.isBlank()) return errorJson("INVALID_ARGUMENT", "закритизакритизасіданняговоритипотребахочуть session_id")
+        if (!closeSession(sessionId)) return errorJson("SESSION_NOT_FOUND", "ще ніспробуйте знайтиприбути terminal session：$sessionId")
         return JSONObject()
             .put("ok", true)
             .put("tool", "terminal")
@@ -318,7 +318,7 @@ internal class RootShellTerminalController(
         closeAll()
     }
 
-    /** 取消热路径只封闭新进程接纳；进程树终止和 reader/waiter 回收在后台完成。 */
+    /** Скасування гарячого шляху лише закриває допуск нових процесів; завершення дерева процесів і перезавантаження читача/офіціанта завершуються у фоновому режимі.*/
     fun interruptAll() {
         beginClosing()
         if (cleanupStarted.compareAndSet(false, true)) {
@@ -371,7 +371,7 @@ internal class RootShellTerminalController(
         mergeStderr: Boolean
     ): String {
         val trimmed = command.trim()
-        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command 不能为空")
+        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command немаєздатнийдлянульовий")
         val timeout = timeoutMs.coerceIn(1_000, MAX_TIMEOUT_SECONDS * 1000)
         val result = runSessionCommand(session, trimmed, timeout)
         val outcome = when {
@@ -431,7 +431,7 @@ internal class RootShellTerminalController(
                 return SessionCommandResult(
                     exitCode = -1,
                     stdout = "",
-                    stderr = "terminal session 已关闭",
+                    stderr = "terminal session вжезакритизакрити",
                     cwd = session.cwd,
                     timedOut = false
                 )
@@ -466,7 +466,7 @@ internal class RootShellTerminalController(
                     return SessionCommandResult(
                         exitCode = -1,
                         stdout = stdoutDelta.trimEnd(),
-                        stderr = session.stderr.text().drop(stderrStart).ifBlank { "terminal session 已关闭" }.trimEnd(),
+                        stderr = session.stderr.text().drop(stderrStart).ifBlank { "terminal session вжезакритизакрити" }.trimEnd(),
                         cwd = session.cwd,
                         timedOut = false
                     )
@@ -501,7 +501,7 @@ internal class RootShellTerminalController(
             return SessionCommandResult(
                 exitCode = -2,
                 stdout = session.stdout.text().drop(stdoutStart).trimEnd(),
-                stderr = session.stderr.text().drop(stderrStart).ifBlank { "命令执行超时" }.trimEnd(),
+                stderr = session.stderr.text().drop(stderrStart).ifBlank { "життязробитиВиконатидобреобганятигодина" }.trimEnd(),
                 cwd = session.cwd,
                 timedOut = true
             )
@@ -517,7 +517,7 @@ internal class RootShellTerminalController(
         mergeStderr: Boolean,
     ): String {
         val trimmed = command.trim()
-        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command 不能为空")
+        if (trimmed.isBlank()) return errorJson("INVALID_ARGUMENT", "command немаєздатнийдлянульовий")
         val normalizedIdentity = normalizeIdentity(identity)
         environmentPreflight(normalizedIdentity, environment)?.let { return it }
         val safeCwd = normalizeCwd(cwd, environment, normalizedIdentity)
@@ -582,9 +582,9 @@ internal class RootShellTerminalController(
             environmentPreflight(identity, environment, rootfsPath)?.let { return it }
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20)
             fun checkActive() {
-                if (processSupervisor.isClosing) throw FileToolException("CANCELLED", "文件操作已取消")
-                if (identity == "root" && !rootAvailable()) throw FileToolException("ROOT_REQUIRED", "Root 授权已不可用")
-                if (System.nanoTime() >= deadline) throw FileToolException("FILE_TIMEOUT", "文件操作达到时间预算，请缩小范围")
+                if (processSupervisor.isClosing) throw FileToolException("CANCELLED", "мистецтваштукТримайтеробитивжеВиберітьвидалити")
+                if (identity == "root" && !rootAvailable()) throw FileToolException("ROOT_REQUIRED", "Root навчатиправильновженемаєможевикористовувати")
+                if (System.nanoTime() >= deadline) throw FileToolException("FILE_TIMEOUT", "мистецтваштукТримайтеробитидосяжністьприбутигодинаміжпопередньоОбчислити，будь ласкаскорочуватисяМаленькийвентилятороточують")
             }
             val cwd = normalizeCwd(args.optString("cwd").takeIf(String::isNotEmpty), environment, identity)
             val backend = if (environment == TerminalEnvironment.ANDROID && identity == "user") {
@@ -618,23 +618,23 @@ internal class RootShellTerminalController(
             }
             FileToolDispatcher.execute(backend, name, args)
         } catch (failure: FileToolException) {
-            errorJson(failure.code, failure.message ?: "文件操作失败")
+            errorJson(failure.code, failure.message ?: "мистецтваштукТримайтеробитивтратитипоразка")
         } catch (_: IllegalArgumentException) {
-            errorJson("INVALID_ARGUMENT", "文件环境、路径或参数无效")
+            errorJson("INVALID_ARGUMENT", "мистецтваштуккільцетериторії、дорогашляхабоженьшеньномернемаєефект")
         } catch (failure: org.json.JSONException) {
-            errorJson("INVALID_ARGUMENT", failure.message ?: "文件参数缺失或类型错误")
+            errorJson("INVALID_ARGUMENT", failure.message ?: "мистецтваштукженьшеньномервідсутністьвтратитиабовидтипунеправильнопомилка")
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
-            errorJson("CANCELLED", "文件操作已取消")
+            errorJson("CANCELLED", "мистецтваштукТримайтеробитивжеВиберітьвидалити")
         } catch (_: java.io.IOException) {
-            errorJson("FILE_IO_ERROR", "文件环境不可访问")
+            errorJson("FILE_IO_ERROR", "мистецтваштуккільцетериторіїнемаєможевідвідатизапитати")
         }
     }
 
     private fun normalizeIdentity(identity: String): String {
         val normalized = identity.lowercase()
         require(normalized == "root" || normalized == "user") {
-            "identity 仅支持 root/user"
+            "identity тількивідділенняутримувати root/user"
         }
         return normalized
     }
@@ -643,7 +643,7 @@ internal class RootShellTerminalController(
         when (environment.ifBlank { TerminalEnvironment.ANDROID.wireName }.lowercase()) {
             TerminalEnvironment.ANDROID.wireName -> TerminalEnvironment.ANDROID
             SELECTED_LINUX_WIRE_NAME -> executionContext.linuxEnvironment
-            else -> throw IllegalArgumentException("environment 仅支持 android/linux")
+            else -> throw IllegalArgumentException("environment тількивідділенняутримувати android/linux")
         }
 
     private fun environmentPreflight(
@@ -652,15 +652,15 @@ internal class RootShellTerminalController(
         rootfsPath: String? = rootfsPathFor(environment),
     ): String? = when {
         environment.isLinux && identity != "root" && LinuxEnvironmentPaths.backendOf(rootfsPath) != LinuxExecutionBackend.PROOT ->
-            errorJson("LINUX_ENVIRONMENT_REQUIRES_ROOT", "Linux 工具环境仅支持 root identity")
+            errorJson("LINUX_ENVIRONMENT_REQUIRES_ROOT", "Linux працюватиІнструменткільцетериторіїтількивідділенняутримувати root identity")
         environment.isLinux && !LinuxEnvironmentPaths.rootfsReady(rootfsPath) ->
             errorJson(
                 "LINUX_ENVIRONMENT_NOT_READY",
-                "Linux 工具环境尚未安装，请先在设置中完成环境配置",
+                "Linux працюватиІнструменткільцетериторіїдосіще нівстановитиупаковка，будь ласкапершеіснуютьналаштувативстановитисерединазакінченостатикільцетериторіїматчвстановити",
             )
-        identity == "root" && !rootAvailable() -> errorJson("ROOT_REQUIRED", "Root 授权不可用")
+        identity == "root" && !rootAvailable() -> errorJson("ROOT_REQUIRED", "Root навчатиправильнонемаєможевикористовувати")
         environment.isLinux && LinuxEnvironmentPaths.backendOf(rootfsPath) == LinuxExecutionBackend.PROOT && identity == "root" ->
-            errorJson("INVALID_IDENTITY", "免 Root Linux 使用普通应用身份，请使用 identity=user")
+            errorJson("INVALID_IDENTITY", "відмовився Root Linux зробитивикористовуватизагальнийПасвідповідьвикористовуватитілочастка，будь ласказробитивикористовувати identity=user")
         else -> null
     }
 
@@ -673,7 +673,7 @@ internal class RootShellTerminalController(
     private fun normalizeCwd(cwd: String?, environment: TerminalEnvironment, identity: String): String {
         val defaultCwd = if (environment.isLinux) executionContext.linuxWorkspacePath else androidWorkspace()
         val requested = cwd.orEmpty().ifEmpty { defaultCwd }
-        require('\u0000' !in requested && requested.length <= 4096) { "工作目录无效或过长" }
+        require('\u0000' !in requested && requested.length <= 4096) { "працюватиробитиГоловазаписнемаєефектабоПасдовго" }
         val environmentPath = when {
             requested == "~" || requested.startsWith("~/") || requested.startsWith("/") -> requested
             else -> "$defaultCwd/$requested"
@@ -689,14 +689,14 @@ internal class RootShellTerminalController(
 
     private fun normalizePath(path: String): String {
         val raw = path
-        require(raw.isNotEmpty() && '\u0000' !in raw) { "path 无效" }
+        require(raw.isNotEmpty() && '\u0000' !in raw) { "path немаєефект" }
         val effective = when {
             raw == "~" -> USER_STORAGE
             raw.startsWith("~/") -> USER_STORAGE + "/" + raw.removePrefix("~/")
             raw.startsWith("/") -> raw
             else -> "${TerminalRuntime.ROOT_WORKSPACE_PATH}/$raw"
         }
-        // Root 可见的链接未必对 App UID 可见，交给目标 Shell 按真实命名空间解析。
+        // Посилання, видимі для кореня, можуть бути невидимі для UID додатка та залишаються цільовій оболонці для вирішення відповідно до справжнього простору імен.
         return effective
     }
 
@@ -714,7 +714,7 @@ internal class RootShellTerminalController(
             linuxSharedMounts = sharedMountsFor(environment),
         )
 
-    /** 共享挂载只在 Linux 会话建立时解析；Android 环境不涉及。 */
+    /** Спільне монтування вирішується лише після встановлення сеансу Linux; середовище Android не задіяно.*/
     private fun sharedMountsFor(environment: TerminalEnvironment): List<SharedFolderMount> =
         if (environment.isLinux) linuxSharedMountsProvider() else emptyList()
 

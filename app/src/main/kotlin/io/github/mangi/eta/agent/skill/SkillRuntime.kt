@@ -27,7 +27,7 @@ internal fun isSafeBuiltinSkillInstallation(targetDir: File): Boolean {
         skillFile.isFile
 }
 
-/** 内置技能 manifest 条目。 */
+/** Вбудований запис маніфесту навичок.*/
 private data class BuiltinSkillAsset(
     val id: String = "",
     val name: String = "",
@@ -39,7 +39,7 @@ private data class BuiltinSkillAsset(
     val hasEvals: Boolean = false,
 )
 
-/** 注册表中的技能状态记录。 */
+/** Записи статусу навичок у реєстрі.*/
 private data class SkillRegistryEntry(
     val enabled: Boolean = true,
     val source: String = USER_SOURCE,
@@ -47,7 +47,7 @@ private data class SkillRegistryEntry(
 )
 
 // =====================================================================================
-// SkillRegistryStore — 持久化技能安装元数据；技能正文仍保留在文件树中。
+// SkillRegistryStore — зберігає метадані встановлення навичок; тіло навичок залишається в дереві файлів.
 // =====================================================================================
 
 private class SkillRegistryStore(
@@ -114,7 +114,7 @@ private class SkillRegistryStore(
 }
 
 // =====================================================================================
-// BuiltinSkillAssetStore — 从 assets 读取并安装内置技能
+// BuiltinSkillAssetStore — читає та встановлює вбудовані навички з активів
 // =====================================================================================
 
 private class BuiltinSkillAssetStore(
@@ -174,7 +174,7 @@ private class BuiltinSkillAssetStore(
 
     fun installBuiltin(skillId: String, registryStore: SkillRegistryStore) {
         val builtin = findBuiltin(skillId)
-            ?: throw IllegalArgumentException("未找到内置 skill：$skillId")
+            ?: throw IllegalArgumentException("ще ніспробуйте знайтиприбутиВсерединівстановити skill：$skillId")
         installBuiltinInternal(builtin)
         registryStore.set(
             skillId,
@@ -186,7 +186,7 @@ private class BuiltinSkillAssetStore(
         val targetDir = File(skillsRoot, builtin.id)
         if (Files.exists(targetDir.toPath(), LinkOption.NOFOLLOW_LINKS)) {
             if (!deleteSkillPathWithoutFollowingLinks(skillsRoot, targetDir)) {
-                error("无法安全清理内置 Skill 目录：${builtin.id}")
+                error("немаєЗаконвстановитиПовнийяснопричинаВсерединівстановити Skill Головазапис：${builtin.id}")
             }
         }
         copyAssetRecursively(context.assets, builtin.assetPath, targetDir)
@@ -209,7 +209,7 @@ private class BuiltinSkillAssetStore(
 }
 
 // =====================================================================================
-// SkillIndexService — 扫描、索引、管理技能
+// SkillIndexService — сканування, індексування та керування навичками
 // =====================================================================================
 
 class SkillIndexService(
@@ -227,8 +227,8 @@ class SkillIndexService(
     private var cachedManagementEntries: List<SkillIndexEntry>? = null
 
     /**
-     * 所有可读写索引的入口都先在同一把跨进程锁内完成待处理文件事务与 Room 快照恢复。
-     * 仅能读取文件、不具备 registry 恢复能力的 Loader 会由锁实现保持 fail-closed。
+     * Усі записи індексу читання-запису повинні спочатку завершити незавершені транзакції файлів і відновлення знімка кімнати в межах одного міжпроцесного блокування.
+     * Завантажувачі, які можуть лише читати файли та не мають можливостей відновлення реєстру, залишатимуться безвідмовно закритими завдяки реалізації блокування.
      */
     internal fun <T> withMutationLock(block: () -> T): T = SkillMutationLock.withLock(
         skillsRoot = skillsRoot,
@@ -274,7 +274,7 @@ class SkillIndexService(
         return withMutationLock {
             synchronized(indexLock) {
                 val entry = listSkillsForManagement().firstOrNull { it.id == skillId && it.installed }
-                    ?: throw IllegalArgumentException("未找到已安装 skill：$skillId")
+                    ?: throw IllegalArgumentException("ще ніспробуйте знайтиприбутивжевстановитиупаковка skill：$skillId")
                 registryStore.set(
                     entry.id,
                     SkillRegistryEntry(enabled = enabled, source = entry.source, installState = INSTALL_STATE_INSTALLED),
@@ -345,7 +345,7 @@ class SkillIndexService(
                     }.isSuccess
                     if (!rollbackComplete) {
                         throw SkillRecoveryRequiredException(
-                            "Skill 删除失败，且文件或 registry 尚未完整恢复",
+                            "Skill видалитивидалитивтратитипоразка，імистецтваштукабо registry досіще нізакінченовсевідновитискладні",
                             error,
                         )
                     }
@@ -358,7 +358,7 @@ class SkillIndexService(
                             LinkOption.NOFOLLOW_LINKS,
                         )
                     ) {
-                        // 成功删除时备份内可能含历史 symlink，必须只 unlink，不能递归跟随。
+                        // Після успішного видалення резервна копія може містити історичні символічні посилання, зв’язки з якими потрібно лише від’єднати, і за ними не можна рекурсивно переходити.
                         deleteSkillPathWithoutFollowingLinks(workRoot, operation)
                     }
                 }
@@ -372,17 +372,17 @@ class SkillIndexService(
                 builtinStore.installBuiltin(skillId, registryStore)
                 invalidateIndexLocked()
                 findInstalledSkill(skillId)
-                    ?: throw IllegalStateException("安装内置 skill 后索引失败：$skillId")
+                    ?: throw IllegalStateException("встановитиупаковкаВсерединівстановити skill назадОтжепривестивтратитипоразка：$skillId")
             }
         }
     }
 
-    /** 文件提交成功后，以单次 Room 事务登记用户 Skill，并同步清除索引缓存。 */
+    /** Після успішного надсилання файлу зареєструйте навик користувача за допомогою однієї транзакції кімнати та одночасно очистіть кеш індексу.*/
     internal fun registerInstalledUserSkills(skillIds: List<String>) {
         withMutationLock {
             synchronized(indexLock) {
                 require(skillIds.none { builtinStore.findBuiltin(it) != null }) {
-                    "不能把内置 Skill 登记为用户 Skill"
+                    "немаєздатнийпучокВсерединівстановити Skill дошказапам'ятатидлявикористовуватипобутові Skill"
                 }
                 val registry = registryStore.readStrict()
                 skillIds.distinct().forEach { skillId ->
@@ -398,7 +398,7 @@ class SkillIndexService(
         }
     }
 
-    /** 在正式目录发生任何移动前，持久化事务涉及 id 的完整旧 registry 状态。 */
+    /** Постійні транзакції включають повний старий стан реєстру ідентифікатора до того, як відбудеться будь-яке переміщення офіційного каталогу.*/
     internal fun captureRegistryRecoverySnapshots(
         skillIds: List<String>,
     ): List<SkillRegistryRecoverySnapshot> = synchronized(indexLock) {
@@ -419,7 +419,7 @@ class SkillIndexService(
         }
     }
 
-    /** 文件恢复完成后，以单次 Room 事务还原全部旧快照；失败时调用方保留 journal。 */
+    /** Після завершення відновлення файлів відновіть усі старі знімки в одній транзакції кімнати; абонент зберігає журнал у разі невдачі.*/
     internal fun restoreRecoveredRegistry(recovered: List<RecoveredSkillOperation>) {
         if (recovered.isEmpty()) return
         synchronized(indexLock) {
@@ -447,7 +447,7 @@ class SkillIndexService(
     private fun seedBuiltinSkillsLocked() {
         if (builtinsSeeded) return
         if (!skillsRoot.exists() && !skillsRoot.mkdirs()) {
-            error("无法创建 Skills 目录：${skillsRoot.absolutePath}")
+            error("немаєЗаконстворитивстановити Skills Головазапис：${skillsRoot.absolutePath}")
         }
         builtinStore.seedMissingBuiltins(registryStore)
         builtinsSeeded = true
@@ -573,7 +573,7 @@ class SkillIndexService(
 }
 
 // =====================================================================================
-// SkillLoader — 加载技能正文和附属资源
+// SkillLoader — завантажує текст навичок і допоміжні ресурси
 // =====================================================================================
 
 class SkillLoader(private val skillsRoot: File) {
@@ -617,7 +617,7 @@ class SkillLoader(private val skillsRoot: File) {
 }
 
 // =====================================================================================
-// SkillCompatibilityChecker — 兼容性检查
+// SkillCompatibilityChecker — перевірка сумісності
 // =====================================================================================
 
 object SkillCompatibilityChecker {
@@ -633,16 +633,16 @@ object SkillCompatibilityChecker {
         }.lowercase()
         return when {
             raw.contains("apple-") || raw.contains("homekit") || raw.contains("healthkit") ->
-                SkillCompatibilityResult(available = false, reason = "不支持 Apple 专属运行时")
+                SkillCompatibilityResult(available = false, reason = "немаєвідділенняутримувати Apple Спеціалізуватисярідтранспортдобрегодина")
             raw.contains("ios") && !raw.contains("android") ->
-                SkillCompatibilityResult(available = false, reason = "该 Skill 标注为 iOS 专属")
+                SkillCompatibilityResult(available = false, reason = "Слід Skill знакПриміткадля iOS Спеціалізуватисярід")
             else -> SkillCompatibilityResult(available = true)
         }
     }
 }
 
 // =====================================================================================
-// SkillRuntime — 工厂入口
+// SkillRuntime — Factory Entry
 // =====================================================================================
 
 object SkillRuntime {

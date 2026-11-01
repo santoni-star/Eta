@@ -10,7 +10,7 @@ import io.github.mangi.eta.agent.auth.ProviderCredentialBinding
 import io.github.mangi.eta.agent.auth.ProviderLoginPrompt
 import io.github.mangi.eta.agent.runtime.AgentRunController
 
-/** 仅由 Eta 主进程初始化和访问；调用方在 I/O 线程执行，不将返回的令牌写入配置。 */
+/** Тільки ініціалізується та отримує доступ головним процесом Eta; абонент виконує в потоці вводу-виводу і не записує повернутий маркер у конфігурацію.*/
 internal object ProviderCredentialRepository {
     @Volatile private var sessions: ProviderCredentialSessions? = null
 
@@ -41,5 +41,5 @@ internal object ProviderCredentialRepository {
     fun forget(providerId: String) = sessions().forget(providerId)
 
     private fun sessions(): ProviderCredentialSessions = sessions
-        ?: throw ProviderAuthException("oauth_not_initialized", "登录服务尚未就绪，请重新打开 Eta")
+        ?: throw ProviderAuthException("oauth_not_initialized", "дошказаписОдягобслуговуваннядосіще ніВідразунитка，будь ласкаВажкановийбитиВІДЧИНЕНО Eta")
 }

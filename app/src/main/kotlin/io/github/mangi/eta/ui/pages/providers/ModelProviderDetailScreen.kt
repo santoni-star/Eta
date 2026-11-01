@@ -206,7 +206,7 @@ private fun ProviderConfigTab(
     var showResetDialog by remember { mutableStateOf(false) }
     var isWorking by remember { mutableStateOf(false) }
     var creationCommitted by remember { mutableStateOf(false) }
-    // 只恢复中断提示；回调监听、验证码和授权 URL 随登录会话销毁。
+    // Відновлюється лише підказка про переривання; слухач зворотного виклику, код перевірки та URL-адреса авторизації знищуються під час сеансу входу.
     var loginInProgress by rememberSaveable(provider.id) { mutableStateOf(false) }
     var pendingInterruption by remember(provider.id) { mutableStateOf(loginInProgress) }
     val loginStore = remember(provider.id, scope) { ProviderLoginStore(provider.id, scope) }
@@ -233,7 +233,7 @@ private fun ProviderConfigTab(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            // 低层 MiuixScaffold 只负责把顶栏 Insets 传给调用方，输入法 Insets 由列表自行消费。
+            // Низькорівневий MiuixScaffold відповідає лише за передачу вставок верхнього стовпця викликаючому, а вставки методу введення споживаються самим списком.
             .imePadding()
             .scrollEndHaptic()
             .overScrollVertical()
@@ -330,7 +330,7 @@ private fun ProviderConfigTab(
         }
 
         item(key = "actions") {
-            // 操作分层：主按钮实心独占，次要操作降级为文字按钮，与弹窗按钮语言一致
+            // Багатошаровість операцій: головна кнопка суцільна та ексклюзивна, а другорядні операції зменшено до текстових кнопок відповідно до мови спливаючих кнопок
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -496,7 +496,7 @@ private fun ProviderConfigTab(
                 confirmText = if (isWorking) context.getString(R.string.page_resetting_616090) else context.getString(R.string.page_reset_3d8134),
                 cancelEnabled = !isWorking,
                 confirmEnabled = !isWorking,
-                // 重置会覆盖用户改过的连接与模型配置，与删除同属破坏性确认。
+                // Скидання перезапише підключення та конфігурацію моделі, змінені користувачем, і є деструктивним підтвердженням, як і видалення.
                 destructive = true,
                 onCancel = { showResetDialog = false },
                 onConfirm = {

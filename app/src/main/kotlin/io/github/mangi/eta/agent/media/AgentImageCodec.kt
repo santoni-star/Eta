@@ -16,9 +16,9 @@ internal object AgentImageCodec {
         source: String,
         mimeHint: String = "image/jpeg"
     ): AgentModelClient.ModelImage {
-        require(bytes.isNotEmpty()) { "图片内容为空" }
-        require(bytes.size <= MAX_AGENT_IMAGE_BYTES) { "图片数据过大：${bytes.size}" }
-        // 已编码图片只读取尺寸和格式，正文保留原始字节。
+        require(bytes.isNotEmpty()) { "малюнокшматокВсерединіДозволитидлянульовий" }
+        require(bytes.size <= MAX_AGENT_IMAGE_BYTES) { "малюнокшматокномервідповідно доПасвеликий：${bytes.size}" }
+        // Закодовані зображення зчитують лише розмір і формат, а текст зберігає оригінальні байти.
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
         val recognizedImage = bytes.hasSupportedImageMagic()
@@ -35,16 +35,16 @@ internal object AgentImageCodec {
         )
     }
 
-    /** 用户附件统一编码为模型兼容的 JPEG，并保持原始像素尺寸。 */
+    /** Вкладені файли користувача однаково кодуються як сумісні з моделлю JPEG і зберігають свої оригінальні розміри в пікселях.*/
     fun fromAttachmentBytes(
         bytes: ByteArray,
         source: String,
         mimeHint: String = "image/jpeg",
     ): AgentModelClient.ModelImage =
         AgentModelImageEncoder.attachment(bytes, source, mimeHint)
-            ?: error("无法解码图片")
+            ?: error("немаєЗаконрозв'язатикодмалюнокшматок")
 
-    /** 已有截图编码直接透传，不解码像素、缩放或转换格式。 */
+    /** Наявні знімки екрана безпосередньо кодуються та прозоро передаються без декодування пікселів, масштабування чи конвертації форматів.*/
     fun fromScreenBytes(
         bytes: ByteArray,
         source: String,
@@ -57,21 +57,21 @@ internal object AgentImageCodec {
         source: String,
     ): AgentModelClient.ModelImage = AgentModelImageEncoder.screen(bitmap, source)
 
-    /** 助理与 GUI 截图共用原始像素合同。 */
+    /** Помічник ділиться необробленим піксельним контрактом зі знімками екрана GUI.*/
     fun fromScreenContextBitmap(
         bitmap: Bitmap,
         source: String,
     ): AgentModelClient.ModelImage = fromScreenBitmap(bitmap, source)
 
     /**
-     * 为聊天列表生成独立的小预览。模型仍从 [image.reference] 读取原图，预览不会参与模型输入。
+     * Створення незалежного невеликого попереднього перегляду для списку чату. Модель все ще читає вихідне зображення з [image.reference], і попередній перегляд не братиме участі у введенні моделі.
      */
     fun previewFromReference(
         context: Context,
         image: AgentModelClient.ModelImage,
     ): AgentModelClient.ModelImage? = AgentModelImageEncoder.preview(context, image)
 
-    /** 文件工具图片会在发送模型前压缩，避免多张原图撑大 OpenAI 兼容请求体。 */
+    /** Зображення інструменту файлів буде стиснуто перед надсиланням моделі, щоб запобігти збільшенню кількох оригінальних зображень у тілі запиту, сумісного з OpenAI.*/
     fun fromToolFile(file: File, source: String): AgentModelClient.ModelImage? = runCatching {
         AgentModelImageEncoder.toolVision(file.readBytesLimited(), source)
     }.getOrNull()
@@ -138,8 +138,8 @@ internal object AgentImageCodec {
     }
 
     /**
-     * 部分 ROM 的 Photo Picker 只实现 typed asset 或文件描述符读取。
-     * 依次尝试标准流、typed asset 和文件描述符，避免选图成功后附件被静默丢弃。
+     * Деякі засоби вибору фотографій ПЗУ реалізують лише читання введених ресурсів або дескрипторів файлів.
+     * Спробуйте стандартні потоки, введені ресурси та дескриптори файлів у послідовності, щоб уникнути мовчазного видалення вкладень після успішного вибору зображення.
      */
     private fun readContentUri(
         context: Context,
@@ -168,8 +168,8 @@ internal object AgentImageCodec {
     }
 
     /**
-     * 为跨进程请求解析图片。远程 URL 与已有 data URL 直接保留；本地 URI/路径只读取元数据，
-     * 正文稍后由 [io.github.mangi.eta.agent.runtime.AgentRuntimeImageTransfer] 通过文件描述符传输。
+     * Аналізуйте зображення для міжпроцесних запитів. Віддалена URL-адреса та існуюча URL-адреса даних зберігаються безпосередньо; локальний URI/шлях читає лише метадані.
+     * Тіло пізніше передається через дескриптор файлу [io.github.mangi.eta.agent.runtime.AgentRuntimeImageTransfer].
      */
     fun fromTransferReference(
         context: Context?,
@@ -209,7 +209,7 @@ internal object AgentImageCodec {
         val length = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
             descriptor.length
         } ?: -1L
-        require(length <= MAX_AGENT_IMAGE_BYTES || length < 0L) { "图片文件过大：$length" }
+        require(length <= MAX_AGENT_IMAGE_BYTES || length < 0L) { "малюнокшматокмистецтваштукПасвеликий：$length" }
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         context.contentResolver.openInputStream(uri)?.use { input ->
             BitmapFactory.decodeStream(input, null, options)
@@ -234,7 +234,7 @@ internal object AgentImageCodec {
         source: String,
     ): AgentModelClient.ModelImage? = runCatching {
         val length = file.length()
-        require(file.isFile && length in 1..MAX_AGENT_IMAGE_BYTES.toLong()) { "图片文件不可读或过大" }
+        require(file.isFile && length in 1..MAX_AGENT_IMAGE_BYTES.toLong()) { "Файл зображення нечитабельний або завеликий" }
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.absolutePath, options)
         AgentModelClient.ModelImage(
@@ -248,7 +248,7 @@ internal object AgentImageCodec {
     }.getOrNull()
 
     private fun File.readBytesLimited(): ByteArray {
-        require(length() <= MAX_AGENT_IMAGE_BYTES.toLong()) { "图片文件过大：${length()}" }
+        require(length() <= MAX_AGENT_IMAGE_BYTES.toLong()) { "Файл зображення завеликий: ${length()}" }
         return readBytes()
     }
 
@@ -260,7 +260,7 @@ internal object AgentImageCodec {
             val read = read(buffer)
             if (read < 0) break
             total += read
-            require(total <= MAX_AGENT_IMAGE_BYTES) { "图片数据过大：$total" }
+            require(total <= MAX_AGENT_IMAGE_BYTES) { "Дані зображення завеликі: $total" }
             output.write(buffer, 0, read)
         }
         return output.toByteArray()

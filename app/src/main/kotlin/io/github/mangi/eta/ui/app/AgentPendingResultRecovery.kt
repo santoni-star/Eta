@@ -10,7 +10,7 @@ import io.github.mangi.eta.ui.model.SystemNoticeCode
 import io.github.mangi.eta.ui.model.SystemNoticeMessageUi
 import io.github.mangi.eta.ui.model.UserMessageUi
 
-/** 将 Runtime outbox 的结果幂等折叠回 App 会话。 */
+/** Безпосередньо згорнути результати вихідної папки Runtime назад у сеанс програми.*/
 internal object AgentPendingResultRecovery {
     data class Outcome(
         val state: AgentChatHomeUiState,
@@ -56,7 +56,7 @@ internal object AgentPendingResultRecovery {
                     runId = runId,
                     messages = state.messages,
                     ok = result.ok,
-                    detail = if (result.ok) "上下文压缩完成" else result.error ?: "上下文压缩失败",
+                    detail = if (result.ok) "начальникавнизмистецтвапресаскорочуватисязакінченостати" else result.error ?: "начальникавнизмистецтвапресаскорочуватисявтратитипоразка",
                 )), false)
         }
 

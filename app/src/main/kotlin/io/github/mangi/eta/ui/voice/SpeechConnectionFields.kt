@@ -43,7 +43,7 @@ internal fun SpeechConnectionSection(store: SpeechSettingsStore, synthesis: Bool
     }
 }
 
-/** 识别与播报共用的服务商连接配置：地域或旧版鉴权、凭据与高级地址设置。 */
+/** Визначайте та повідомляйте про спільні конфігурації підключення провайдера: регіональну або застарілу автентифікацію, облікові дані та розширені налаштування адреси.*/
 @Composable
 private fun QwenDoubaoConnectionSection(store: SpeechSettingsStore, synthesis: Boolean) {
     val settings = store.settings

@@ -23,8 +23,8 @@ internal object GoogleEligibilityHooks {
     ): HookInstallation {
         val hooks = HookRegistrar(module, rootLogger, "GoogleEligibility")
         return hooks.install {
-            // 资格补齐与机型伪装同属"让 Google App 认为设备具备资格"的一件事，
-            // 作为一圈即搜的底层依赖始终执行。
+            // Завершення придатності та маскування моделі — це те ж саме, що «змусити Google App думати, що пристрій відповідає вимогам».
+            // Як базова залежність One Circle Search, вона завжди виконується.
             hookSystemProperties(hooks)
             hookPackageManagerFeatures(hooks, classLoader)
         }
@@ -57,7 +57,7 @@ internal object GoogleEligibilityHooks {
         } ?: hooks.missing(
             id = "google.system-properties.get",
             description = "SystemProperties.get(String)",
-            detail = "未找到 SystemProperties.get(String)"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties.get(String)"
         )
 
         HookSupport.findMethod(
@@ -77,7 +77,7 @@ internal object GoogleEligibilityHooks {
         } ?: hooks.missing(
             id = "google.system-properties.get-default",
             description = "SystemProperties.get(String,String)",
-            detail = "未找到 SystemProperties.get(String,String)"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties.get(String,String)"
         )
 
         HookSupport.findMethod(
@@ -97,7 +97,7 @@ internal object GoogleEligibilityHooks {
         } ?: hooks.missing(
             id = "google.system-properties.get-boolean",
             description = "SystemProperties.getBoolean(String,boolean)",
-            detail = "未找到 SystemProperties.getBoolean(String,boolean)"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties.getBoolean(String,boolean)"
         )
     }
 
@@ -105,17 +105,17 @@ internal object GoogleEligibilityHooks {
         hooks.skipped(
             id = "google.system-properties.get",
             description = "SystemProperties.get(String)",
-            detail = "未找到 SystemProperties，跳过 get(String) Hook"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties，СтрибокПас get(String) Hook"
         )
         hooks.skipped(
             id = "google.system-properties.get-default",
             description = "SystemProperties.get(String,String)",
-            detail = "未找到 SystemProperties，跳过 get(String,String) Hook"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties，СтрибокПас get(String,String) Hook"
         )
         hooks.skipped(
             id = "google.system-properties.get-boolean",
             description = "SystemProperties.getBoolean(String,boolean)",
-            detail = "未找到 SystemProperties，跳过 getBoolean(String,boolean) Hook"
+            detail = "ще ніспробуйте знайтиприбути SystemProperties，СтрибокПас getBoolean(String,boolean) Hook"
         )
     }
 
@@ -130,7 +130,7 @@ internal object GoogleEligibilityHooks {
             hooks.missing(
                 id = "google.package-manager-features",
                 description = "ApplicationPackageManager.hasSystemFeature",
-                detail = "未找到 ApplicationPackageManager"
+                detail = "ще ніспробуйте знайтиприбути ApplicationPackageManager"
             )
             return
         }
@@ -147,7 +147,7 @@ internal object GoogleEligibilityHooks {
             hooks.missing(
                 id = "google.package-manager-features",
                 description = "ApplicationPackageManager.hasSystemFeature",
-                detail = "未找到 ApplicationPackageManager.hasSystemFeature(String, ...)"
+                detail = "ще ніспробуйте знайтиприбути ApplicationPackageManager.hasSystemFeature(String, ...)"
             )
             return
         }

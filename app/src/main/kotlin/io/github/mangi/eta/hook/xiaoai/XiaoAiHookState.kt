@@ -7,7 +7,7 @@ internal object XiaoAiTakeoverPolicy {
     private const val AGENT_PREFIX = "/agent "
     private const val AGENT_ENCODED_PREFIX = "/agent%20"
     private const val IMAGE_ONLY_PLACEHOLDER = "blank"
-    private const val IMAGE_ONLY_PROMPT = "请分析这张图片"
+    private const val IMAGE_ONLY_PROMPT = "будь ласкаточкааналізуватицеВІДЧИНЕНОмалюнокшматок"
 
     data class Decision(
         val prompt: String,
@@ -121,8 +121,8 @@ internal class XiaoAiQueryCache(
     }
 
     /**
-     * Nlp.Request 的 Event ID 由小爱在出站时重新生成，不能假设它等于 setQueryInfo 的
-     * dialogId。优先按 ID 取值，再按同一轮查询文本关联；关联成功后同样消费一次。
+     * Ідентифікатор події Nlp.Request повторно генерується Xiaoai під час вихідного зв’язку, і його не можна вважати рівним setQueryInfo
+     *dialogId. Значення спочатку отримується за ідентифікатором, а потім у тому ж циклі запитується асоціація тексту; після успішного асоціювання він споживається знову.
      */
     @Synchronized
     fun takeMatching(

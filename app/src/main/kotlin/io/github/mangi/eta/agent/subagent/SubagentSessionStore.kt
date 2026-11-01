@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * 会话内 Subagent 实例上下文缓存，供主 Agent 通过 `resume` 续接已有的 Subagent。
+ * Кеш контексту екземпляра субагента під час сеансу, щоб головний агент продовжив існуючий субагент через `resume`.
  */
 internal object SubagentSessionStore {
     private const val MAX_CONVERSATIONS = 16

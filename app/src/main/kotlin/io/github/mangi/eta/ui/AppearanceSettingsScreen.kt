@@ -206,7 +206,7 @@ internal fun AppearanceSettingsScreen(onBack: () -> Unit) {
                     enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
                     exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
                 ) {
-                    // AnimatedVisibility 的内容按层叠摆放，分割线和行必须包进 Column 才会上下排列。
+                    // Вміст AnimatedVisibility упорядковано каскадним способом, а розділові лінії та рядки мають бути загорнуті в стовпець, щоб розташовуватися вгору та вниз.
                     Column {
                         EtaPreferenceDivider(hasLeading = false)
                         EtaOverlayDropdownPreference(

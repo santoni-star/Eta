@@ -11,7 +11,7 @@ internal object HyperOsScreenSearchRequest {
 
     fun matches(intent: Intent?): Boolean {
         if (intent?.action != Intent.ACTION_ASSIST) return false
-        // 来源字符串也可能用于普通助理请求，必须同时确认识屏功能和导航长按类型。
+        // Рядок джерела також може використовуватися для загальних запитів помічника та має підтверджувати як функцію розпізнавання екрана, так і тип тривалого натискання навігації.
         return intent.getStringExtra("voice_assist_function_key") == "start_screen_recognition" &&
             intent.getStringExtra("triggerType") == "NavLongPress" &&
             intent.getStringExtra("voice_assist_start_from_key") in navigationSources

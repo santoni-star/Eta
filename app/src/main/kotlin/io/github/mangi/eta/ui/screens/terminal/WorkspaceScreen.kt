@@ -63,7 +63,7 @@ internal fun WorkspaceScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var path by rememberSaveable { mutableStateOf("") }
     var pendingExport by rememberSaveable { mutableStateOf<String?>(null) }
-    // null 表示尚未读到首个结果；与“目录为空”区分，避免加载期间闪出空态。
+    // null означає, що перший результат ще не прочитано; це відрізняється від "каталог порожній", щоб уникнути порожнього стану під час завантаження.
     var entries by remember { mutableStateOf<List<WorkspaceEntry>?>(null) }
     var revision by remember { mutableIntStateOf(0) }
     var busy by remember { mutableStateOf(false) }
@@ -224,7 +224,7 @@ internal fun WorkspaceScreen(onBack: () -> Unit) {
                     icon = Icons.Rounded.FolderOpen,
                 )
             }
-            // 文件逐项进入 Lazy 列表，但画成一个连续分组，与其他设置页的分组列表一致。
+            // Файли входять до списку Lazy один за одним, але об’єднуються в безперервну групу, що відповідає спискам груп на інших сторінках налаштувань.
             else -> itemsIndexed(currentEntries, key = { _, entry -> entry.path }) { index, entry ->
                 EtaPreferenceGroupItem(
                     isFirst = index == 0 && !hasParent,
@@ -259,5 +259,5 @@ internal fun WorkspaceScreen(onBack: () -> Unit) {
     }
 }
 
-/** 导入导出结果；失败需要醒目区分，不能和成功提示同色。 */
+/** Імпорт та експорт результатів; невдача має бути чітко виділена і не може бути того самого кольору, що й підказка про успіх. */
 private data class WorkspaceMessage(val text: String, val isError: Boolean)

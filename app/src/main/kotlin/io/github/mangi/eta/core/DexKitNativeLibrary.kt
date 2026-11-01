@@ -4,7 +4,7 @@ import android.os.Build
 import android.os.Process
 import java.io.File
 
-/** 原生库必须由模块的 ClassLoader 加载，宿主只提供私有缓存目录。 */
+/** Власну бібліотеку має завантажувати ClassLoader модуля, а хост надає лише приватний каталог кешу.*/
 internal object DexKitNativeLibrary {
     private var loaded = false
 
@@ -16,7 +16,7 @@ internal object DexKitNativeLibrary {
             loaded = true
             return
         } catch (error: UnsatisfiedLinkError) {
-            logger.debug { "DexKit 标准加载不可用: reason=${nativeLoadFailureReason(error)}" }
+            logger.debug { "DexKit знакдозволяютьдодатинавантаженнянемаєможевикористовувати: reason=${nativeLoadFailureReason(error)}" }
         }
         if (!nativeDirectory.isNullOrBlank()) {
             try {
@@ -24,19 +24,19 @@ internal object DexKitNativeLibrary {
                 loaded = true
                 return
             } catch (error: UnsatisfiedLinkError) {
-                logger.debug { "DexKit 安装目录加载不可用: reason=${nativeLoadFailureReason(error)}" }
+                logger.debug { "DexKit встановитиупаковкаГоловазаписдодатинавантаженнянемаєможевикористовувати: reason=${nativeLoadFailureReason(error)}" }
             }
         }
-        // 压缩 APK 条目无法直接 dlopen；框架提供的安装目录也可能不可用于当前进程。
+        // Записи стисненого APK не можна відкрити безпосередньо; каталог встановлення, наданий фреймворком, може бути недоступним для поточного процесу.
         val abis = if (Process.is64Bit()) Build.SUPPORTED_64_BIT_ABIS else Build.SUPPORTED_32_BIT_ABIS
         val library = DexKitNativeLibraryFile.extract(moduleApkPath, cacheDirectory, abis.toList())
         System.load(library.absolutePath)
         loaded = true
-        logger.info("DexKit 已从模块 APK 加载原生库")
+        logger.info("DexKit вжевідцвільшматок APK додатинавантаженняОригіналнародивсяБібліотека")
     }
 }
 
-/** 只记录固定错误分类，避免把 linker 消息中的文件路径写进日志。 */
+/** Реєструйте лише категорії виправлених помилок, щоб уникнути запису шляху до файлу в повідомленні компонувальника в журнал.*/
 internal fun nativeLoadFailureReason(error: UnsatisfiedLinkError): String {
     val message = error.message.orEmpty().lowercase()
     return when {

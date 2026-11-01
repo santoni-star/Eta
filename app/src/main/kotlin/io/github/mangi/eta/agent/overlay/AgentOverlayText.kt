@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalResources
 import io.github.mangi.eta.R
 
-/** 浮窗只保存语义状态，文案在渲染时根据当前系统语言解析。 */
+/** Плаваюче вікно зберігає лише семантичний стан, а копія аналізується відповідно до поточної мови системи під час візуалізації.*/
 internal sealed interface AgentOverlayStatus {
     data object Reasoning : AgentOverlayStatus
     data object SupplementReceived : AgentOverlayStatus
@@ -26,11 +26,11 @@ internal sealed interface AgentOverlayStatus {
 @Composable
 internal fun AgentOverlayStatus.localizedText(): String = localizedText(LocalResources.current)
 
-/** 通知等非 Compose 表面与浮层共用同一套状态文案。 */
+/** Некомпоновані поверхні, такі як сповіщення та плаваючі шари, мають однаковий набір копій стану.*/
 internal fun AgentOverlayStatus.localizedText(resources: Resources): String = when (this) {
     AgentOverlayStatus.Reasoning -> resources.getString(R.string.overlay_reasoning)
     AgentOverlayStatus.SupplementReceived -> resources.getString(R.string.overlay_supplement_received)
-    // 工具名本身就是动作（点击元素、读取文件），不再加"执行："前缀。
+    // Сама назва інструмента — це дія (клацніть елемент, прочитайте файл), більше не має префікса «Виконати:».
     is AgentOverlayStatus.RunningTool -> toolDisplayName(resources, name)
     is AgentOverlayStatus.HostedToolRunning -> resources.getString(R.string.overlay_hosted_tool_running, name)
     AgentOverlayStatus.ResultReady -> resources.getString(R.string.overlay_result_ready)

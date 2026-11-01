@@ -38,7 +38,7 @@ internal data class ProviderLoginState(
     val isBusy: Boolean get() = phase != ProviderLoginPhase.Idle
 }
 
-/** 登录会话归属当前配置页；浏览器切换不取消，离开页面则关闭轮询或回调监听。 */
+/** Сеанс входу належить до поточної сторінки конфігурації; перемикання браузера не скасовується, а моніторинг опитування або зворотного виклику вимикається при виході зі сторінки.*/
 internal class ProviderLoginStore(
     private val providerId: String,
     parentScope: CoroutineScope,
@@ -62,7 +62,7 @@ internal class ProviderLoginStore(
             val account = withContext(ioDispatcher) { operations.account(providerId, authMode) }
             mutableState.value = mutableState.value.copy(
                 account = account,
-                message = if (interrupted) "登录已中断，请重试" else null,
+                message = if (interrupted) "дошказаписвжесерединаперерва，будь ласкаВажкаспробувати" else null,
             )
         }
     }
@@ -86,7 +86,7 @@ internal class ProviderLoginStore(
             }
             mutableState.value = mutableState.value.copy(account = account, prompt = null, phase = ProviderLoginPhase.SyncingModels)
             val count = withContext(ioDispatcher) { operations.syncModels(providerId, provider.authMode) }
-            mutableState.value = mutableState.value.copy(message = "已登录，已同步 $count 个远端模型")
+            mutableState.value = mutableState.value.copy(message = "вжедошказапис，вжете самекрок $count індивідуальнийдалекокінецьцвільтипу")
         }
     }
 
@@ -97,7 +97,7 @@ internal class ProviderLoginStore(
             val revoked = withContext(ioDispatcher) { operations.disconnect(providerId, authMode, activeController) }
             mutableState.value = mutableState.value.copy(
                 account = null,
-                message = if (revoked == false) "已退出登录，远端撤销未确认" else "已退出登录",
+                message = if (revoked == false) "вжевідступпозадошказапис，далекокінецьвилучитишпилькаще ніправильнорозпізнати" else "вжевідступпозадошказапис",
             )
         }
     }
@@ -129,16 +129,16 @@ internal class ProviderLoginStore(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: AgentRunCancelledException) {
-                // 取消是用户结束当前授权，不显示失败提示。
+                // Скасування означає, що користувач завершує поточну авторизацію без відображення підказки про помилку.
             } catch (error: Exception) {
                 if (generation == attempt && !activeController.isCancelled) {
                     mutableState.value = mutableState.value.copy(
                         message = when (mutableState.value.phase) {
-                            ProviderLoginPhase.SyncingModels -> "已登录，模型同步失败，请在模型页重新拉取"
+                            ProviderLoginPhase.SyncingModels -> "вжедошказапис，цвільтипуте самекроквтратитипоразка，будь ласкаіснуютьцвільтипуСторінкаВажкановийтягнутиВиберіть"
                             else -> (error as? ProviderAuthException)?.message ?: when (phase) {
-                                ProviderLoginPhase.Loading -> "无法读取登录状态，请重试"
-                                ProviderLoginPhase.Disconnecting -> "退出登录失败，请重试"
-                                else -> "登录失败，请重试"
+                                ProviderLoginPhase.Loading -> "немаєЗакончитатиВиберітьдошказаписформустан，будь ласкаВажкаспробувати"
+                                ProviderLoginPhase.Disconnecting -> "відступпозадошказаписвтратитипоразка，будь ласкаВажкаспробувати"
+                                else -> "дошказаписвтратитипоразка，будь ласкаВажкаспробувати"
                             }
                         },
                     )
@@ -184,9 +184,9 @@ private object RepositoryProviderLoginOperations : ProviderLoginOperations {
     ): ProviderAccountSummary = ProviderCredentialRepository.login(providerId, authMode, controller, onPrompt)
 
     override suspend fun syncModels(providerId: String, authMode: String): Int {
-        val provider = requireNotNull(ProviderRepository.providerById(providerId)) { "服务商连接不存在" }
+        val provider = requireNotNull(ProviderRepository.providerById(providerId)) { "Одягобслуговуваннябізнеснавітьзловитинемаєжитиіснують" }
         if (provider.authMode != authMode) {
-            throw ProviderAuthException("oauth_session_changed", "服务商登录方式已变更，请重新拉取模型")
+            throw ProviderAuthException("oauth_session_changed", "ОдягобслуговуваннябізнесдошказаписплощіРежимвжеЗмінаНавіть，будь ласкаВажкановийтягнутиВиберітьцвільтипу")
         }
         val catalog = RemoteModelFetcher.fetchCatalog(provider).getOrThrow()
         val result = ModelRepository.syncRemoteCatalog(catalog)

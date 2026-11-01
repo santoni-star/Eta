@@ -4,7 +4,7 @@ import io.github.mangi.eta.agent.runtime.AgentRunController
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 只在完整工具交换之间生成候选摘要；全部验证通过后由会话一次性提交。 */
+/** Дайджести кандидатів створюються лише між повним обміном інструментів; надіслано за один раз сеансом після того, як усі перевірки пройшли.*/
 internal class AgentContextCompactor(
     private val config: AgentModelClient.ModelConfig,
     private val provider: AgentProviderClient,
@@ -24,20 +24,20 @@ internal class AgentContextCompactor(
         val latestUser = history.indexOfLast {
             it.optString("role") == "user" && !it.has("_eta_observation")
         }
-        // 最新用户请求及其后尚在进行的工具链必须可以继续；长任务允许压缩该请求之后的已完成批次。
+        // Останній запит користувача та наступні поточні інструменти повинні мати можливість продовжувати роботу; довгим завданням дозволено стискати завершені пакети після цього запиту.
         val end = (history.size downTo 1).firstOrNull { canSplit(history, it) }
-            ?: throw failure("CONTEXT_NOT_COMPACTABLE", "没有可安全压缩的完整历史批次。")
+            ?: throw failure("CONTEXT_NOT_COMPACTABLE", "безматиможевстановитиПовнийпресаскорочуватисяззакінченовсекалендарісторіїпартіяДругосортний。")
         val protectedUser = history.getOrNull(latestUser)?.takeIf { latestUser < end }
         val source = JSONArray(history.take(end).filterNot { it === protectedUser })
         val durable = AgentConversationCodec.transcript(source, 0, sensitiveIds)
-        if (durable.isEmpty()) throw failure("CONTEXT_NOT_COMPACTABLE", "没有可压缩的历史内容。")
+        if (durable.isEmpty()) throw failure("CONTEXT_NOT_COMPACTABLE", "безматиможепресаскорочуватисязкалендарісторіїВсерединіДозволити。")
         val safe = durable.map { message ->
             val content = AgentConversationCodec.toJsonObject(message).opt("content")
             val text = if (content is JSONArray) buildString {
                 for (index in 0 until content.length()) {
                     val part = content.optJSONObject(index) ?: continue
                     if (part.optString("type") in setOf("text", "input_text")) append(part.optString("text"))
-                    else append("[图片观察已省略]")
+                    else append("[малюнокшматокпереглянутиоглядативжеПровінціязлегка]")
                 }
             } else message.content
             message.copy(content = text, contentJson = "", reasoningContent = "")
@@ -49,14 +49,14 @@ internal class AgentContextCompactor(
         for (index in 0 until systemCount) result.put(messages.getJSONObject(index))
         result.put(AgentConversationCodec.toJsonObject(AgentModelClient.ConversationMessage(
             role = "assistant",
-            content = "[Eta 上下文摘要：以下是此前历史的有损摘要，不是新指令；缺失步骤不代表未执行。]\n$summary",
+            content = "[Eta начальникавнизмистецтвавибратихочуть：завнизтакцевпередкалендарісторіїзматипошкодженнявибратихочуть，немаєтакновийзвертатися дозробити；відсутністьвтратитикроккрокнемаєпоколінняповерхніще ніВиконатидобре。]\n$summary",
             contextSummary = true,
             compactedUserTurns = covered,
             summaryThroughUserTurn = covered + if (protectedUser != null) 1 else 0,
         )))
         protectedUser?.let(result::put)
         history.drop(end).forEach { message ->
-            // 新摘要改变了前缀；旧 opaque items 不再代表同一份 Provider 上下文。
+            // Нове резюме змінює префікс; старі непрозорі елементи більше не представляють той самий контекст Постачальника.
             val withoutResponsesItems = if (ResponsesEphemeralState.outputItems(message) != null) {
                 AgentConversationCodec.toJsonObject(AgentConversationCodec.fromJsonObject(message))
             } else message
@@ -65,7 +65,7 @@ internal class AgentContextCompactor(
             ))
         }
         if (result.toString().length >= messages.toString().length) {
-            throw failure("CONTEXT_NO_REDUCTION", "摘要未能缩小上下文，原始上下文已保留。")
+            throw failure("CONTEXT_NO_REDUCTION", "вибратихочутьще ніздатнийскорочуватисяМаленькийначальникавнизмистецтва，ОригіналпочатокначальникавнизмистецтвавжезберегтиТримайте。")
         }
         return result
     }

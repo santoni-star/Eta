@@ -26,9 +26,9 @@ internal class SpeechPcmOutput : SpeechAudioOutput {
                 check(!finished) { "Speech audio input already finished" }
                 val remaining = bytes.size - offset
                 val count = audio.write(bytes, offset, remaining, AudioTrack.WRITE_NON_BLOCKING)
-                if (count < 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "音频播放失败")
+                if (count < 0) throw SpeechFailure(SpeechErrorCode.AUDIO, "звукчастотатрансляціяпоставитивтратитипоразка")
                 frames += count / BYTES_PER_FRAME
-                // 空音轨提前启动会在等待云端首包时超时停用；写满后再启动，短写也表示已达到可写上限。
+                // Якщо порожня звукова доріжка запущена заздалегідь, вона закінчиться та деактивується під час очікування першого пакета з хмари; якщо він заповнений, він буде запущений знову. Короткий запис також означає, що досягнуто верхньої межі запису.
                 if (!started && frames > 0 && (frames >= audio.bufferSizeInFrames || count < remaining)) {
                     audio.play()
                     started = true
@@ -43,7 +43,7 @@ internal class SpeechPcmOutput : SpeechAudioOutput {
     @Synchronized override fun finish() {
         val audio = track ?: throw CancellationException("Speech playback stopped")
         if (finished) return
-        // 短音频可能永远填不满启动阈值，结束输入时按实际帧数启动，不补静音或截掉正文。
+        // Короткий звук може ніколи не заповнити поріг запуску. Коли введення закінчиться, воно буде запущено відповідно до фактичної кількості кадрів, без додавання тиші та обрізання тексту.
         if (!started && frames > 0) {
             audio.setStartThresholdInFrames(frames.toInt())
             audio.play()

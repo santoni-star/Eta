@@ -6,10 +6,10 @@ import io.github.mangi.eta.EtaApp
 import io.github.mangi.eta.core.AndroidAgentLogger
 
 /**
- * 在 GUI 工具执行前确认 Eta 无障碍服务已经真实连接。
+ * Підтвердьте, що службу доступності Eta дійсно підключено, перш ніж запускати інструмент GUI.
  *
- * 持久保护、Secure Settings 写入与断连重绑均由 system_server 后端负责。这里不申请
- * Root，也不直接改系统设置；保护关闭或后端不可用时 fail closed。
+ * Постійний захист, запис безпечних налаштувань, від’єднання та повторне прив’язування – усе це обробляється серверною частиною system_server. Не звертайтеся сюди
+ * Root, ані напряму змінювати налаштування системи; не закривається, коли захист вимкнено або серверна частина недоступна.
  */
 object AgentAccessibilityKeeper {
     internal fun ensureEnabledForGuiOperation(context: Context): AccessibilityEnableResult {
@@ -54,21 +54,21 @@ object AgentAccessibilityKeeper {
         if (!protectionAvailable() || !protectionEnabled()) {
             return AccessibilityEnableResult.failure(
                 code = "ACCESSIBILITY_UNAVAILABLE",
-                message = "Eta 无障碍服务未连接；请在系统设置中开启 Eta 无障碍服务",
+                message = "Eta немаєбар'єрперешкоджатиОдягобслуговуванняще нінавітьзловити；будь ласкаіснуютьКраваткасистеманалаштувативстановитисерединаВІДЧИНЕНОпочаток Eta немаєбар'єрперешкоджатиОдягобслуговування",
                 recoveryRequested = false,
             )
         }
         if (!requestRecovery()) {
             return AccessibilityEnableResult.failure(
                 code = "ACCESSIBILITY_PROTECTION_UNAVAILABLE",
-                message = "无障碍保护后端不可用；本次 GUI 操作未执行",
+                message = "немаєбар'єрперешкоджатизберегтизахиститиназадкінецьнемаєможевикористовувати；книгаДругосортний GUI Тримайтеробитище ніВиконатидобре",
                 recoveryRequested = true,
             )
         }
         if (!awaitServiceBinding()) {
             return AccessibilityEnableResult.failure(
                 code = "ACCESSIBILITY_REPAIR_TIMEOUT",
-                message = "Eta 无障碍服务未在恢复时限内连接；本次 GUI 操作未执行",
+                message = "Eta немаєбар'єрперешкоджатиОдягобслуговуванняще нііснуютьвідновитискладнігодинаобмеженняВсерединінавітьзловити；книгаДругосортний GUI Тримайтеробитище ніВиконатидобре",
                 recoveryRequested = true,
             )
         }

@@ -3,14 +3,14 @@ package io.github.mangi.eta.agent.model
 import io.github.mangi.eta.data.model.CustomHeader
 
 /**
- * 自定义 HTTP Header 安全管理。
+ * Налаштуйте керування безпекою заголовка HTTP.
  *
- * 过滤掉会破坏 HTTP 协议或被框架自动管理的 header，并对敏感 header 做日志脱敏。
+ * Відфільтруйте заголовки, які пошкоджують протокол HTTP або автоматично керуються фреймворком, і десенсибілізуйте конфіденційні заголовки в журналах.
  */
 internal object CustomHeaderFilter {
 
     /**
-     * 禁止用户手动设置的 header 名称（大小写不敏感）。
+     * Вимкніть імена заголовків, встановлені користувачами вручну (незалежно від регістру).
      */
     private val FORBIDDEN_NAMES = setOf(
         "host",
@@ -30,7 +30,7 @@ internal object CustomHeaderFilter {
     )
 
     /**
-     * 日志中需要脱敏的 header 名称（大小写不敏感）。
+     * Ім’я заголовка, яке потрібно десенсибілізувати в журналі (незалежно від регістру).
      */
     private val SENSITIVE_NAMES = setOf(
         "authorization",
@@ -40,13 +40,13 @@ internal object CustomHeaderFilter {
     )
 
     /**
-     * 是否是被禁止的 header 名称。
+     * Чи є це заборонена назва заголовка.
      */
     fun isForbidden(name: String): Boolean =
         name.trim().isBlank() || name.trim().lowercase() in FORBIDDEN_NAMES
 
     /**
-     * 过滤列表中的非法 header。
+     * Фільтрувати недопустимі заголовки в списку.
      */
     fun sanitize(headers: List<CustomHeader>): List<CustomHeader> =
         headers.filterNot { isForbidden(it.name) }
@@ -55,21 +55,21 @@ internal object CustomHeaderFilter {
         val names = mutableSetOf<String>()
         headers.forEachIndexed { index, header ->
             val name = header.name.trim()
-            val prefix = "第 ${index + 1} 个请求头"
-            if (isForbidden(name)) return "${prefix}名称为空或由系统管理"
+            val prefix = "немає ${index + 1} індивідуальнийбудь ласкапроситиголова"
+            if (isForbidden(name)) return "${prefix}назвасказатидлянульовийабоЗалежить відКраваткасистематрубкапричина"
             if (!name.matches(Regex("[!#$%&'*+.^_`|~0-9A-Za-z-]+"))) {
-                return "${prefix}名称包含无效字符"
+                return "${prefix}назвасказатиСумкаМіститьнемаєефектхарактерсимвол"
             }
             if (header.value.any { it != '\t' && it !in ' '..'~' }) {
-                return "${prefix}值只能包含可打印的 ASCII 字符或制表符"
+                return "${prefix}значенняТількиздатнийСумкаМіститьможебитидрукуватиз ASCII характерсимволабосистемаповерхнісимвол"
             }
-            if (!names.add(name.lowercase())) return "${prefix}名称重复（不区分大小写）"
+            if (!names.add(name.lowercase())) return "${prefix}назвасказатиВажкаскладні（немаєрайонточкавеликийМаленькийНапишіть）"
         }
         return null
     }
 
     /**
-     * 将自定义 header 合并到 OkHttp Headers Builder，后添加的覆盖先添加的同名 header。
+     * Об’єднайте користувацькі заголовки в OkHttp Headers Builder, і ті, що додані пізніше, перезапишуть заголовки з такою ж назвою, додані першими.
      */
     fun mergeInto(
         builder: okhttp3.Headers.Builder,
@@ -81,7 +81,7 @@ internal object CustomHeaderFilter {
     }
 
     /**
-     * 为日志输出脱敏敏感 header。
+     * Десенсибілізація чутливих заголовків для виведення журналу.
      */
     fun redactForLog(headers: List<CustomHeader>): List<Pair<String, String>> =
         sanitize(headers).map { header ->

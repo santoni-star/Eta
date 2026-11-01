@@ -3,10 +3,10 @@ package io.github.mangi.eta.data.model
 import kotlinx.serialization.Serializable
 
 /**
- * Subagent 模型与思考配置。
+ * Субагентна модель і конфігурація мислення.
  *
- * [modelId] 为空表示跟随主 Agent 当前生效的模型；指定具体 Model.id 且对应服务商与模型仍启用时，
- * Subagent 优先使用该模型运行。
+ * [modelId] порожній, щоб слідувати поточній активній моделі головного агента; коли вказано конкретний Model.id, а відповідний постачальник послуг і модель все ще ввімкнено,
+ * Субагент запускається з використанням цієї моделі спочатку.
  */
 @Serializable
 internal data class SubagentSettings(

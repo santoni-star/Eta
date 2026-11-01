@@ -1,6 +1,6 @@
 package io.github.mangi.eta.agent.skill
 
-/** ZIP 中可安装的 Skill。relativePath 以仓库根目录为基准，仓库根本身使用 `.`。 */
+/** Навички, які можна встановити в ZIP. relativePath базується на кореневому каталозі сховища, а сам корінь сховища використовує `.`.*/
 data class SkillArchiveCandidate(
     val id: String,
     val name: String,
@@ -63,13 +63,13 @@ sealed interface SkillInstallResult {
 
     data class Conflict(
         val conflicts: List<SkillInstallConflict>,
-        /** 本地 ZIP 冲突时返回；来自安装核心实际物化并检查的同一份归档字节。 */
+        /** Повернено через локальний конфлікт ZIP; байтів із того самого архіву, який фактично матеріалізувало та досліджувало ядро ​​встановлення.*/
         val archiveSha256: String? = null,
     ) : SkillInstallResult
 
     data class Failure(
         val error: SkillInstallError,
-        /** 自动回滚不完整，应用私有恢复目录中保留了旧 Skill 备份。 */
+        /** Автоматичний відкат є неповним, і старі резервні копії навичок зберігаються в приватному каталозі відновлення програми.*/
         val recoveryRequired: Boolean = false,
     ) : SkillInstallResult
 }

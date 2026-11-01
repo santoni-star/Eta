@@ -22,7 +22,7 @@ import io.github.mangi.eta.agent.tool.AgentToolCapabilities
 
 internal data class DeviceCapabilitiesUi(
     val root: RootAccessState,
-    // 服务回调只反映 Binder 连接，不能用于判断管理器中的模块开关或 Hook 生效状态。
+    // Зворотний виклик служби відображає лише з’єднання Binder і не може використовуватися для визначення статусу перемикача модуля або ефективного перехоплення в менеджері.
     val xposedConnected: Boolean,
     val tools: AgentToolCapabilities,
 ) {

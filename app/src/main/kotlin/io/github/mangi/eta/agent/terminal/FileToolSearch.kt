@@ -6,7 +6,7 @@ import java.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 游标保留有限深度的目录栈和当前文本位置；每轮只扫描有界条目与字节。 */
+/** Курсор зберігає стек каталогів кінцевої глибини та поточну позицію тексту; лише обмежені записи та байти скануються в кожному раунді.*/
 internal class FileToolSearch(
     private val backend: FileToolBackend,
     private val nanoTime: () -> Long = System::nanoTime,
@@ -29,11 +29,11 @@ internal class FileToolSearch(
     ): String = fileToolOperation(if (query == null) "glob_files" else "grep_files") {
         require(limit > 0)
         if (query != null && (query.isEmpty() || query.length > 512 || query.contains('\n') || query.contains('\r'))) {
-            throw FileToolException("INVALID_QUERY", "搜索词必须为 1 到 512 个字符的单行普通文本")
+            throw FileToolException("INVALID_QUERY", "пошукОтжесловоповиненОбов'язководля 1 прибути 512 індивідуальнийхарактерсимволзодиндобрезагальнийПасмистецтвакнига")
         }
         val root = backend.resolve(path)
         val rootStat = backend.stat(root)
-        if (rootStat.kind != FileToolKind.DIRECTORY) throw FileToolException("NOT_DIRECTORY", "搜索范围必须是目录")
+        if (rootStat.kind != FileToolKind.DIRECTORY) throw FileToolException("NOT_DIRECTORY", "пошукОтжевентилятороточуютьповиненОбов'язковотакГоловазапис")
         val matcher = FileToolGlob(pattern)
         val signature = digest(JSONObject().put("tool", if (query == null) "glob_files" else "grep_files")
             .put("root", root).put("pattern", pattern).put("query", query ?: JSONObject.NULL)
@@ -42,7 +42,7 @@ internal class FileToolSearch(
         val state = if (cursor.isNullOrBlank()) State(mutableListOf(Frame("", 0, rootStat.revision))) else decodeCursor(cursor, signature)
         state.frames.forEach { frame ->
             if (backend.stat(join(root, frame.relative)).revision != frame.revision) {
-                throw FileToolException("STALE_CURSOR", "搜索目录已变化，请重新开始搜索")
+                throw FileToolException("STALE_CURSOR", "пошукОтжеГоловазаписвжеЗміназмінити，будь ласкаВажкановийВІДЧИНЕНОпочатокпошукОтже")
             }
         }
         val startedAt = nanoTime()
@@ -85,7 +85,7 @@ internal class FileToolSearch(
             val filePath = join(root, pending.relative)
             try {
                 val stat = backend.stat(filePath)
-                if (stat.revision != pending.revision) throw FileToolException("STALE_CURSOR", "搜索中的文件已变化，请重新开始搜索")
+                if (stat.revision != pending.revision) throw FileToolException("STALE_CURSOR", "пошукОтжесерединазмистецтваштуквжеЗміназмінити，будь ласкаВажкановийВІДЧИНЕНОпочатокпошукОтже")
                 val chunk = reader.read(stat, pending.offset, minOf(16_000, byteBudget))
                 if (chunk.text.isEmpty()) { state.pending = null; continue }
                 var position = 0
@@ -129,7 +129,7 @@ internal class FileToolSearch(
                     }
                     if (matches.length() >= maxResults) { stopReason = "result_limit"; paused = true; break }
                 }
-                if (backend.stat(filePath).revision != stat.revision) throw FileToolException("STALE_CURSOR", "搜索期间文件已变化，请重新开始搜索")
+                if (backend.stat(filePath).revision != stat.revision) throw FileToolException("STALE_CURSOR", "пошукОтжеОчікуйтеміжмистецтваштуквжеЗміназмінити，будь ласкаВажкановийВІДЧИНЕНОпочатокпошукОтже")
                 if (pending.offset >= stat.sizeBytes) state.pending = null
                 if (paused) break
             } catch (error: FileToolException) {
@@ -163,7 +163,7 @@ internal class FileToolSearch(
         var visited = 0
         while (state.frames.isNotEmpty() && visited < budget) {
             backend.checkActive()
-            // 一次列表返回后至少消费一个条目，避免慢文件系统让同一游标反复停在原地。
+            // Використовуйте принаймні один запис після повернення до списку, щоб запобігти тому, щоб повільні файлові системи багаторазово залишали один і той самий курсор на місці.
             if (visited > 0 && timeExpired()) return NextFile(null, visited, timeLimited = true)
             val frame = state.frames.last()
             val cached = pages[frame.relative]
@@ -219,7 +219,7 @@ internal class FileToolSearch(
         state.pending?.let { json.put("pending", JSONObject().put("path", it.relative).put("offset", it.offset).put("line", it.line)
             .put("revision", it.revision).put("tail", it.tail).put("matched", it.lineMatched)) }
         val encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(json.toString().toByteArray(Charsets.UTF_8))
-        if (encoded.length > MAX_CURSOR_CHARS) throw FileToolException("CURSOR_LIMIT", "搜索路径过深或过长，请选择更小的搜索目录")
+        if (encoded.length > MAX_CURSOR_CHARS) throw FileToolException("CURSOR_LIMIT", "пошукОтжедорогашляхПасглибокийабоПасдовго，будь ласкавибративибратиНавітьМаленькийзпошукОтжеГоловазапис")
         return encoded
     }
 
@@ -243,9 +243,9 @@ internal class FileToolSearch(
         }
         State(frames, pending, json.getInt("skipped").also { require(it >= 0) })
     } catch (_: IllegalArgumentException) {
-        throw FileToolException("INVALID_CURSOR", "搜索游标无效或不属于当前搜索条件")
+        throw FileToolException("INVALID_CURSOR", "пошукОтжетурзнакнемаєефектабонемаєріднаколивпередпошукОтжесмужкаштук")
     } catch (_: org.json.JSONException) {
-        throw FileToolException("INVALID_CURSOR", "搜索游标无效")
+        throw FileToolException("INVALID_CURSOR", "пошукОтжетурзнакнемаєефект")
     }
 
     private fun validateRelative(value: String) {

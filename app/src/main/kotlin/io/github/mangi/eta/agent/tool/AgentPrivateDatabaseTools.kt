@@ -9,7 +9,7 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 读取经过真机验证的固定数据库；路径、表、字段与查询均不接受模型输入。 */
+/** Читати фіксовану базу даних, яка була перевірена реальними машинами; шляхи, таблиці, поля та запити не приймають введення моделі.*/
 internal class AgentPrivateDatabaseTools(
     private val context: Context,
     private val root: BoundedRootCommandExecutor,
@@ -24,7 +24,7 @@ internal class AgentPrivateDatabaseTools(
 
     private fun listAlarms(database: SQLiteDatabase, args: JSONObject): String {
         if (!database.hasColumns("alarms", setOf("_id", "hour", "minutes", "enabled"))) {
-            return error("CLOCK_SCHEMA_UNSUPPORTED", "当前时钟数据库结构暂不受支持")
+            return error("CLOCK_SCHEMA_UNSUPPORTED", "коливпередгодинадзвоникномервідповідно доБібліотекавузолструктуратимчасовонемаєзавідділенняутримувати")
         }
         val limit = args.optInt("limit", 20).coerceIn(1, 50)
         val items = database.rows(
@@ -42,7 +42,7 @@ internal class AgentPrivateDatabaseTools(
 
     private fun listTimers(database: SQLiteDatabase, args: JSONObject): String {
         if (!database.hasColumns("timer_schedule", setOf("_id", "duration", "state"))) {
-            return error("CLOCK_SCHEMA_UNSUPPORTED", "当前时钟数据库结构暂不受支持")
+            return error("CLOCK_SCHEMA_UNSUPPORTED", "коливпередгодинадзвоникномервідповідно доБібліотекавузолструктуратимчасовонемаєзавідділенняутримувати")
         }
         val limit = args.optInt("limit", 20).coerceIn(1, 50)
         val items = database.rows(
@@ -60,7 +60,7 @@ internal class AgentPrivateDatabaseTools(
 
     private fun searchClipboard(database: SQLiteDatabase, args: JSONObject): String {
         if (!database.hasColumns("CLIPBOARD_ITEM", setOf("TIME", "CONTENT"))) {
-            return error("CLIPBOARD_SCHEMA_UNSUPPORTED", "当前剪贴板历史结构暂不受支持")
+            return error("CLIPBOARD_SCHEMA_UNSUPPORTED", "коливпередВирізатипалкаплитакалендарісторіївузолструктуратимчасовонемаєзавідділенняутримувати")
         }
         val limit = args.optInt("limit", 20).coerceIn(1, 50)
         val query = args.optString("query").trim()
@@ -131,7 +131,7 @@ internal class AgentPrivateDatabaseTools(
     private fun readDatabase(source: DatabaseSource, unavailableCode: String, block: (SQLiteDatabase) -> String): String =
         synchronized(snapshotLock) {
             val userId = context.dataDir.parentFile?.name?.toIntOrNull()
-                ?: return@synchronized error(unavailableCode, "无法确定当前 Android 用户")
+                ?: return@synchronized error(unavailableCode, "немаєЗаконправильноЗвичайноколивперед Android використовуватипобутові")
             val sourcePath = source.path.replace("{user}", userId.toString())
             val snapshot = createSnapshot(sourcePath, source.maxBytes)
                 ?: return@synchronized error(unavailableCode, source.unavailableMessage)
@@ -260,17 +260,17 @@ internal class AgentPrivateDatabaseTools(
         val CLOCK_DATABASE = DatabaseSource(
             "/data/user_de/{user}/com.coloros.alarmclock/databases/alarms.db",
             32L * 1024 * 1024,
-            "ColorOS 时钟数据暂时不可访问",
+            "ColorOS годинадзвоникномервідповідно дотимчасовогодинанемаєможевідвідатизапитати",
         )
         val CLIPBOARD_DATABASE = DatabaseSource(
             "/data/user/{user}/com.sohu.inputmethod.sogouoem/databases/clipboard_db",
             32L * 1024 * 1024,
-            "当前输入法没有可访问的剪贴板历史",
+            "коливпередвтратитивведітьЗаконбезматиможевідвідатизапитатизВирізатипалкаплитакалендарісторії",
         )
         val HEALTH_DATABASE = DatabaseSource(
             "/data/system_ce/{user}/healthconnect/healthconnect.db",
             256L * 1024 * 1024,
-            "系统健康数据暂时不可访问",
+            "КраваткасистемаздоровийЗдоровийномервідповідно дотимчасовогодинанемаєможевідвідатизапитати",
         )
     }
 }

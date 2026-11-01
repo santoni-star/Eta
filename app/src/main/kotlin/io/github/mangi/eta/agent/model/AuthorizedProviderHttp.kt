@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 
-/** 凭据仅在请求发送前解析；401 恢复止于响应头，不重放已经开始的模型流。 */
+/** Облікові дані аналізуються лише перед надсиланням запиту; Відновлення 401 завершується в заголовку відповіді та не відтворює потік моделі, який уже почався.*/
 internal object AuthorizedProviderHttp {
     fun <T> execute(
         client: OkHttpClient,
@@ -54,7 +54,7 @@ internal object AuthorizedProviderHttp {
                             val failure = AgentModelFailure.http(response.code, response.peekBody(16_384).string())
                             if (failure.code != "HTTP_401") throw failure
                             throw AgentModelFailure(
-                                "OAUTH_UNAUTHORIZED", false, "订阅登录已失效，请重新登录服务商账户。",
+                                "OAUTH_UNAUTHORIZED", false, "порядокчитатидошказаписвжевтратитиефект，будь ласкаВажкановийдошказаписОдягобслуговуваннябізнесрахунокпобутові。",
                             )
                         }
                         return consume(response)

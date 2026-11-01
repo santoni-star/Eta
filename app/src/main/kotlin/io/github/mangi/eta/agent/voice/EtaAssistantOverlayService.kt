@@ -83,10 +83,10 @@ import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.squircle.LocalSquircleEnabled
 
 /**
- * Eta 数字助理的用户界面窗口。
+ * Вікно інтерфейсу користувача для цифрового помічника Eta.
  *
- * 系统助理会话承接电源键入口并采集上下文；这里固定使用全屏 TYPE_APPLICATION_OVERLAY，
- * 让输入法、动画和厂商助手式浮窗拥有同一个窗口生命周期。
+ * Сеанс системного помічника бере на себе введення клавіші живлення та збирає контекст; повноекранний TYPE_APPLICATION_OVERLAY виправлено тут,
+ * Нехай метод введення, анімація та плаваючі вікна помічника виробника мають однаковий життєвий цикл вікна.
  */
 internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -174,8 +174,8 @@ internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStat
                 if (state.preview.isNotBlank()) inputText = state.preview
                 speechState = EtaSpeechState(
                     phase = state.phase,
-                    // 连接、聆听、识别中的阶段播报由语音条目与波形承担，反馈条只保留
-                    // 错误和空闲态的模型下载消息，避免与语音界面重复叙事。
+                    // Трансляція етапу підключення, прослуховування та розпізнавання здійснюється голосовими елементами та формами хвилі, а залишається лише панель зворотного зв’язку
+                    // Повідомлення про завантаження моделі помилки та стану очікування, щоб уникнути повторюваних розповідей за допомогою голосового інтерфейсу.
                     message = state.error ?: state.progress.takeIf { it.isNotBlank() && state.phase == EtaSpeechPhase.IDLE },
                     downloadAvailable = state.downloadAvailable,
                     configureAvailable = state.error != null && !state.downloadAvailable,
@@ -258,7 +258,7 @@ internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStat
         val settings = speechSettings ?: return
         val canRecord = settings.recognitionEnabled &&
             checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        // 文字模式先完成唤醒光效和输入栏显现，最后才交接焦点并请求键盘。
+        // Текстовий режим спочатку завершує світловий ефект пробудження та відображення поля введення, а нарешті переносить фокус і запитує клавіатуру.
         if (!canRecord && (!entryEntranceComplete || !entryContentReady)) return
         entryInputPending = false
         if (canRecord) {
@@ -322,8 +322,8 @@ internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStat
                 appearance = appearance,
                 applyInterfaceScale = false,
             ) {
-                // ColorOS 在 Overlay 窗口切换期间可能短暂使用软件画布；RuntimeShader
-                // 无法在该画布绘制，因此浮窗统一使用 Miuix 的圆角回退路径。
+                // ColorOS може короткочасно використовувати програмне полотно під час перемикання вікон Overlay; RuntimeShader
+                // На цьому полотні неможливо малювати, тому плаваюче вікно рівномірно використовує округлений резервний шлях Miuix.
                 CompositionLocalProvider(LocalSquircleEnabled provides false,
                     LocalSpeechPlayback provides playback,
                     LocalSpeechPlaybackEnabled provides (speechSettings?.let { it.tts != TtsProvider.NONE } == true)) {
@@ -874,7 +874,7 @@ internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStat
         private const val HANDOFF_TIMEOUT_MS = 5_000L
         private const val HANDOFF_EXIT_DURATION_MS = 220L
         private const val HANDOFF_REQUEST_CODE = 0x455441
-        private const val LEGACY_STOPPED_ERROR = "已停止"
+        private const val LEGACY_STOPPED_ERROR = "вжеСТІЙкінець"
         private const val SYNTHETIC_STOPPED = "eta_status:stopped"
         private const val SYNTHETIC_RUNTIME_FAILED = "eta_status:runtime_failed"
         private const val FOREGROUND_DISMISS_TIMEOUT_MS = 2_000L
@@ -884,8 +884,8 @@ internal class EtaAssistantOverlayService : Service(), LifecycleOwner, SavedStat
         private var activeService: EtaAssistantOverlayService? = null
 
         /**
-         * Eta 自己拥有入口浮层，直接关闭并等待具体 View detach；不能按包名猜测，
-         * 因为入口、Runtime 与结果浮层都属于同一个包。
+         * Eta має власний вхідний плаваючий шар, який можна закрити безпосередньо та чекати на від’єднання певного View; його неможливо вгадати за назвою пакета.
+         * Оскільки введення, час виконання та плаваючий шар результату належать одному пакету.
          */
         fun dismissForForegroundOperation(context: Context): Boolean {
             val service = activeService

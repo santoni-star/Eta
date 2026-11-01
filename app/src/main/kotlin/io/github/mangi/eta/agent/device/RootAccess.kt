@@ -24,7 +24,7 @@ internal data class RootAccessState(
     val isGranted: Boolean get() = status == RootAccessStatus.GRANTED
 }
 
-/** Root 探测归 App 进程所有；读取能力不会执行 su 或弹出授权。 */
+/** Виявлення кореня належить процесу App; можливості читання не виконуватимуть авторизацію su або popup.*/
 internal object RootAccess {
     private const val PREFERENCES = "eta_root_access"
     private const val AUTOMATIC_REQUEST_ATTEMPTED = "automatic_request_attempted"
@@ -44,12 +44,12 @@ internal object RootAccess {
         refresh(context)
     }
 
-    /** 首次发现 su 时请求一次；拒绝后只有显式 request 才会再次申请。 */
+    /** Запитати su один раз, коли його вперше виявлено; після відхилення знову буде застосовано лише явний запит.*/
     fun refresh(context: Context): Job = startProbe(context, explicit = false)
 
     fun request(context: Context): Job = startProbe(context, explicit = true)
 
-    /** 仅由执行器确认 su 拒绝后调用；普通命令失败不代表授权被撤销。 */
+    /** Викликається лише після того, як виконавець підтвердить відхилення су; невиконання звичайних команд не означає, що авторизацію скасовано.*/
     fun markDenied() {
         preferences?.edit()?.putBoolean(LAST_GRANTED, false)?.apply()
         mutableState.value = mutableState.value.copy(status = RootAccessStatus.DENIED)
@@ -81,7 +81,7 @@ internal object RootAccess {
                     )
                     return@launch
                 }
-                // 先记住尝试，进程在授权弹窗期间退出也不会在下次启动再次打扰用户。
+                // Не забувайте спочатку спробувати. Якщо процес завершиться під час спливаючого вікна авторизації, він більше не турбуватиме користувача під час наступного запуску.
                 if (!prefs.edit().putBoolean(AUTOMATIC_REQUEST_ATTEMPTED, true).commit()) {
                     mutableState.value = RootAccessState(RootAccessStatus.NOT_GRANTED, suPresent = true)
                     AndroidAgentLogger.warn("Root access probe outcome=preferences_unavailable")

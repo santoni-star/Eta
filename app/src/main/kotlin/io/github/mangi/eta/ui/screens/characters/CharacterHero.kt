@@ -60,8 +60,8 @@ private val HeroAvatarWidth = 132.dp
 private val HeroAvatarHeight = HeroAvatarWidth / CharacterPortraitAspect
 
 /**
- * 角色详情主视觉：头像本身放大模糊作为氛围底色并渐隐到页面背景，前景是竖版头像与名字。
- * 模糊只作用在一张已降采样的图上，绘制成本固定，不随页面内容变化。
+ * Основне зображення деталей персонажа: сам аватар збільшується та розмивається як фон атмосфери та зникає на тлі сторінки, а вертикальний аватар та ім’я на передньому плані.
+ * Розмиття працює лише на зображенні зі зниженою дискретизацією, а вартість малювання є фіксованою та не змінюється разом із вмістом сторінки.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -96,7 +96,7 @@ internal fun CharacterHero(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    // 上下两端都融回页面底色：顶部不在顶栏下切出硬边，底部自然接到下方分组。
+                    // Верхній і нижній кінці знову зливаються з фоновим кольором сторінки: верхній не обрізає жорсткий край під верхньою смугою, а нижній природним чином пов’язаний із групою нижче.
                     Brush.verticalGradient(
                         0f to colors.background,
                         0.18f to colors.background.copy(alpha = 0f),
@@ -136,7 +136,7 @@ internal fun CharacterHero(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.PhotoCamera,
-                        contentDescription = "更换头像",
+                        contentDescription = "НавітьЗмінаголовамалюнок",
                         modifier = Modifier.size(18.dp),
                         tint = colors.onSurface,
                     )
@@ -157,14 +157,14 @@ internal fun CharacterHero(
                 IconButton(onClick = onToggleFavorite, enabled = !busy, minWidth = 36.dp, minHeight = 36.dp) {
                     Icon(
                         imageVector = if (card.favorite) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                        contentDescription = if (card.favorite) "取消收藏" else "收藏",
+                        contentDescription = if (card.favorite) "Виберітьвидалитиотриматитибетська" else "отриматитибетська",
                         modifier = Modifier.size(20.dp),
                         tint = if (card.favorite) FavoriteColor else colors.onSurfaceVariantSummary,
                     )
                 }
             }
             val byline = listOfNotNull(
-                card.creator.takeIf(String::isNotBlank)?.let { "作者 $it" },
+                card.creator.takeIf(String::isNotBlank)?.let { "робитиВООЗ $it" },
                 card.version.takeIf(String::isNotBlank)?.let { "v$it" },
             ).joinToString(" · ")
             if (byline.isNotEmpty()) {
@@ -213,7 +213,7 @@ internal fun CharacterHero(
             }
             Spacer(Modifier.height(20.dp))
             EtaTextButton(
-                text = "开始对话",
+                text = "ВІДЧИНЕНОпочатокправильноговорити",
                 enabled = !busy,
                 onClick = onStart,
                 modifier = Modifier.fillMaxWidth(),
@@ -224,8 +224,8 @@ internal fun CharacterHero(
 }
 
 /**
- * 开场白横向翻页：每张卡完整预览一段开场，当前页即选中的开场白，免去单选列表的二次确认。
- * 卡片定高并截断，全文通过“阅读全文”弹窗查看，翻页时高度不跳动。
+ * Перегортання початкової сторінки по горизонталі: кожна картка попередньо переглядає повне відкриття, а поточна сторінка є вибраним відкриттям, що усуває потребу у вторинному підтвердженні списку одноразового вибору.
+ * Висота картки фіксована та скорочена. Повний текст можна переглянути через спливаюче вікно «Читати повний текст», а висота не стрибає при гортанні сторінок.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -277,7 +277,7 @@ internal fun GreetingPager(
                             if (page == pagerState.settledPage) {
                                 Icon(
                                     imageVector = Icons.Rounded.Check,
-                                    contentDescription = "已选择",
+                                    contentDescription = "вжевибративибрати",
                                     modifier = Modifier.size(12.dp),
                                     tint = colors.onPrimary,
                                 )
@@ -287,7 +287,7 @@ internal fun GreetingPager(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = text.ifBlank { "没有预设开场白，由你先开口" },
+                    text = text.ifBlank { "безматипопередньоналаштуватиВІДЧИНЕНОполебілий，Залежить відвипершеВІДЧИНЕНОрот" },
                     style = MiuixTheme.textStyles.body2,
                     color = if (text.isBlank()) colors.onSurfaceVariantSummary else colors.onSurface,
                     maxLines = 6,
@@ -296,7 +296,7 @@ internal fun GreetingPager(
                 )
                 if (text.isNotBlank()) {
                     Text(
-                        text = "阅读全文",
+                        text = "читатичитатиПовниймистецтва",
                         style = MiuixTheme.textStyles.footnote1,
                         color = colors.primary,
                     )

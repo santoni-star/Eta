@@ -44,9 +44,9 @@ internal class MiniMaxSpeechDecoder(onAudio: (ByteArray) -> Unit) {
                 val encoded = data.optString("audio")
                 if (encoded.isNotEmpty()) audio.write(decodeHexAudio(encoded))
             }
-            // 末包的 audio 是整段聚合音频；即使网关忽略 exclude_aggregated_audio，也不能重复播放。
+            // Аудіо в останньому пакеті є повним агрегованим аудіо; навіть якщо шлюз ігнорує exclude_aggregated_audio, його не можна відтворювати повторно.
             2 -> completed = true
-            else -> throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax 返回了无效的音频状态")
+            else -> throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax поверненняповерненнязрозумівнемаєефектззвукчастотаформустан")
         }
         return !completed
     }
@@ -55,19 +55,19 @@ internal class MiniMaxSpeechDecoder(onAudio: (ByteArray) -> Unit) {
 }
 
 private fun decodeHexAudio(value: String): ByteArray {
-    if (value.length % 2 != 0) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax 音频编码不完整")
+    if (value.length % 2 != 0) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax звукчастотакомпілюватикоднемаєзакінченовсе")
     return ByteArray(value.length / 2) { index ->
         val high = value[index * 2].digitToIntOrNull(16)
         val low = value[index * 2 + 1].digitToIntOrNull(16)
-        if (high == null || low == null) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax 音频编码无效")
+        if (high == null || low == null) throw SpeechFailure(SpeechErrorCode.PROTOCOL, "MiniMax звукчастотакомпілюватикоднемаєефект")
         ((high shl 4) or low).toByte()
     }
 }
 
 private fun minimaxFailure(code: Int): SpeechFailure = when (code) {
-    1001 -> SpeechFailure(SpeechErrorCode.TIMEOUT, "MiniMax 语音合成超时，请重试")
-    1002, 1039 -> SpeechFailure(SpeechErrorCode.RATE_LIMITED, "MiniMax 请求过于频繁，请稍后重试")
-    1004 -> SpeechFailure(SpeechErrorCode.AUTHENTICATION, "MiniMax 认证失败，请检查 API Key")
-    1042, 2013 -> SpeechFailure(SpeechErrorCode.CONFIGURATION, "MiniMax 无法处理当前文本或音色，请检查配置")
-    else -> SpeechFailure(SpeechErrorCode.SERVER, "MiniMax 语音合成失败（$code）")
+    1001 -> SpeechFailure(SpeechErrorCode.TIMEOUT, "MiniMax мовазвуккомбайнстатиобганятигодина，будь ласкаВажкаспробувати")
+    1002, 1039 -> SpeechFailure(SpeechErrorCode.RATE_LIMITED, "MiniMax будь ласкапроситиПасначастотаТрадиційний，будь ласкатрохиназадВажкаспробувати")
+    1004 -> SpeechFailure(SpeechErrorCode.AUTHENTICATION, "MiniMax розпізнатисертифікатвтратитипоразка，будь ласкаперевіритиперевірити API Key")
+    1042, 2013 -> SpeechFailure(SpeechErrorCode.CONFIGURATION, "MiniMax немаєЗаконвпричинаколивпередмистецтвакнигаабозвукколір，будь ласкаперевіритиперевіритиматчвстановити")
+    else -> SpeechFailure(SpeechErrorCode.SERVER, "MiniMax мовазвуккомбайнстативтратитипоразка（$code）")
 }

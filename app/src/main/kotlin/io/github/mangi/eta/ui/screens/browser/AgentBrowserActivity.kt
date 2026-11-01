@@ -15,7 +15,7 @@ import io.github.mangi.eta.data.repository.AppearanceSettingsRepository
 import io.github.mangi.eta.ui.app.AgentAppTheme
 import kotlinx.coroutines.launch
 
-/** WebView 保持在固定窗口内，进出动画由系统合成窗口，避免整页绘制裁剪介入网页渲染。 */
+/** WebView залишається у фіксованому вікні, а анімація входу та виходу синтезується системою, щоб запобігти малюванню й обрізанню всієї сторінки, що перешкоджає відображенню веб-сторінки.*/
 class AgentBrowserActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

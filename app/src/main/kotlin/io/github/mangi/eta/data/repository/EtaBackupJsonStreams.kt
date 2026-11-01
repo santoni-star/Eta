@@ -28,7 +28,7 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.decodeToSequence
 import kotlinx.serialization.json.encodeToStream
 
-/** 沿用 JSON 备份合同，用磁盘暂存大数组，校验与恢复均逐条解码。 */
+/** Дотримуйтеся контракту на резервне копіювання JSON, використовуйте диск для тимчасового зберігання великих масивів, а також перевіряйте та відновлюйте їх один за іншим.*/
 @OptIn(ExperimentalSerializationApi::class)
 internal object EtaBackupJsonStreams {
     const val MAX_BACKUP_BYTES = 512L * 1024L * 1024L
@@ -83,22 +83,22 @@ internal object EtaBackupJsonStreams {
             val cancellation = currentCoroutineContext()
             val checked = PushbackInputStream(LimitedInput(input, MAX_BACKUP_BYTES, cancellation::ensureActive))
             val first = checked.read()
-            if (first < 0) throw EtaBackupException("备份文件为空")
+            if (first < 0) throw EtaBackupException("Приготуйтечасткамистецтваштукдлянульовий")
             checked.unread(first)
             JsonReader(checked.reader(Charsets.UTF_8)).use { reader ->
                 JsonWriter(header.writer(Charsets.UTF_8).buffered()).use { writer ->
-                    if (reader.peek() == JsonToken.END_DOCUMENT) throw EtaBackupException("备份文件为空")
+                    if (reader.peek() == JsonToken.END_DOCUMENT) throw EtaBackupException("Приготуйтечасткамистецтваштукдлянульовий")
                     reader.beginObject()
                     writer.beginObject()
                     val seen = mutableSetOf<String>()
                     while (reader.hasNext()) {
                         cancellation.ensureActive()
                         val name = reader.nextName()
-                        if (!seen.add(name)) throw EtaBackupException("备份中存在重复字段")
+                        if (!seen.add(name)) throw EtaBackupException("ПриготуйтечасткасерединажитиіснуютьВажкаскладніхарактерчастина")
                         onPhase(if (name in knownFields) "read_$name" else "read_unknown")
                         when {
                             name in recordFields -> {
-                                if (reader.peek() != JsonToken.BEGIN_ARRAY) throw EtaBackupException("备份中的记录列表格式无效")
+                                if (reader.peek() != JsonToken.BEGIN_ARRAY) throw EtaBackupException("Приготуйтечасткасерединаззапам'ятатизаписСписокповерхнісіткаРежимнемаєефект")
                                 JsonWriter(File(directory, "$name.json").writer(Charsets.UTF_8).buffered()).use { records ->
                                     copyValue(reader, records, 0, cancellation::ensureActive)
                                 }
@@ -112,7 +112,7 @@ internal object EtaBackupJsonStreams {
                     }
                     reader.endObject()
                     writer.endObject()
-                    if (reader.peek() != JsonToken.END_DOCUMENT) throw EtaBackupException("备份文件末尾存在额外内容")
+                    if (reader.peek() != JsonToken.END_DOCUMENT) throw EtaBackupException("ПриготуйтечасткамистецтваштуккінецьхвістжитиіснуютьЛобназовніВсерединіДозволити")
                 }
             }
             onPhase("read_header")
@@ -121,7 +121,7 @@ internal object EtaBackupJsonStreams {
         } catch (failure: Throwable) {
             removeDirectory(directory)
             if (failure is CancellationException || failure is EtaBackupException || failure is Error) throw failure
-            throw EtaBackupException("备份文件格式无效", failure)
+            throw EtaBackupException("ПриготуйтечасткамистецтваштуксіткаРежимнемаєефект", failure)
         }
     }
 
@@ -194,7 +194,7 @@ internal object EtaBackupJsonStreams {
             checkCancelled()
             return `in`.read(buffer, offset, length).also { if (it > 0) count(it) }
         }
-        // 输入流由调用方持有，暂存读取结束不提前关闭调用方资源。
+        // Вхідний потік утримується абонентом, і ресурси абонента не закриваються раніше, коли тимчасове читання завершено.
         override fun close() = Unit
         private fun count(bytes: Int) {
             total += bytes
@@ -213,13 +213,13 @@ internal object EtaBackupJsonStreams {
     }
 
     private fun sizeLimitFailure(limit: Long): EtaBackupException {
-        val size = if (limit >= 1024 * 1024) "${limit / (1024 * 1024)} MiB" else "$limit 字节"
-        return EtaBackupException("备份文件超过 $size 限制")
+        val size = if (limit >= 1024 * 1024) "${limit / (1024 * 1024)} MiB" else "$limit характерФестиваль"
+        return EtaBackupException("ПриготуйтечасткамистецтваштукобганятиПас $size обмеженнясистема")
     }
 
     private fun copyValue(reader: JsonReader, writer: JsonWriter, depth: Int, checkCancelled: () -> Unit) {
         checkCancelled()
-        if (depth > 128) throw EtaBackupException("备份中的 JSON 嵌套过深")
+        if (depth > 128) throw EtaBackupException("Приготуйтечасткасерединаз JSON вбудованийвстановитиПасглибокий")
         when (reader.peek()) {
             JsonToken.BEGIN_ARRAY -> {
                 reader.beginArray(); writer.beginArray()
@@ -238,7 +238,7 @@ internal object EtaBackupJsonStreams {
             JsonToken.NUMBER -> writer.value(BigDecimal(reader.nextString()))
             JsonToken.BOOLEAN -> writer.value(reader.nextBoolean())
             JsonToken.NULL -> { reader.nextNull(); writer.nullValue() }
-            else -> throw EtaBackupException("备份文件格式无效")
+            else -> throw EtaBackupException("ПриготуйтечасткамистецтваштуксіткаРежимнемаєефект")
         }
     }
 

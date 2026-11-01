@@ -17,7 +17,7 @@ internal object ResponsesRequestBuilder {
         mergeExtraBody(request, config.extraBodyJson)
         RequestBodyMerge.mergeCustomBody(request, config.customBody)
 
-        // 这些字段决定协议正确性、隐私边界和 Eta 本轮行为，必须由运行时最终写入。
+        // Ці поля визначають правильність протоколу, межі конфіденційності та поведінку поточного раунду Eta і повинні бути остаточно записані середовищем виконання.
         request.put("model", config.model)
         request.put("instructions", instructions)
         request.put("input", input)

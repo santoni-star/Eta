@@ -52,7 +52,7 @@ import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * 聊天时间线中的 Subagent 节点行：保持内联极简与留白，点击呼出实时检视面板。
+ * Рядок вузла субагента на часовій шкалі чату: зберігайте його вбудованим мінімалістичним і порожнім, натисніть, щоб відкрити панель перегляду в реальному часі.
  */
 @Composable
 internal fun SubagentActivityRow(
@@ -69,13 +69,13 @@ internal fun SubagentActivityRow(
     val taskTitle = snapshot.description.ifBlank { message.argumentsSummary.ifBlank { "Subagent" } }
     val subtitle = when {
         running -> snapshot.currentAction.takeIf { it.isNotBlank() }
-            ?: if (snapshot.toolStepCount > 0) "已执行 ${snapshot.toolStepCount} 步" else "正在运行…"
+            ?: if (snapshot.toolStepCount > 0) "вжеВиконатидобре ${snapshot.toolStepCount} крок" else "простоіснуютьтранспортдобре…"
         failed -> snapshot.error?.lineSequence()?.firstOrNull()?.takeIf { it.isNotBlank() }
             ?: message.outcomeLine()
-            ?: "执行未完成"
+            ?: "Виконатидобреще нізакінченостати"
         else -> when {
-            snapshot.toolStepCount > 0 -> "完成 · ${snapshot.toolStepCount} 次工具调用"
-            else -> message.outcomeLine() ?: "完成"
+            snapshot.toolStepCount > 0 -> "закінченостати · ${snapshot.toolStepCount} ДругосортнийпрацюватиІнструментмелодіявикористовувати"
+            else -> message.outcomeLine() ?: "закінченостати"
         }
     }
 
@@ -130,7 +130,7 @@ internal fun SubagentActivityRow(
             }
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = "查看 Subagent 详情",
+                contentDescription = "перевіритиподивіться Subagent докладноПрихильність",
                 modifier = Modifier
                     .padding(start = 6.dp, end = 8.dp)
                     .size(14.dp),
@@ -206,7 +206,7 @@ private fun SubagentInspectorContent(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // 顶部状态与元信息横条：留白克制，只展示关键身份与实时状态
+        // Верхня панель статусу та мета-інформації: залиште порожній простір і стримайте, відображайте лише ключові дані та статус у реальному часі
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -245,7 +245,7 @@ private fun SubagentInspectorContent(
             }
         }
 
-        // 任务指令（Prompt）：浅色容器，长文本默认收起，点按展开
+        // Команда завдання (підказка): контейнер світлого кольору, довгий текст за замовчуванням згорнутий, натисніть, щоб розгорнути
         if (snapshot.prompt.isNotBlank()) {
             Column(
                 modifier = Modifier
@@ -283,7 +283,7 @@ private fun SubagentInspectorContent(
             }
         }
 
-        // 内部执行时间线：沿用主聊天界面的 1dp 细线与圆点徽章
+        // Внутрішня шкала часу виконання: успадкуйте тонку лінію 1dp і значок із крапками основного інтерфейсу чату
         if (snapshot.steps.isNotEmpty() || running) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 snapshot.steps.forEachIndexed { index, step ->
@@ -322,7 +322,7 @@ private fun SubagentInspectorContent(
                             contentAlignment = Alignment.CenterStart,
                         ) {
                             ShimmerText(
-                                text = snapshot.currentAction.ifBlank { "正在运行…" },
+                                text = snapshot.currentAction.ifBlank { "простоіснуютьтранспортдобре…" },
                                 active = true,
                                 style = MiuixTheme.textStyles.body2,
                                 color = MiuixTheme.colorScheme.onSurface,
@@ -333,7 +333,7 @@ private fun SubagentInspectorContent(
             }
         }
 
-        // 错误信息
+        // повідомлення про помилку
         val error = snapshot.error?.takeIf { it.isNotBlank() && failed }
         if (error != null) {
             Text(
@@ -350,7 +350,7 @@ private fun SubagentInspectorContent(
             )
         }
 
-        // 实时或最终汇报（Output）
+        // Звіт у режимі реального часу або остаточний звіт (вихід)
         if (snapshot.output.isNotBlank()) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
@@ -399,7 +399,7 @@ private fun SubagentStepRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ShimmerText(
-                text = step.title.ifBlank { step.toolName.ifBlank { "步骤" } },
+                text = step.title.ifBlank { step.toolName.ifBlank { "кроккрок" } },
                 active = running,
                 style = MiuixTheme.textStyles.body2,
                 color = when {

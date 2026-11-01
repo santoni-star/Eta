@@ -39,13 +39,13 @@ import top.yukonga.miuix.kmp.squircle.squircleBorder
 import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 角色卡竖版比例与原版角色卡图一致（2:3），裁剪时保留人物上半身。 */
+/** Вертикальне співвідношення картки персонажа відповідає вихідній картці персонажа (2:3), а верхня частина тіла персонажа зберігається під час обрізання.*/
 internal const val CharacterPortraitAspect = 2f / 3f
 internal val CharacterPortraitCorner = 20.dp
 
 /**
- * 角色库卡片：整张图铺满，底部渐暗承载名字与标签，避免图文分栏显得像设置项。
- * 收藏星标悬浮在右上角，点击不进入详情。
+ * Картка бібліотеки символів: повністю закрите зображення, а нижня частина поступово темніє для розміщення назви та мітки, що запобігає тому, що стовпці зображення та тексту виглядають як елементи налаштування.
+ * Зірка колекції висить у верхньому правому куті, натисніть її, щоб не вводити деталі.
  */
 @Composable
 internal fun CharacterPortraitCard(
@@ -96,7 +96,7 @@ internal fun CharacterPortraitCard(
             ) {
                 Icon(
                     imageVector = if (card.favorite) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                    contentDescription = if (card.favorite) "取消收藏" else "收藏",
+                    contentDescription = if (card.favorite) "Виберітьвидалитиотриматитибетська" else "отриматитибетська",
                     modifier = Modifier.size(16.dp),
                     tint = if (card.favorite) FavoriteColor else Color.White,
                 )
@@ -141,12 +141,12 @@ private fun PortraitTag(text: String) {
     )
 }
 
-/** 收藏星标的暖金色，固定值保证落在任意头像上都可辨认。 */
+/** Теплий золотий колір зірки колекції, фіксоване значення гарантує, що її можна впізнати на будь-якому аватарі.*/
 internal val FavoriteColor = Color(0xFFFFC94D)
 
 /**
- * 网格末尾的新建卡：与角色卡同尺寸的描边占位，上半区新建、下方导入两个入口，
- * 视觉上弱于真实角色，不抢主内容。
+ * Нова картка в кінці сітки: заповнювач штрихів такого ж розміру, як і картка персонажа, з двома входами у верхній половині та нижній,
+ * Візуально слабше реальних персонажів і не викрадає основний вміст.
  */
 @Composable
 internal fun CharacterAddTile(
@@ -181,7 +181,7 @@ internal fun CharacterAddTile(
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(24.dp), tint = colors.primary)
             }
             Spacer(Modifier.height(12.dp))
-            Text("新建角色", style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.Medium, color = colors.onSurface)
+            Text("новийвстановитирігколір", style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.Medium, color = colors.onSurface)
         }
         Box(
             modifier = Modifier
@@ -199,7 +199,7 @@ internal fun CharacterAddTile(
         ) {
             Icon(Icons.Rounded.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp), tint = colors.onSurfaceVariantSummary)
             Spacer(Modifier.width(6.dp))
-            Text("导入角色卡", style = MiuixTheme.textStyles.footnote1, color = colors.onSurfaceVariantSummary)
+            Text("керівництвовведітьрігколіркартка", style = MiuixTheme.textStyles.footnote1, color = colors.onSurfaceVariantSummary)
         }
     }
 }

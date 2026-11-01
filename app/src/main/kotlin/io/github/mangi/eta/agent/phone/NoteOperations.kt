@@ -21,19 +21,19 @@ internal class NoteOperations(
             "read_note" -> {
                 val id = id(args)
                 read(id)?.let { PhoneOperation.ok(tool).put("note", it) }
-                    ?: PhoneOperation.failure("NOTE_NOT_FOUND", "未找到便签")
+                    ?: PhoneOperation.failure("NOTE_NOT_FOUND", "ще ніспробуйте знайтиприбутизручнийзнак")
             }
             "delete_note" -> delete(args)
-            else -> PhoneOperation.failure("UNKNOWN_TOOL", "未知便签操作")
+            else -> PhoneOperation.failure("UNKNOWN_TOOL", "ще нізнатизручнийзнакТримайтеробити")
         }
 
     private fun id(args: JSONObject): String {
         val value = PhoneOperation.text(args, "note_id", true, 36)!!
         try {
             if (UUID.fromString(value).toString() != value.lowercase())
-                PhoneOperation.error("INVALID_ARGUMENT", "note_id 必须是原始便签 UUID")
+                PhoneOperation.error("INVALID_ARGUMENT", "note_id повиненОбов'язковотакОригіналпочатокзручнийзнак UUID")
         } catch (_: IllegalArgumentException) {
-            PhoneOperation.error("INVALID_ARGUMENT", "note_id 必须是原始便签 UUID")
+            PhoneOperation.error("INVALID_ARGUMENT", "note_id повиненОбов'язковотакОригіналпочатокзручнийзнак UUID")
         }
         return UUID.fromString(value).toString()
     }
@@ -48,13 +48,13 @@ internal class NoteOperations(
                 title?.let { put("title", it) }
             }
         resolver.query(uri("rich_notes"), arrayOf("local_id"), "0", null, null)?.use {}
-            ?: PhoneOperation.error("NOTES_NOT_READY", "便签尚未提供可验证的数据接口，未执行创建；请检查应用初始化和权限")
+            ?: PhoneOperation.error("NOTES_NOT_READY", "зручнийзнакдосіще нінестидляможетестсертифікатзномервідповідно дозловитирот，ще ніВиконатидобрестворитивстановити；будь ласкаперевіритиперевіритивідповідьвикористовуватиранопочатокзмінитиіправильнообмеження")
         onMutation()
         val result =
             resolver.insert(uri("text_note"), values)
                 ?: return PhoneOperation.changed("create_note", false)
         if (result.getQueryParameter("result") != "success")
-            PhoneOperation.error("NOTE_CREATE_REJECTED", "便签应用没有接受创建请求")
+            PhoneOperation.error("NOTE_CREATE_REJECTED", "зручнийзнаквідповідьвикористовуватибезматизловитизастворитивстановитибудь ласкапросити")
         val id =
             result.getQueryParameter("localId")
                 ?: return PhoneOperation.changed("create_note", false)
@@ -70,7 +70,7 @@ internal class NoteOperations(
 
     private fun delete(args: JSONObject): JSONObject {
         val id = id(args)
-        val before = read(id) ?: return PhoneOperation.failure("NOTE_NOT_FOUND", "未找到便签")
+        val before = read(id) ?: return PhoneOperation.failure("NOTE_NOT_FOUND", "ще ніспробуйте знайтиприбутизручнийзнак")
         val target =
             uri("text_note")
                 .buildUpon()
@@ -95,7 +95,7 @@ internal class NoteOperations(
                 "local_id=? AND deleted=0 AND recycle_time=0",
                 arrayOf(id),
                 null,
-            ) ?: PhoneOperation.error("NOTES_UNAVAILABLE", "便签未返回可读取结果")
+            ) ?: PhoneOperation.error("NOTES_UNAVAILABLE", "зручнийзнакще ніповерненняповерненняможечитатиВиберітьвузолфрукти")
         return cursor.use {
             if (!it.moveToFirst()) null
             else

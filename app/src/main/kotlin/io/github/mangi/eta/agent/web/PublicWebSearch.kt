@@ -29,7 +29,7 @@ internal data class SearchPage(
 
 internal class WebSearchException(val code: String, message: String) : IllegalArgumentException(message)
 
-/** 公开搜索页只作为链接发现来源；页面挑战和解析失败不能伪装成零条结果。 */
+/** Загальнодоступні пошукові сторінки використовуються лише як джерела пошуку посилань; виклики сторінок і помилки аналізу не можна маскувати за нульові результати.*/
 internal object PublicWebSearch {
     const val PROVIDER = "duckduckgo_html"
     const val MAX_QUERY_CHARS = 2_000
@@ -45,10 +45,10 @@ internal object PublicWebSearch {
         validateLimit(maxResults)
         if (query.isBlank() || query.length > MAX_QUERY_CHARS || '\u0000' in query ||
             !Charsets.UTF_8.newEncoder().canEncode(query)
-        ) fail("INVALID_ARGUMENT", "query 必须为 1 到 2000 个字符的有效文本")
+        ) fail("INVALID_ARGUMENT", "query повиненОбов'язководля 1 прибути 2000 індивідуальнийхарактерсимволзматиефектмистецтвакнига")
         val url = requireNotNull(SEARCH_ENDPOINT.toHttpUrlOrNull()).newBuilder()
             .addQueryParameter("q", query.trim()).build().toString()
-        if (url.length > MAX_URL_CHARS) fail("INVALID_ARGUMENT", "查询编码后的网址超过长度限制，请缩短 query")
+        if (url.length > MAX_URL_CHARS) fail("INVALID_ARGUMENT", "перевіритиЗапитуйтекомпілюватикодназадзчистийсайтобганятиПасдовговитрачатиобмеженнясистема，будь ласкаскорочуватисякороткий query")
         return url
     }
 
@@ -60,17 +60,17 @@ internal object PublicWebSearch {
     ): SearchPage {
         validateLimit(maxResults)
         ensureActive()
-        if (html.length > MAX_HTML_CHARS) fail("SEARCH_RESPONSE_TOO_LARGE", "搜索页面超过解析大小限制")
+        if (html.length > MAX_HTML_CHARS) fail("SEARCH_RESPONSE_TOO_LARGE", "пошукОтжеСторінкалокшинаобганятиПасрозв'язатианалізувативеликийМаленькийобмеженнясистема")
         val base = httpUrl(finalUrl)?.takeIf { isSearchHost(it.host) }
-            ?: fail("SEARCH_PARSE_FAILED", "搜索响应没有来自预期的搜索站点")
+            ?: fail("SEARCH_PARSE_FAILED", "пошукОтжекільцевідповідьбезматиприходьоскількипопередньоОчікуйтезпошукОтжестоятиточка")
         val document = Jsoup.parse(html, base.toString())
         ensureActive()
         if (document.selectFirst("#challenge-form, .anomaly-modal__modal, .anomaly-modal__puzzle") != null ||
             document.select("form[action]").any { form ->
                 base.resolve(form.attr("action"))?.encodedPath == "/anomaly.js"
             }
-        ) fail("SEARCH_CHALLENGE", "搜索站点要求人工验证，请在浏览器中处理或稍后重试")
-        if (rateLimited(document)) fail("SEARCH_RATE_LIMITED", "搜索站点暂时限制请求，请稍后重试")
+        ) fail("SEARCH_CHALLENGE", "пошукОтжестоятиточкахочутьпроситилюдейпрацюватитестсертифікат，будь ласкаіснуютьпереглядатиПереглянутипристрійсерединавпричинааботрохиназадВажкаспробувати")
+        if (rateLimited(document)) fail("SEARCH_RATE_LIMITED", "пошукОтжестоятиточкатимчасовогодинаобмеженнясистемабудь ласкапросити，будь ласкатрохиназадВажкаспробувати")
 
         val blocks = document.select("#links .web-result, .results > .result")
             .filterNot { it.hasClass("result--ad") || it.hasClass("result--no-result") }
@@ -110,7 +110,7 @@ internal object PublicWebSearch {
         if (results.isEmpty()) {
             val emptyNotice = document.selectFirst(".no-results")
             if (blocks.isNotEmpty() || emptyNotice == null || emptyNotice.text().isBlank()) {
-                fail("SEARCH_PARSE_FAILED", "未识别到搜索结果或明确的无结果提示，页面结构可能已变化")
+                fail("SEARCH_PARSE_FAILED", "ще нізнанняне требаприбутипошукОтжевузолфруктиабояскравийправильнознемаєвузолфруктинестиПоказати，СторінкалокшинавузолструктураможездатнийвжеЗміназмінити")
             }
         }
         ensureActive()
@@ -148,7 +148,7 @@ internal object PublicWebSearch {
     }
 
     private fun validateLimit(maxResults: Int) {
-        if (maxResults !in 1..10) fail("INVALID_ARGUMENT", "max_results 必须为 1 到 10")
+        if (maxResults !in 1..10) fail("INVALID_ARGUMENT", "max_results повиненОбов'язководля 1 прибути 10")
     }
 
     private fun fail(code: String, message: String): Nothing = throw WebSearchException(code, message)

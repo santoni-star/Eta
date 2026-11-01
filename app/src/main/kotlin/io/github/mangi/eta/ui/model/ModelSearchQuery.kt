@@ -1,10 +1,10 @@
 package io.github.mangi.eta.ui.model
 
 /**
- * 模型搜索的统一匹配规则：按非字母数字切分为多个词，每个词都要在某个字段中按顺序出现。
+ * Уніфіковані правила відповідності для пошуку моделі: розділіть на кілька слів відповідно до не буквено-цифрових чисел, і кожне слово має відображатися в порядку в певному полі.
  *
- * 字段同样去掉分隔符再比较，让 `v4flash` 能命中 `DeepSeek V4.1 Flash`，
- * 也让 `deepseek-v3` 与 `deepseek v3` 得到相同结果。
+ * Поля також видаляються з роздільниками, а потім порівнюються, щоб `v4flash` міг потрапити до `DeepSeek V4.1 Flash`,
+ * Також зробіть так, щоб `deepseek-v3` і `deepseek v3` отримували однакові результати.
  */
 internal class ModelSearchQuery(query: String) {
     private val tokens = query.lowercase().split(separators).filter(String::isNotBlank)

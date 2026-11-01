@@ -11,14 +11,14 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-/** 角色作用域由 Runtime 绑定，模型参数不能选择其他角色或现实记忆。 */
+/** Обсяг ролі обмежений Runtime, і параметри моделі не можуть вибирати інші ролі чи реальні спогади.*/
 internal class CharacterMemoryTools(
     private val context: Context,
     private val characterId: String,
     private val enabled: () -> Boolean,
 ) {
     fun execute(call: AgentModelClient.ToolCall): AgentModelClient.ToolResult {
-        if (!enabled()) return result(error("MEMORY_DISABLED", "记忆已在设置中关闭"))
+        if (!enabled()) return result(error("MEMORY_DISABLED", "запам'ятативідкликативжеіснуютьналаштувативстановитисерединазакритизакрити"))
         return try {
             val args = JSONObject(call.argumentsJson)
             val value = when (call.name) {
@@ -44,24 +44,24 @@ internal class CharacterMemoryTools(
                         )
                         "append" -> AgentMemoryMutation.Append(revision, args.getString("content"))
                         "clear" -> AgentMemoryMutation.Clear(revision)
-                        else -> return result(error("INVALID_MEMORY_MODE", "角色记忆写入模式无效"))
+                        else -> return result(error("INVALID_MEMORY_MODE", "рігколірзапам'ятативідкликатиНапишітьвведітьцвільРежимнемаєефект"))
                     }
                     when (val written = CharacterMemoryRepository.mutate(context, characterId, mutation)) {
                         is AgentMemoryWriteResult.Success -> JSONObject().put("ok", true)
                             .put("revision", written.snapshot.revision).put("bytes", written.snapshot.byteSize)
                             .put("line_count", written.snapshot.lineCount)
                         is AgentMemoryWriteResult.Conflict -> error(
-                            "MEMORY_CONFLICT", "剧情记忆已发生变化，请先调用 character_memory_get 获取最新内容",
+                            "MEMORY_CONFLICT", "драмаПрихильністьзапам'ятативідкликативжеволоссянародивсяЗміназмінити，будь ласкапершемелодіявикористовувати character_memory_get отриматиВиберітьбільшістьновийВсерединіДозволити",
                         ).put("revision", written.snapshot.revision)
                     }
                 }
-                else -> error("UNKNOWN_TOOL", "未知角色记忆工具")
+                else -> error("UNKNOWN_TOOL", "ще нізнатирігколірзапам'ятативідкликатипрацюватиІнструмент")
             }
             result(value)
         } catch (failure: AgentMemoryException) {
-            result(error(failure.code, failure.message ?: "角色记忆操作失败"))
+            result(error(failure.code, failure.message ?: "рігколірзапам'ятативідкликатиТримайтеробитивтратитипоразка"))
         } catch (_: JSONException) {
-            result(error("INVALID_TOOL_ARGUMENTS", "角色记忆工具参数无效"))
+            result(error("INVALID_TOOL_ARGUMENTS", "рігколірзапам'ятативідкликатипрацюватиІнструментженьшеньномернемаєефект"))
         }
     }
 
@@ -85,7 +85,7 @@ internal class CharacterMemoryTools(
                 function.put("description", if (read) {
                     "Read this character's persistent story memory. It contains fictional events, relationships, and scene continuity shared by this character's conversations. Use query or bounded pages. This does not read the user's real-world MEMORY.md."
                 } else {
-                    "Atomically update this character's persistent story memory with fictional events, relationships, and scene continuity. Keep '# 核心记忆' concise and update stale facts instead of duplicating them. Never put story facts in real-world MEMORY.md or treat fictional actions as completed device operations. Use the revision from character_memory_get or the run-start character memory."
+                    "Atomically update this character's persistent story memory with fictional events, relationships, and scene continuity. Keep '# ядернийсерцезапам'ятативідкликати' concise and update stale facts instead of duplicating them. Never put story facts in real-world MEMORY.md or treat fictional actions as completed device operations. Use the revision from character_memory_get or the run-start character memory."
                 })
                 if (!read) function.getJSONObject("parameters").getJSONObject("properties")
                     .getJSONObject("revision").put("description", "Exact SHA-256 revision from character_memory_get or the run-start character memory.")

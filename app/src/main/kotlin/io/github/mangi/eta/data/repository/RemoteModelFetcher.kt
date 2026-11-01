@@ -72,13 +72,13 @@ internal object RemoteModelFetcher {
                 val models = if (profile == ProviderConnectionProfile.OPENAI_CODEX) fetched else fetched.filter(::isChatCapableModel)
                 controller.throwIfCancelled()
                 if (binding != null && !credentials.isCurrent(binding)) {
-                    throw ProviderAuthException("oauth_session_changed", "登录账号已变更，请重新拉取模型")
+                    throw ProviderAuthException("oauth_session_changed", "дошказаписрахунокНомервжеЗмінаНавіть，будь ласкаВажкановийтягнутиВиберітьцвільтипу")
                 }
                 continuation.resume(Result.success(RemoteModelCatalog(models, provider, binding)))
             } catch (cancelled: CancellationException) {
                 continuation.cancel(cancelled)
             } catch (cancelled: AgentRunCancelledException) {
-                continuation.cancel(CancellationException("模型目录读取已取消", cancelled))
+                continuation.cancel(CancellationException("цвільтипуГоловазаписчитатиВиберітьвжеВиберітьвидалити", cancelled))
             } catch (failure: Exception) {
                 continuation.resume(Result.failure(failure))
             }
@@ -101,7 +101,7 @@ internal object RemoteModelFetcher {
     internal fun parseOpenAiModels(body: String): List<Model> =
         modelArray(body, "data").map { element ->
             element.jsonObjectOrNull()?.toModel(defaultOwnedBy = null)
-                ?: error("服务商模型目录包含无效模型项")
+                ?: error("ОдягобслуговуваннябізнесцвільтипуГоловазаписСумкаМіститьнемаєефектцвільтипупункт")
         }
 
     internal fun parseCodexModels(body: String): List<Model> = CodexModelCatalog.parse(modelArray(body, "models"))
@@ -116,20 +116,20 @@ internal object RemoteModelFetcher {
     internal fun parseAnthropicModels(body: String): List<Model> =
         modelArray(body, "data").map { element ->
             element.jsonObjectOrNull()?.toAnthropicModel()
-                ?: error("Anthropic 模型目录包含无效模型项")
+                ?: error("Anthropic цвільтипуГоловазаписСумкаМіститьнемаєефектцвільтипупункт")
         }
 
     private fun modelArray(body: String, field: String): JsonArray {
         val root = try {
             json.parseToJsonElement(body).jsonObjectOrNull()
         } catch (_: SerializationException) {
-            error("服务商模型目录不是有效的 JSON")
+            error("ОдягобслуговуваннябізнесцвільтипуГоловазаписнемаєтакматиефектз JSON")
         }
-            ?: error("服务商模型目录格式无效")
+            ?: error("ОдягобслуговуваннябізнесцвільтипуГоловазаписсіткаРежимнемаєефект")
         require(root["error"] == null || root["error"] == JsonNull) {
-            "服务商返回了模型目录错误"
+            "ОдягобслуговуваннябізнесповерненняповерненнязрозумівцвільтипуГоловазаписнеправильнопомилка"
         }
-        return root[field]?.jsonArrayOrNull() ?: error("服务商模型目录缺少 $field 列表")
+        return root[field]?.jsonArrayOrNull() ?: error("ОдягобслуговуваннябізнесцвільтипуГоловазаписвідсутністьмало $field Списокповерхні")
     }
 
     private fun fetchOpenAiCompatible(
@@ -211,16 +211,16 @@ internal object RemoteModelFetcher {
             throw AgentModelFailure.http(response.code, response.peekBody(16_384).string())
         }
         val body = response.peekBody(maxBytes + 1).bytes()
-        require(body.size <= maxBytes) { "服务商模型目录超过大小限制" }
+        require(body.size <= maxBytes) { "ОдягобслуговуваннябізнесцвільтипуГоловазаписобганятиПасвеликийМаленькийобмеженнясистема" }
         body.toString(Charsets.UTF_8)
     }
 
     /**
-     * 判断远端目录中的模型是否可用于 Agent 对话。
+     * Визначити, чи доступна модель у віддаленому каталозі для діалогу агента.
      *
-     * OpenAI 兼容平台的 /models 会混入语音识别、语音合成、图像/视频生成、
-     * embedding、rerank 等非对话模型（例如阿里百炼一次返回数百个）。这些模型
-     * 无法参与 Agent 的文本工具调用循环，拉取时按 id 命名特征与输出模态过滤掉。
+     * /моделі для платформ, сумісних з OpenAI, поєднуватимуть розпізнавання мовлення, синтез мовлення, створення зображень/відео,
+     * Недіалогові моделі, такі як вбудовування та переранжування (наприклад, Ali Bailian повертає сотні за раз). Ці моделі
+     * Неможливо брати участь у циклі виклику текстового інструменту агента, відфільтрувати іменовані функції та вивести модальний ідентифікатор під час витягування.
      */
     internal fun isChatCapableModel(model: Model): Boolean {
         if (model.outputModalities.isNotEmpty() &&
@@ -233,17 +233,17 @@ internal object RemoteModelFetcher {
     }
 
     private val NON_CHAT_MODEL_ID_MARKERS = listOf(
-        // 语音识别
+        // розпізнавання мови
         "asr", "whisper", "paraformer", "sensevoice", "gummy",
-        // 语音合成与声音模型
+        // Синтез мовлення та звукомоделювання
         "tts", "speech", "voice", "cosyvoice", "sambert",
-        // 向量与排序
+        // Вектори та сортування
         "embedding", "rerank",
-        // 图像生成与理解外的图像专用模型
+        // Специфічні для зображення моделі поза межами створення та розуміння зображення
         "image", "dall-e", "flux", "stable-diffusion", "wanx", "hidream",
-        // 视频生成
+        // генерація відео
         "video", "veo-",
-        // 其他非对话专用模型
+        // Інші моделі, не пов’язані з розмовою
         "ocr", "music", "moderation",
     )
 
@@ -416,10 +416,10 @@ internal object RemoteModelFetcher {
         takeIf { supported -> names.any(supported::contains) }?.let { true }
 
     /**
-     * 空列表表示远端没有提供输入模态元数据，后续才允许官方目录补齐。
+     * Порожній список означає, що віддалена сторона не надає вхідних модальних метаданих, і офіційному каталогу буде дозволено завершити їх пізніше.
      *
-     * 不能把缺失字段直接折叠成 text：否则无法区分“远端明确声明仅文本”和
-     * “标准 /models 根本未返回能力字段”，官方目录会错误覆盖前一种情况。
+     * Відсутні поля не можна згортати безпосередньо в текст: інакше буде неможливо розрізнити «віддалене явне оголошення лише тексту» та
+     * «Стандарт/моделі взагалі не повертають поля можливостей», офіційний каталог неправильно скасовує попередній регістр.
      */
     private fun JsonObject.inputModalities(architecture: JsonObject?): List<String> {
         stringList("input_modalities", "inputModalities")?.let { return it }

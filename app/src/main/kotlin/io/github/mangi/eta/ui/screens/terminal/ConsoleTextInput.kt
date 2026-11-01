@@ -27,14 +27,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
-/** 控制台输入的去向：已上屏文本、功能键与输入法组字预览分开回调。 */
+/** Призначення консольного введення: текст на екрані, функціональні клавіші та попередній перегляд групи слів методу введення викликаються окремо.*/
 internal interface ConsoleInputSink {
     fun onText(text: String, modifiers: TerminalModifiers)
     fun onKey(key: TerminalKey, modifiers: TerminalModifiers)
     fun onComposingChange(text: String)
 }
 
-/** 由界面持有，向已挂载的输入节点请求显示或收起软键盘。 */
+/** Утримуваний інтерфейсом, він запитує змонтований вузол введення для відображення або приховування програмної клавіатури.*/
 @Stable
 internal class ConsoleKeyboardController {
     internal var node: ConsoleTextInputNode? = null
@@ -49,9 +49,9 @@ internal class ConsoleKeyboardController {
 }
 
 /**
- * 让所在区域成为终端输入目标：获得焦点后直接与输入法建立连接，而不是借助隐藏输入框。
- * 输入框的文本模型会吞掉退格、把组字中的拼音当作输入，也收不到方向键；
- * 这里只把已确认的文本和按键转交 [sink]，编辑器始终保持为空。
+ * Зробіть область, у якій ви перебуваєте, ціллю введення терміналу: безпосередньо підключіться до методу введення після отримання фокусу, замість того, щоб покладатися на приховане поле введення.
+ * Текстова модель поля введення поглинає Backspace, розглядає піньїнь у групі слів як вхідні дані та не отримуватиме клавіші зі стрілками;
+ * Тут тільки підтверджений текст і натискання клавіш передаються в [sink], редактор завжди залишається порожнім.
  */
 internal fun Modifier.consoleTextInput(
     sink: ConsoleInputSink,
@@ -84,7 +84,7 @@ internal class ConsoleTextInputNode(
 
     private var session: Job? = null
 
-    /** 只保留最近一次显隐请求；会话尚未建立时留待建立后执行。 */
+    /** Зберігається лише останній явний і прихований запит; якщо сеанс ще не встановлено, він буде виконаний після його встановлення.*/
     private val keyboardRequests = Channel<Boolean>(Channel.CONFLATED)
 
     fun update(sink: ConsoleInputSink, controller: ConsoleKeyboardController) {
@@ -135,7 +135,7 @@ internal class ConsoleTextInputNode(
         }
     }
 
-    // 硬件键盘的按键经视图分发到焦点节点；软键盘按键走 InputConnection.sendKeyEvent。
+    // Клавіші апаратної клавіатури розподіляються на вузол фокусування через подання; програмні клавіші клавіатури проходять через InputConnection.sendKeyEvent.
     override fun onKeyEvent(event: KeyEvent): Boolean =
         dispatchKeyEvent(event.nativeKeyEvent, sink)
 
@@ -143,9 +143,9 @@ internal class ConsoleTextInputNode(
 }
 
 /**
- * 普通文本类型而非密码类型：密码类型会让多数中文输入法切到英文；
- * 关闭联想与个性化学习，避免自动纠错改写命令，也不让输入法记住终端里敲过的内容。
- * 多行且不带编辑器动作，回车键表现为换行键并由连接转换为终端回车。
+ * Звичайний тип тексту замість типу пароля: тип пароля змусить більшість китайських методів введення перейти на англійську;
+ * Вимкніть асоціацію та персоналізоване навчання, щоб уникнути автоматичного виправлення помилок і переписування команд, а також щоб метод введення не запам’ятовував те, що було введено в терміналі.
+ * Для кількох рядків і без дії редактора клавіша Enter працює як клавіша переходу рядка та перетворюється з підключення на клавішу Enter терміналу.
  */
 private fun configureEditorInfo(outAttributes: EditorInfo) {
     outAttributes.inputType = InputType.TYPE_CLASS_TEXT or
@@ -160,8 +160,8 @@ private fun configureEditorInfo(outAttributes: EditorInfo) {
 }
 
 /**
- * 编辑器只承载组字区：组字期间内容留在可编辑缓冲里供输入法改写，
- * 上屏后立即发送并清空。缓冲为空时的删除请求按退格/删除键转发。
+ * Редактор містить лише область групування слів: протягом періоду групування слів вміст залишається в редагованому буфері для перезапису методом введення.
+ *Надіслати та очистити одразу після відображення екрана. Запити на видалення, коли буфер порожній, пересилаються натисканням клавіші Backspace/Delete.
  */
 private class ConsoleInputConnection(
     view: View,
@@ -213,11 +213,11 @@ private class ConsoleInputConnection(
         return true
     }
 
-    // 不让输入法依据空缓冲推断句首而自动大写。
+    // Запобігайте методу введення виводити початок речення на основі порожнього буфера та автоматично використовувати його великими літерами.
     override fun getCursorCapsMode(reqModes: Int): Int = 0
 }
 
-/** 返回是否消费；只在按下时发送，抬起事件对已识别的按键同样消费，避免触发焦点移动。 */
+/** Повертає чи споживати; воно надсилається лише при натисканні. Подія підйому також споживає ідентифіковані ключі, щоб уникнути ініціювання переміщення фокуса.*/
 private fun dispatchKeyEvent(event: AndroidKeyEvent, sink: ConsoleInputSink): Boolean {
     val modifiers = TerminalModifiers(
         ctrl = event.isCtrlPressed,
@@ -229,11 +229,11 @@ private fun dispatchKeyEvent(event: AndroidKeyEvent, sink: ConsoleInputSink): Bo
         if (event.action == AndroidKeyEvent.ACTION_DOWN) sink.onKey(key, modifiers)
         return true
     }
-    // 去掉 Ctrl/Alt 取得基础字符，再由编码器施加修饰，与软键盘修饰键走同一条编码路径。
+    // Видаліть Ctrl/Alt, щоб отримати основні символи, а потім застосуйте зміни за допомогою кодувальника, дотримуючись того самого шляху кодування, що й клавіші-модифікатори програмної клавіатури.
     val unicode = event.getUnicodeChar(event.metaState and MODIFIER_META_MASK.inv())
     if (unicode <= 0 || unicode and KeyCharacterMap.COMBINING_ACCENT != 0) return false
     if (event.action == AndroidKeyEvent.ACTION_DOWN) {
-        // Shift 已体现在字符本身（大写、符号），不再作为修饰传递。
+        // Shift відображається в самому символі (велика літера, символ) і більше не передається як модифікатор.
         sink.onText(String(Character.toChars(unicode)), modifiers.copy(shift = false))
     }
     return true

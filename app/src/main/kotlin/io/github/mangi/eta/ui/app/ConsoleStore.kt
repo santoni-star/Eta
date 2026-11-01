@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** 控制台一帧画面：行快照不可变，渲染层按 id 复用条目、按 version 判断是否重绘。 */
+/** Один кадр консолі: знімок рядка незмінний, рівень візуалізації повторно використовує записи за ідентифікатором і визначає, чи потрібно перемальовувати за версією.*/
 @Immutable
 internal data class ConsoleFrame(
     val lines: List<TerminalScreenBuffer.RenderLine> = emptyList(),
@@ -50,22 +50,22 @@ internal data class ConsoleSessionUi(
 internal data class ConsoleUiState(
     val sessions: List<ConsoleSessionUi> = emptyList(),
     val activeSessionId: String? = null,
-    /** 环境 tab 的选择；与当前会话环境一致，无会话时表示新建会话的目标环境。 */
+    /** Вибір вкладки середовища; це узгоджується з поточним середовищем сеансу. Якщо сеансу немає, це вказує на цільове середовище нового сеансу.*/
     val environment: TerminalEnvironment = TerminalEnvironment.DEBIAN,
     val linuxEnvironment: TerminalEnvironment = TerminalEnvironment.DEBIAN,
     val connected: Boolean = false,
     val exited: Boolean = false,
-    /** null = 探测中；false 时入口回退到块式终端。 */
+    /** null = зондування; якщо false, запис повертається до терміналу блоку.*/
     val ptySupported: Boolean? = null,
     val failMessage: String? = null,
-    /** 当前会话的画面；每个会话的屏幕缓冲区独立保存。 */
+    /** Екран поточної сесії; екранний буфер кожного сеансу зберігається окремо.*/
     val frame: ConsoleFrame = ConsoleFrame(),
 )
 
 /**
- * 控制台页面的 App 级状态所有者：持有多个 PTY 会话与各自独立的屏幕缓冲区，
- * 字节流在 IO 线程喂入 [TerminalScreenBuffer]，按节流节奏向 UI 发布当前会话的帧。
- * 离开页面会话仍存活；普通会话由前台执行服务持有，用户停止后回收。
+ * Власник стану на рівні програми для сторінок консолі: підтримує кілька сеансів PTY з окремими екранними буферами,
+ * Потік байтів подається в [TerminalScreenBuffer] у потоці введення-виведення, а кадри поточного сеансу публікуються в інтерфейсі користувача відповідно до ритму дроселювання.
+ * Сеанс залишається активним після виходу зі сторінки; звичайні сеанси проводяться службою виконання на передньому плані та повторюються після зупинки користувача.
  */
 internal class ConsoleStore(
     context: Context,
@@ -73,12 +73,12 @@ internal class ConsoleStore(
 ) {
     private companion object {
         const val FLUSH_INTERVAL_MS = 50L
-        /** 同步输出期间暂缓发布帧的上限；程序漏发结束标记时不至于让画面一直停住。 */
+        /** Верхня межа призупиненої публікації кадрів під час виведення синхронізації; коли програма пропускає позначку кінця, екран не зависне назавжди.*/
         const val SYNCHRONIZED_OUTPUT_TIMEOUT_MS = 200L
         const val SCROLLBACK_LINES = 1000
     }
 
-    /** 按键与查询应答必须按产生顺序写入 stdin；单并发调度保证 FIFO，又不占用主线程。 */
+    /** Натискання клавіш і відповіді на запити мають бути записані в стандартний вхід у порядку їх генерації; єдине одночасне планування гарантує FIFO, не займаючи основний потік.*/
     private val inputDispatcher = Dispatchers.IO.limitedParallelism(1)
 
     private val appContext = context.applicationContext
@@ -96,10 +96,10 @@ internal class ConsoleStore(
     private val initialLinuxEnvironment =
         LinuxEnvironmentSettingsRepository.current(appContext).terminalEnvironment
 
-    /** 每个会话独立的屏幕缓冲区；写入只能在 IO 线程持锁进行，UI 线程持锁读快照。 */
+    /** Незалежний екранний буфер для кожного сеансу; запис може виконуватися лише за допомогою потоку вводу-виводу, який утримує блокування, і потоку інтерфейсу користувача, який утримує блокування для читання знімка.*/
     private val buffers = mutableMapOf<String, TerminalScreenBuffer>()
 
-    /** 界面当前的默认前景/背景色，供 TUI 查询深浅主题；随系统深浅色切换更新到所有会话。 */
+    /** Поточний колір переднього/фонового плану за замовчуванням інтерфейсу, щоб TUI запитував темні та світлі теми; оновлено для всіх сеансів із системою перемикання темного та світлого кольорів.*/
     private var themeColors = 0xFF000000L to 0xFFFFFFFFL
     private val sessionSizes = ConcurrentHashMap<String, Pair<Int, Int>>()
 
@@ -115,10 +115,10 @@ internal class ConsoleStore(
     )
     val uiState: StateFlow<ConsoleUiState> = _uiState.asStateFlow()
 
-    // PTY 读线程与主线程都会触发发布帧。
+    // І потік читання PTY, і основний потік запускають кадри публікації.
     /**
-     * 会话启动期间（Root 授权与 chroot 准备可能耗时数秒）网格尺寸仍会随软键盘变化；
-     * 这期间只记录最新尺寸，就绪后再同步，避免每次尺寸变化都另起一个会话。只在主线程读写。
+     * Під час запуску сеансу (авторизація root і підготовка chroot можуть зайняти кілька секунд) розмір сітки все ще змінюватиметься за допомогою програмної клавіатури;
+     * Протягом цього періоду буде записано та синхронізовано лише останній розмір, щоб уникнути запуску нового сеансу кожного разу, коли розмір змінюється. Читати і писати тільки в головній темі.
      */
     private var creatingSession = false
 
@@ -127,7 +127,7 @@ internal class ConsoleStore(
     private var lastCols = 0
     private var lastRows = 0
 
-    /** 探测 PTY 前提；结果缓存进状态，不支持时入口回退到块式终端。 */
+    /** Виявлення передумови PTY; результат кешується в стані, а запис повертається до терміналу блоку, якщо він не підтримується.*/
     fun probePtySupport() {
         scope.launch {
             val supported = withContext(Dispatchers.IO) { ptySupported() }
@@ -146,8 +146,8 @@ internal class ConsoleStore(
     }
 
     /**
-     * 确保当前有存活会话；网格尺寸变化重入时只同步尺寸，不重建会话。
-     * [environment] 仅用于没有可复用会话时的新建。
+     * Переконайтеся, що на даний момент є збережений сеанс; коли розмір сітки змінюється та вводиться повторно, лише розмір буде синхронізовано, а сеанс не буде перебудовано.
+     * [середовище] використовується лише для нового створення, якщо немає повторних сеансів.
      */
     fun open(environment: TerminalEnvironment, cols: Int, rows: Int) {
         if (cols <= 0 || rows <= 0) return
@@ -170,7 +170,7 @@ internal class ConsoleStore(
         createSession(environment, cols, rows)
     }
 
-    /** 以当前环境与最近一次网格尺寸新建会话。 */
+    /** Створіть новий сеанс із поточним середовищем і останнім розміром сітки.*/
     fun newSession() {
         if (lastCols <= 0 || lastRows <= 0) return
         createSession(_uiState.value.environment, lastCols, lastRows)
@@ -187,12 +187,12 @@ internal class ConsoleStore(
                 failMessage = null,
             )
         }
-        // 会话在后台期间网格可能已变化（横竖屏、软键盘），切回时按当前网格同步。
+        // Сітка може змінитися (горизонтальний і вертикальний екран, програмна клавіатура), коли сеанс триває у фоновому режимі. При зворотному перемиканні він буде синхронізований з поточною сіткою.
         if (lastCols > 0 && lastRows > 0) resizeSession(sessionId, lastCols, lastRows)
         flushFrame(sessionId)
     }
 
-    /** 关闭指定会话；关闭当前会话时切换到剩余最近的会话，没有则回到空态。 */
+    /** Закрити вказаний сеанс; під час закриття поточного сеансу переключитися на останній сеанс, що залишився, якщо ні, повернутися до порожнього стану.*/
     fun closeSession(sessionId: String) {
         scope.launch(Dispatchers.IO) {
             controller.closeSession(sessionId)
@@ -220,7 +220,7 @@ internal class ConsoleStore(
         _uiState.value.activeSessionId?.let { flushFrame(it) }
     }
 
-    /** 重启指定会话：终止后按原环境与原网格尺寸重开。 */
+    /** Перезапустіть вказаний сеанс: після завершення перезапустіть відповідно до початкового середовища та початкового розміру сітки.*/
     fun restartSession(sessionId: String) {
         if (creatingSession) return
         val session = _uiState.value.sessions.find { it.id == sessionId } ?: return
@@ -238,7 +238,7 @@ internal class ConsoleStore(
         createSession(session.environment, size.first, size.second)
     }
 
-    /** 切换环境 tab：只改目标环境；有该环境的存活会话则切过去，否则由网格回调新建。 */
+    /** Вкладка «Змінити середовище»: змінювати лише цільове середовище; якщо в цьому середовищі є збережений сеанс, він буде переключений на нього, інакше він буде створений зворотним викликом сітки.*/
     fun switchEnvironment(environment: TerminalEnvironment) {
         val state = _uiState.value
         if (state.environment == environment && state.activeSessionId != null) return
@@ -259,7 +259,7 @@ internal class ConsoleStore(
         }
     }
 
-    /** 当前会话断开后以同一环境与网格尺寸重连。 */
+    /** Повторне підключення з тим же середовищем і розміром сітки після відключення поточного сеансу.*/
     fun reconnect() {
         val activeId = _uiState.value.activeSessionId ?: return
         restartSession(activeId)
@@ -271,7 +271,7 @@ internal class ConsoleStore(
         scope.launch(inputDispatcher) { controller.write(sessionId, text) }
     }
 
-    /** 功能键按当前会话的光标键模式编码，程序切换 DECCKM 后无需界面感知。 */
+    /** Функціональні клавіші кодуються відповідно до режиму клавіш курсора поточного сеансу, і після того, як програма перемикається на DECCKM, не потрібно знати інтерфейс.*/
     fun sendKey(key: TerminalKey, modifiers: TerminalModifiers = TerminalModifiers.NONE) {
         val applicationCursorKeys = activeBuffer { it.applicationCursorKeys } ?: return
         write(TerminalKeyEncoder.key(key, modifiers, applicationCursorKeys))
@@ -303,7 +303,7 @@ internal class ConsoleStore(
         return synchronized(bufferLock) { buffers[sessionId]?.let(read) }
     }
 
-    /** 屏幕缓冲区与 PTY 同步改尺寸；内核随后通知程序重绘，缓冲区先按新尺寸承接旧画面。 */
+    /** Екранний буфер і PTY змінюються синхронно; потім ядро ​​сповіщає програму про перемальовування, і буфер спочатку приймає старий екран відповідно до нового розміру.*/
     private fun resizeSession(sessionId: String, cols: Int, rows: Int) {
         if (sessionSizes[sessionId] == (cols to rows)) return
         sessionSizes[sessionId] = cols to rows
@@ -331,7 +331,7 @@ internal class ConsoleStore(
                 withContext(NonCancellable + Dispatchers.Main) { creatingSession = false }
             }
             withContext(Dispatchers.Main) {
-                // 启动期间网格可能已变化，按最新尺寸同步一次。
+                // Сітка могла змінитися під час запуску, синхронізуйте її один раз з останнім розміром.
                 _uiState.value.activeSessionId?.let { resizeSession(it, lastCols, lastRows) }
             }
         }
@@ -404,7 +404,7 @@ internal class ConsoleStore(
             responses = buffer.drainResponses()
             synchronizing = buffer.synchronizedOutput
         }
-        // 查询应答不经过界面，后台会话也要及时回复，否则程序会阻塞在等待上。
+        // Відповідь на запит не проходить через інтерфейс, і на фоновий сеанс потрібно відповісти вчасно, інакше програма буде заблокована в очікуванні.
         responses?.let { reply -> scope.launch(inputDispatcher) { controller.write(sessionId, reply) } }
         if (sessionId != _uiState.value.activeSessionId) return
         val now = System.currentTimeMillis()

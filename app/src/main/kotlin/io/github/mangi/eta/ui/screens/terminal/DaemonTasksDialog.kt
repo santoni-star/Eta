@@ -37,7 +37,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 守护任务列表面板；终端块视图与控制台视图共用。 */
+/** Панель списку завдань Guardian; Вид клемника та вид консолі є спільними.*/
 @Composable
 internal fun DaemonTasksDialog(
     tasks: List<DaemonTaskUi>,
@@ -165,11 +165,11 @@ private fun daemonStatusColor(task: DaemonTaskUi) = when {
 private fun daemonMeta(task: DaemonTaskUi): String {
     val environmentLabel = task.environment.displayName
     val stateLabel = when (task.status) {
-        "completed" -> "已完成"
-        "failed" -> "执行失败"
-        "timed_out" -> "已超时"
-        "stopped" -> "已停止"
-        "interrupted" -> "已中断"
+        "completed" -> "вжезакінченостати"
+        "failed" -> "Виконатидобревтратитипоразка"
+        "timed_out" -> "вжеобганятигодина"
+        "stopped" -> "вжеСТІЙкінець"
+        "interrupted" -> "вжесерединаперерва"
         else -> stringResource(if (task.running) R.string.terminal_daemon_running else R.string.terminal_daemon_exited)
     }
     return "$environmentLabel · ${task.identity} · $stateLabel"

@@ -9,7 +9,7 @@ import android.provider.CalendarContract
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** 日程与提醒共用 Provider 事务；写入目标始终是原始事件 ID，而非搜索索引 ID。 */
+/** Розклади та нагадування про транзакції постачальника; метою запису завжди є оригінальний ідентифікатор події, а не ідентифікатор індексу пошуку.*/
 internal class CalendarOperations(
     private val context: Context,
     private val userId: Int? = null,
@@ -53,7 +53,7 @@ internal class CalendarOperations(
             "create_calendar_events" -> createMany(args)
             "update_calendar_event" -> update(args)
             "delete_calendar_event" -> delete(args)
-            else -> PhoneOperation.failure("UNKNOWN_TOOL", "未知日历操作")
+            else -> PhoneOperation.failure("UNKNOWN_TOOL", "ще нізнатиденькалендарТримайтеробити")
         }
 
     private fun calendars(): List<JSONObject> =
@@ -72,7 +72,7 @@ internal class CalendarOperations(
         if (args.has("calendar_id")) {
             val id = PhoneOperation.id(args, "calendar_id")
             if (available.none { it.optString("_id") == id.toString() })
-                PhoneOperation.error("CALENDAR_NOT_WRITABLE", "指定日历不存在或不可写")
+                PhoneOperation.error("CALENDAR_NOT_WRITABLE", "звертатися доЗвичайноденькалендарнемаєжитиіснуютьабонемаєможеНапишіть")
             return id
         }
         val visible = available.filter { it.optString("visible") == "1" }
@@ -80,7 +80,7 @@ internal class CalendarOperations(
         if (choices.size != 1)
             PhoneOperation.error(
                 "CALENDAR_SELECTION_REQUIRED",
-                "请先调用 list_calendars 并指定 calendar_id，不能猜测默认日历",
+                "будь ласкапершемелодіявикористовувати list_calendars ізвертатися доЗвичайно calendar_id，немаєздатнийВгадайтестмовчазнийрозпізнатиденькалендар",
             )
         return choices.single().getString("_id").toLong()
     }
@@ -100,10 +100,10 @@ internal class CalendarOperations(
         ) {
             val start = PhoneOperation.time(args, "start_time")
             val end = PhoneOperation.time(args, "end_time")
-            if (end <= start) PhoneOperation.error("INVALID_ARGUMENT", "日程结束必须晚于开始")
+            if (end <= start) PhoneOperation.error("INVALID_ARGUMENT", "деньПроцедуравузолпучокповиненОбов'язковонічнаВІДЧИНЕНОпочаток")
             val allDay = PhoneOperation.boolean(args, "all_day", false)
             if (allDay && (start % DAY_MS != 0L || end % DAY_MS != 0L))
-                PhoneOperation.error("INVALID_ARGUMENT", "全天日程须使用 UTC 零点及排他的结束日期零点")
+                PhoneOperation.error("INVALID_ARGUMENT", "ПовнийнебоденьПроцедураОбов'язковозробитивикористовувати UTC нульточкаірядоквінзвузолпучокденьОчікуйтенульточка")
             values.put("dtstart", start)
             values.put("dtend", end)
             values.put("eventTimezone", if (allDay) "UTC" else PhoneOperation.timezone(args))
@@ -116,8 +116,8 @@ internal class CalendarOperations(
         if (!args.has("reminder_minutes")) return null
         val items =
             args.optJSONArray("reminder_minutes")
-                ?: PhoneOperation.error("INVALID_ARGUMENT", "reminder_minutes 必须是数组")
-        if (items.length() > 5) PhoneOperation.error("INVALID_ARGUMENT", "单个日程最多设置5条提醒")
+                ?: PhoneOperation.error("INVALID_ARGUMENT", "reminder_minutes повиненОбов'язковотакномерГрупа")
+        if (items.length() > 5) PhoneOperation.error("INVALID_ARGUMENT", "одиніндивідуальнийденьПроцедурабільшістьбагатоналаштувативстановити5смужканестиПрокинутися")
         return (0 until items.length())
             .map { i ->
                 PhoneOperation.integer(
@@ -139,13 +139,13 @@ internal class CalendarOperations(
 
     private fun createMany(args: JSONObject): JSONObject {
         val events =
-            args.optJSONArray("events") ?: PhoneOperation.error("INVALID_ARGUMENT", "events 必须是数组")
-        if (events.length() !in 1..30) PhoneOperation.error("INVALID_ARGUMENT", "每批最多创建30个日程")
+            args.optJSONArray("events") ?: PhoneOperation.error("INVALID_ARGUMENT", "events повиненОбов'язковотакномерГрупа")
+        if (events.length() !in 1..30) PhoneOperation.error("INVALID_ARGUMENT", "коженпартіябільшістьбагатостворитивстановити30індивідуальнийденьПроцедура")
         val requests =
             (0 until events.length()).map { index ->
                 val event =
                     events.optJSONObject(index)
-                        ?: PhoneOperation.error("INVALID_ARGUMENT", "日程条目必须是对象")
+                        ?: PhoneOperation.error("INVALID_ARGUMENT", "деньПроцедурасмужкаГоловаповиненОбов'язковотакправильнослон")
                 JSONObject(event.toString()).also {
                     if (args.has("calendar_id")) it.put("calendar_id", args.get("calendar_id"))
                 }
@@ -179,7 +179,7 @@ internal class CalendarOperations(
         positions.forEachIndexed { index, position ->
             val inserted =
                 committed.getOrNull(position)?.uri
-                    ?: PhoneOperation.error("OPERATION_UNCONFIRMED", "日历未返回创建的事件 ID")
+                    ?: PhoneOperation.error("OPERATION_UNCONFIRMED", "денькалендарще ніповерненняповерненнястворитивстановитизрічштук ID")
             val id = ContentUris.parseId(inserted)
             val after = read(id)
             val (values, reminders) = plans[index]
@@ -203,11 +203,11 @@ internal class CalendarOperations(
         val id = PhoneOperation.id(args, "event_id")
         val before = read(id) ?: return missing()
         if (before.optString("rrule").isNotBlank() && !before.isNull("rrule"))
-            PhoneOperation.error("RECURRING_EVENT_SCOPE_REQUIRED", "重复日程需要明确实例或整组修改范围，当前接口不改写重复事件")
+            PhoneOperation.error("RECURRING_EVENT_SCOPE_REQUIRED", "ВажкаскладніденьПроцедурапотребахочутьяскравийправильноРеальністьприкладабовсеГрупабудуватизмінитивентилятороточують，коливпередзловитиротнемаєзмінитиНапишітьВажкаскладнірічштук")
         val values = eventValues(args, false)
         val reminders = reminders(args)
         if (values.size() == 0 && reminders == null)
-            PhoneOperation.error("INVALID_ARGUMENT", "没有需要修改的字段")
+            PhoneOperation.error("INVALID_ARGUMENT", "безматипотребахочутьбудуватизмінитизхарактерчастина")
         val operations = arrayListOf<ContentProviderOperation>()
         if (reminders != null) values.put("hasAlarm", if (reminders.isEmpty()) 0 else 1)
         operations +=
@@ -246,9 +246,9 @@ internal class CalendarOperations(
         val before = read(id) ?: return missing()
         val scope = PhoneOperation.text(args, "scope", false, 20) ?: "event"
         if (scope !in setOf("event", "series"))
-            PhoneOperation.error("INVALID_ARGUMENT", "scope 必须是 event 或 series")
+            PhoneOperation.error("INVALID_ARGUMENT", "scope повиненОбов'язковотак event або series")
         if (!before.isNull("rrule") && before.optString("rrule").isNotBlank() && scope != "series")
-            PhoneOperation.error("RECURRING_EVENT_SCOPE_REQUIRED", "删除重复日程需明确 scope=series")
+            PhoneOperation.error("RECURRING_EVENT_SCOPE_REQUIRED", "видалитивидалитиВажкаскладніденьПроцедурапотребаяскравийправильно scope=series")
         onMutation()
         val affected = resolver.delete(ContentUris.withAppendedId(uri("events"), id), null, null)
         return PhoneOperation.changed("delete_calendar_event", affected > 0 && read(id) == null)
@@ -290,7 +290,7 @@ internal class CalendarOperations(
         val ascending =
             PhoneOperation.text(args, "sort", false, 10)?.let {
                 if (it !in setOf("newest", "oldest"))
-                    PhoneOperation.error("INVALID_ARGUMENT", "sort 无效")
+                    PhoneOperation.error("INVALID_ARGUMENT", "sort немаєефект")
                 it == "oldest"
             } ?: false
         val clauses = mutableListOf("deleted=0")
@@ -307,7 +307,7 @@ internal class CalendarOperations(
                 val start = PhoneOperation.time(args, "start_time")
                 val end = PhoneOperation.time(args, "end_time")
                 if (end <= start || end - start > 366L * DAY_MS)
-                    PhoneOperation.error("INVALID_ARGUMENT", "日程实例查询须指定不超过366天的完整时间窗口")
+                    PhoneOperation.error("INVALID_ARGUMENT", "деньПроцедураРеальністьприкладперевіритиЗапитуйтеОбов'язковозвертатися доЗвичайнонемаєобганятиПас366небоззакінченовсегодинаміжвікнорот")
                 clauses += "begin < ? AND (end > ? OR (begin = end AND begin >= ?))"
             bindings += listOf(end.toString(), start.toString(), start.toString())
             rows(
@@ -364,7 +364,7 @@ internal class CalendarOperations(
     ): List<JSONObject> {
         val cursor =
             resolver.query(uri, columns, selection, args, sort)
-                ?: PhoneOperation.error("CALENDAR_UNAVAILABLE", "日历未返回可读取结果，请检查权限和隐私保护")
+                ?: PhoneOperation.error("CALENDAR_UNAVAILABLE", "денькалендарще ніповерненняповерненняможечитатиВиберітьвузолфрукти，будь ласкаперевіритиперевіритиправильнообмеженняіприхованийприватнийзберегтизахистити")
         return cursor.use { c ->
             if (offset > 0) c.moveToPosition(offset - 1)
             buildList {
@@ -397,7 +397,7 @@ internal class CalendarOperations(
                     .sorted() == expected.sorted()
             } == true
 
-    private fun missing() = PhoneOperation.failure("CALENDAR_EVENT_NOT_FOUND", "未找到当前用户的有效日历事件")
+    private fun missing() = PhoneOperation.failure("CALENDAR_EVENT_NOT_FOUND", "ще ніспробуйте знайтиприбутиколивпередвикористовуватипобутовізматиефектденькалендаррічштук")
 
     companion object {
         private const val DAY_MS = 86_400_000L

@@ -10,7 +10,7 @@ import android.os.SystemClock
 import io.github.mangi.eta.agent.tool.DeviceMutationResult
 import org.json.JSONObject
 
-/** 应用进程拥有灯光连接，不能随一次工具调用销毁，否则系统会立即熄灯。 */
+/** Процес застосування має світлове з’єднання, і його не можна знищити викликом інструменту, інакше система негайно вимкне світло.*/
 internal class FlashlightController private constructor(context: Context) {
     private val manager = context.applicationContext.getSystemService(CameraManager::class.java)
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -72,7 +72,7 @@ internal class FlashlightController private constructor(context: Context) {
 
     fun state(): JSONObject {
         if (cameraId == null)
-            return DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "设备没有可用的闪光灯")
+            return DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "налаштуватиПриготуйтебезматиможевикористовуватизспалахсвітлолампа")
         val enabled = awaitState()
         return JSONObject()
             .put("ok", enabled != null)
@@ -81,13 +81,13 @@ internal class FlashlightController private constructor(context: Context) {
             .put("available", enabled != null)
             .also {
                 if (enabled == null)
-                    it.put("code", "FLASHLIGHT_BUSY").put("message", "闪光灯暂不可用，可能正被相机占用")
+                    it.put("code", "FLASHLIGHT_BUSY").put("message", "спалахсвітлолампатимчасовонемаєможевикористовувати，можездатнийпростоковдраВзаємномашиназаймативикористовувати")
             }
     }
 
     fun set(enabled: Boolean, userId: Int): JSONObject {
         val id =
-            cameraId ?: return DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "设备没有可用的闪光灯")
+            cameraId ?: return DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "налаштуватиПриготуйтебезматиможевикористовуватизспалахсвітлолампа")
         val before = awaitState()
         if (before == enabled)
             return DeviceMutationResult.observed(
@@ -111,11 +111,11 @@ internal class FlashlightController private constructor(context: Context) {
                 true,
             )
         } catch (_: CameraAccessException) {
-            DeviceToolContract.failure("FLASHLIGHT_BUSY", "系统无法操作闪光灯，请检查相机占用和设备状态")
+            DeviceToolContract.failure("FLASHLIGHT_BUSY", "КраваткасистеманемаєЗаконТримайтеробитиспалахсвітлолампа，будь ласкаперевіритиперевіритиВзаємномашиназаймативикористовуватиіналаштуватиПриготуйтеформустан")
         } catch (_: SecurityException) {
-            DeviceToolContract.failure("FLASHLIGHT_ACCESS_DENIED", "系统拒绝手电筒控制")
+            DeviceToolContract.failure("FLASHLIGHT_ACCESS_DENIED", "КраваткасистемавідхилитиАбсолютнорукуелектроенергіяциліндрКОНТРОЛЬсистема")
         } catch (_: IllegalArgumentException) {
-            DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "闪光灯设备已不可用")
+            DeviceToolContract.failure("FLASHLIGHT_UNAVAILABLE", "спалахсвітлолампаналаштуватиПриготуйтевженемаєможевикористовувати")
         }
     }
 

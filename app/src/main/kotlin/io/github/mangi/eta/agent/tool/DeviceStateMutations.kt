@@ -10,7 +10,7 @@ import io.github.mangi.eta.agent.device.DeviceToolContract
 import java.util.Locale
 import org.json.JSONObject
 
-/** 系统写操作与读回验证共用同一用户和同一状态口径。 */
+/** Системні операції запису та перевірки зворотного читання мають спільний доступ до одного користувача та одного калібру стану.*/
 internal class DeviceStateMutations(
     private val context: Context,
     private val executeRoot: (String) -> BoundedRootCommandExecutor.Result,
@@ -20,9 +20,9 @@ internal class DeviceStateMutations(
         DeviceToolContract.userScopeError(args, userId)?.let { return it.toString() }
         val namespace = args.optString("namespace").lowercase(Locale.ROOT)
         val key = args.optString("key")
-        if (!DeviceToolContract.validSetting(namespace, key)) return invalid("设置命名空间或键格式无效")
+        if (!DeviceToolContract.validSetting(namespace, key)) return invalid("налаштувативстановитижиттяназванульовийміжабоключсіткаРежимнемаєефект")
         val value = args.optString("value")
-        if (!args.has("value") || value.length > 2_000) return invalid("必须提供不超过 2000 字的设置值")
+        if (!args.has("value") || value.length > 2_000) return invalid("повиненОбов'язковонестидлянемаєобганятиПас 2000 характерзналаштувативстановитизначення")
         val readCommand = "settings --user $userId get ${DeviceToolContract.quote(namespace)} ${DeviceToolContract.quote(key)}"
         val before = readSetting(readCommand)
         val result = executeRoot("settings --user $userId put ${DeviceToolContract.quote(namespace)} " +
@@ -36,12 +36,12 @@ internal class DeviceStateMutations(
         val userId = DeviceToolContract.appUserId(context)
         DeviceToolContract.userScopeError(args, userId)?.let { return it.toString() }
         val target = args.optString("target").lowercase(Locale.ROOT)
-        val enabled = args.opt("enabled") as? Boolean ?: return invalid("enabled 必须是布尔值")
+        val enabled = args.opt("enabled") as? Boolean ?: return invalid("enabled повиненОбов'язковотактканинавизначення")
         if (target !in setOf("wifi", "bluetooth")) return SystemStateControls(context, executeRoot).set(target, enabled).toString()
         val command = when (target) {
             "wifi" -> "cmd wifi set-wifi-enabled ${if (enabled) "enabled" else "disabled"}"
             "bluetooth" -> "cmd bluetooth_manager ${if (enabled) "enable" else "disable"}"
-            else -> return invalid("不支持的设备状态")
+            else -> return invalid("немаєвідділенняутримуватизналаштуватиПриготуйтеформустан")
         }
         val before = readDeviceState(target)
         val result = executeRoot(command)
@@ -55,17 +55,17 @@ internal class DeviceStateMutations(
         DeviceToolContract.userScopeError(args, userId)?.let { return it.toString() }
         val packageName = args.optString("package_name")
         if (packageName == "android" || !DeviceToolContract.validPackageName(packageName)) {
-            return DeviceToolContract.failure("INVALID_PACKAGE", "包名格式无效").toString()
+            return DeviceToolContract.failure("INVALID_PACKAGE", "СумканазвасіткаРежимнемаєефект").toString()
         }
         val action = args.optString("action").lowercase(Locale.ROOT)
         val command = when (action) {
             "force_stop" -> "am force-stop --user $userId ${DeviceToolContract.quote(packageName)}"
             "freeze" -> "pm disable-user --user $userId ${DeviceToolContract.quote(packageName)}"
             "unfreeze" -> "pm enable --user $userId ${DeviceToolContract.quote(packageName)}"
-            else -> return invalid("不支持的应用状态动作")
+            else -> return invalid("немаєвідділенняутримуватизвідповідьвикористовуватиформустанрухатисяробити")
         }
         val before = readApplicationState(packageName, action)
-            ?: return DeviceToolContract.failure("APP_STATE_UNAVAILABLE", "无法读取当前用户的应用状态；应用可能未安装、不可见或查询被拒绝，本次未执行")
+            ?: return DeviceToolContract.failure("APP_STATE_UNAVAILABLE", "немаєЗакончитатиВиберітьколивпередвикористовуватипобутовізвідповідьвикористовуватиформустан；відповідьвикористовуватиможездатнийще нівстановитиупаковка、немаєможедивабоперевіритиЗапитуйтековдравідхилитиАбсолютно，книгаДругосортнийще ніВиконатидобре")
                 .put("user_id", userId).toString()
         val result = executeRoot(command)
         val after = readApplicationState(packageName, action)
@@ -85,12 +85,12 @@ internal class DeviceStateMutations(
             "notification" -> AudioManager.STREAM_NOTIFICATION
             "voice_call" -> AudioManager.STREAM_VOICE_CALL
             "system" -> AudioManager.STREAM_SYSTEM
-            else -> return invalid("不支持的音量通道")
+            else -> return invalid("немаєвідділенняутримуватиззвуккількістьПасдорога")
         }
         val percent = args.optInt("percent", -1)
-        if (percent !in 0..100) return invalid("percent 必须在 0 到 100 之间")
+        if (percent !in 0..100) return invalid("percent повиненОбов'язковоіснують 0 прибути 100 зміж")
         val audio = context.getSystemService(AudioManager::class.java)
-            ?: return DeviceToolContract.failure("AUDIO_SERVICE_UNAVAILABLE", "系统音频服务不可用").toString()
+            ?: return DeviceToolContract.failure("AUDIO_SERVICE_UNAVAILABLE", "КраваткасистемазвукчастотаОдягобслуговуваннянемаєможевикористовувати").toString()
         return try {
             val min = audio.getStreamMinVolume(stream)
             val max = audio.getStreamMaxVolume(stream).coerceAtLeast(min)
@@ -102,9 +102,9 @@ internal class DeviceStateMutations(
                 .put("stream", streamName).put("percent", percent).put("level", after)
                 .put("min_level", min).put("max_level", max).toString()
         } catch (_: SecurityException) {
-            DeviceToolContract.failure("VOLUME_CHANGE_DENIED", "系统拒绝修改该音量通道").toString()
+            DeviceToolContract.failure("VOLUME_CHANGE_DENIED", "КраваткасистемавідхилитиАбсолютнобудуватизмінитиСлідзвуккількістьПасдорога").toString()
         } catch (_: RuntimeException) {
-            DeviceToolContract.failure("VOLUME_CHANGE_FAILED", "音量修改或状态读回失败，结果尚未确认")
+            DeviceToolContract.failure("VOLUME_CHANGE_FAILED", "звуккількістьбудуватизмінитиабоформустанчитатиповерненнявтратитипоразка，вузолфруктидосіще ніправильнорозпізнати")
                 .put("verified", false).toString()
         }
     }
@@ -112,7 +112,7 @@ internal class DeviceStateMutations(
     private fun readSetting(command: String): String? {
         val result = executeRoot(command)
         if (!result.ok || result.truncated) return null
-        // settings CLI 用额外换行结束输出；只移除该换行，保留设置值自身的空格和换行。
+        // параметри CLI завершує вихід додатковим символом нового рядка; видаляється лише новий рядок, залишаючи власні пробіли та нові рядки значення параметра недоторканими.
         return result.stdout.removeSuffix("\n").takeUnless { it == "null" }
     }
 

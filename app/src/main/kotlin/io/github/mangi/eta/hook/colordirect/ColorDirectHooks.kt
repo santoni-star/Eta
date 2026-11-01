@@ -57,8 +57,8 @@ internal object ColorDirectHooks {
         if (activityClass == null) {
             hooks.missing(
                 id = "colordirect.collect-info",
-                description = "CollectInfoActivity Intent 处理入口",
-                detail = "未找到 CollectInfoActivity，无法接管双指识屏 Activity 入口"
+                description = "CollectInfoActivity Intent впричинавведітьрот",
+                detail = "ще ніспробуйте знайтиприбути CollectInfoActivity，немаєЗаконзловититрубкапаразвертатися дознанняекран Activity введітьрот"
             )
             return
         }
@@ -80,8 +80,8 @@ internal object ColorDirectHooks {
         if (method == null) {
             hooks.missing(
                 id = "colordirect.collect-info",
-                description = "CollectInfoActivity Intent 处理入口",
-                detail = "未唯一定位 CollectInfoActivity Intent 处理方法，保留系统双指识屏"
+                description = "CollectInfoActivity Intent впричинавведітьрот",
+                detail = "ще нітількиодинЗвичайнобіт CollectInfoActivity Intent впричинаплощіЗакон，зберегтиТримайтеКраваткасистемапаразвертатися дознанняекран"
             )
             return
         }
@@ -89,9 +89,9 @@ internal object ColorDirectHooks {
         hooks.intercept(
             id = "colordirect.collect-info",
             executable = method,
-            description = "CollectInfoActivity Intent 处理入口"
+            description = "CollectInfoActivity Intent впричинавведітьрот"
         ) { chain ->
-            // 开关关闭则走原双指识屏逻辑。
+            // Коли перемикач вимкнено, використовуватиметься оригінальна логіка екрана з двома відбитками пальців.
             if (!Prefs.isEnabled(Prefs.Keys.DOUBLE_FINGER_CIRCLE_TO_SEARCH)) {
                 return@intercept chain.proceed()
             }
@@ -113,20 +113,20 @@ internal object ColorDirectHooks {
     private fun tryStartCircleToSearch(context: Context, logger: ModuleLogger): Boolean {
         val now = SystemClock.uptimeMillis()
         if (now - lastHandledUptime <= ModuleConfig.INTERCEPT_DEDUP_WINDOW_MS) {
-            logger.debug { "$SOURCE: 命中去重窗口，吞掉重复双指识屏" }
+            logger.debug { "$SOURCE: життясерединайтиВажкавікнорот，ковтатиПрогратиВажкаскладніпаразвертатися дознанняекран" }
             return true
         }
 
-        if (!CircleToSearchInvoker.isAvailable(context, logger, SOURCE, "回退小布双指识屏")) {
+        if (!CircleToSearchInvoker.isAvailable(context, logger, SOURCE, "поверненнявідступМаленькийтканинапаразвертатися дознанняекран")) {
             return false
         }
 
-        if (!CircleToSearchInvoker.trigger(logger, "$SOURCE 双指识屏")) {
+        if (!CircleToSearchInvoker.trigger(logger, "$SOURCE паразвертатися дознанняекран")) {
             return false
         }
 
         lastHandledUptime = now
-        logger.debug { "$SOURCE: 命中双指识屏，已转发 Circle to Search" }
+        logger.debug { "$SOURCE: життясерединапаразвертатися дознанняекран，вжезмінитиволосся Circle to Search" }
         return true
     }
 

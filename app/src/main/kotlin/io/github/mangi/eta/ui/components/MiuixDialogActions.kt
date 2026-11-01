@@ -12,17 +12,17 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * 弹窗底部按钮行：取消在左、确认在右，平分整行。
- * 遵循 Miuix 官方示例的双按钮惯例，全 App 弹窗统一使用。
+ * Ряд кнопок у нижній частині спливаючого вікна: Скасувати ліворуч, Підтвердити праворуч, розділяючи весь рядок порівну.
+ * Дотримуйтесь конвенції двох кнопок офіційних прикладів Miuix і використовуйте всі спливаючі вікна однаково.
  *
- * @param confirmText 确认按钮文案。
- * @param onCancel 取消回调。
- * @param onConfirm 确认回调。
- * @param modifier 根修饰符。
- * @param cancelText 取消按钮文案。
- * @param cancelEnabled 取消按钮是否可用。
- * @param confirmEnabled 确认按钮是否可用。
- * @param destructive 确认是否为破坏性操作（使用 error 配色）。
+ * @param confirmText Копія кнопки підтвердження.
+ * @param onCancel скасувати зворотний виклик.
+ * @param onConfirm зворотний виклик підтвердження.
+ * @param modifier кореневий модифікатор.
+ * @param cancelText Копіювання кнопки скасування.
+ * @param cancelEnabled Чи доступна кнопка скасування.
+ * @param confirmEnabled Чи доступна кнопка підтвердження.
+ * @param destructive Перевірте, чи це деструктивна операція (використовуйте відповідність кольору помилки).
  */
 @Composable
 fun MiuixDialogActions(

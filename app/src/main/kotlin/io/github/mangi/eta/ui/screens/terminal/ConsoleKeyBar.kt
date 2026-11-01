@@ -63,8 +63,8 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 internal enum class StickyModifier { OFF, ONCE, LOCKED }
 
 /**
- * 键条上的 Ctrl/Alt：轻点只作用于下一次按键，长按锁定直到再次轻点。
- * 软键盘、键条与硬件键盘的输入都从这里取修饰，三条路径的组合键行为一致。
+ * Ctrl/Alt на панелі клавіш: натискання впливає лише на наступне натискання клавіші, довге натискання блокується, доки не буде натиснуто знову.
+ * Введення програмної клавіатури, панелі клавіш і апаратної клавіатури змінюються звідси, а комбінації клавіш у трьох шляхах мають однакову поведінку.
  */
 @Stable
 internal class ConsoleModifierKeys {
@@ -89,7 +89,7 @@ internal class ConsoleModifierKeys {
         alt = StickyModifier.LOCKED
     }
 
-    /** 合并本次按键自带的修饰并消耗一次性修饰；锁定的修饰保持。 */
+    /** Об'єднайте модифікації, які постачаються за допомогою цієї кнопки, і споживайте одноразові модифікації; заблоковані зміни залишаються.*/
     fun consume(base: TerminalModifiers = TerminalModifiers.NONE): TerminalModifiers {
         val merged = base.copy(
             ctrl = base.ctrl || ctrl != StickyModifier.OFF,
@@ -116,7 +116,7 @@ private sealed interface BarKey {
     data object Paste : BarKey
 }
 
-/** 常用键在前，首屏覆盖 TUI 导航所需的 Esc、Tab、修饰键、方向键与回车。 */
+/** Клавіші, які зазвичай використовуються, розташовані спереду, а перший екран охоплює Esc, Tab, клавіші-модифікатори, клавіші напрямків і Enter, необхідні для навігації TUI.*/
 private val BAR_KEYS: List<BarKey> = listOf(
     BarKey.Special(TerminalKey.ESCAPE, label = "Esc"),
     BarKey.Special(TerminalKey.TAB, label = "Tab"),
@@ -278,7 +278,7 @@ private fun KeyCap(
                     onPress = {
                         pressed = true
                         haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                        // 可连发键按下即发送，长按后按固定节奏重复；其余键在抬起时才触发，以便区分长按。
+                        // Клавіші серії надсилаються при натисканні та повторюються у фіксованому ритмі після тривалого натискання; інші клавіші спрацьовують лише при підйомі, щоб розрізняти довгі натискання.
                         val repeater = if (repeatable) {
                             currentOnPress()
                             scope.launch {
@@ -329,7 +329,7 @@ private fun KeyCap(
     }
 }
 
-/** 还能向后滚动时在末端淡出，提示键条可横向滑动；滚动状态只在绘制阶段读取。 */
+/** Він також може зникати в кінці під час прокручування назад, а панель підказок може ковзати горизонтально; стан прокручування зчитується лише під час фази малювання.*/
 private fun Modifier.fadingEnd(visible: () -> Boolean, color: Color): Modifier = drawWithContent {
     drawContent()
     if (visible()) {

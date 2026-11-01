@@ -9,7 +9,7 @@ internal data class RemoteModelReconciliation(
     val result: RemoteModelSyncResult,
 )
 
-/** 同一模型保留本地身份与用户覆盖；账号目录可删除旧自动目录，手工配置始终保留。 */
+/** Та сама модель зберігає локальну ідентифікацію та охоплення користувачів; каталог облікового запису може видалити старий автоматичний каталог, а налаштування вручну завжди зберігаються.*/
 internal fun reconcileRemoteModels(
     existing: List<Model>,
     fetched: List<Model>,
@@ -33,7 +33,7 @@ internal fun reconcileRemoteModels(
             when {
                 remote != null -> {
                     consumed += key
-                    // Codex 账号目录可以声明不同于公共 API 预设的窗口；预填值不能覆盖它。
+                    // Каталог облікових записів Codex може оголошувати вікна, відмінні від загальнодоступного API за замовчуванням; попередньо заповнене значення не може замінити його.
                     val configuredWindow = stored.contextWindowOverride.takeUnless {
                         authMode == ProviderAuthModes.OPENAI_CHATGPT && stored.source == ModelSource.CATALOG &&
                             it == stored.contextWindow
@@ -46,7 +46,7 @@ internal fun reconcileRemoteModels(
                         isBuiltIn = stored.isBuiltIn || remote.isBuiltIn,
                         customHeaders = stored.customHeaders,
                         customBody = stored.customBody,
-                        // 运行窗口只读覆盖值；用户未填写时才采用远端明确给出的窗口。
+                        // Запущене вікно є значенням перевизначення лише для читання; якщо користувач не заповнює його, використовується лише вікно, явно задане віддаленою стороною.
                         contextWindowOverride = configuredWindow ?: remote.contextWindow,
                         reasoningOverride = stored.reasoningOverride,
                         reasoningCapabilitiesOverride = stored.reasoningCapabilitiesOverride,
@@ -59,7 +59,7 @@ internal fun reconcileRemoteModels(
         }
         remoteByKey.forEach { (key, remote) ->
             if (key !in consumed && key in adopted) {
-                require(remote.id.isNotBlank()) { "远端模型缺少本地标识" }
+                require(remote.id.isNotBlank()) { "далекокінецьцвільтипувідсутністьмалокнигаземлізнакзнання" }
                 add(remote.copy(
                     modelId = remote.modelId.trim(),
                     displayName = remote.displayName.trim().ifBlank { remote.modelId.trim() },

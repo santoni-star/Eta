@@ -30,11 +30,11 @@ internal object HookSupport {
             try {
                 return current.getDeclaredMethod(name, *parameterTypes).apply { isAccessible = true }
             } catch (_: NoSuchMethodException) {
-                // 继续检查父类。
+                // Продовжуйте перевіряти батьківський клас.
             } catch (_: SecurityException) {
-                // 当前类受限时，父类仍可能公开兼容入口。
+                // Коли поточний клас обмежено, батьківський клас все ще може показувати записи сумісності.
             } catch (_: LinkageError) {
-                // ROM 类签名引用缺失类型时按目标不存在处理，不能击穿 system_server。
+                // Коли підпис класу ПЗУ посилається на відсутній тип, це розглядається так, ніби ціль не існує, і на системний_сервер неможливо проникнути.
             }
             current = current.superclass
         }
@@ -42,7 +42,7 @@ internal object HookSupport {
     }
 
     /**
-     * 安装期按结构筛选公开方法。ROM 签名引用缺失类型时按目标不存在处理。
+     * Відбір публічних методів за структурою під час встановлення. Підписи ПЗУ, що посилаються на відсутні типи, розглядаються так, ніби мета не існує.
      */
     fun findPublicMethod(
         clazz: Class<*>,
@@ -56,7 +56,7 @@ internal object HookSupport {
     }
 
     /**
-     * 安装期按结构筛选声明方法。单个方法不可访问时跳过，不影响其他候选项。
+     * Фільтрувати методи оголошення за структурою під час встановлення. Якщо єдиний метод недоступний, його буде пропущено, а інші кандидати не вплинуть.
      */
     fun findDeclaredMethods(
         clazz: Class<*>,
@@ -87,11 +87,11 @@ internal object HookSupport {
             try {
                 return current.getDeclaredField(name).apply { isAccessible = true }
             } catch (_: NoSuchFieldException) {
-                // 继续检查父类。
+                // Продовжуйте перевіряти батьківський клас.
             } catch (_: SecurityException) {
-                // 当前类受限时，父类仍可能公开兼容字段。
+                // Коли поточний клас обмежено, батьківський клас все ще може надавати сумісні поля.
             } catch (_: LinkageError) {
-                // ROM 类签名引用缺失类型时按目标不存在处理，不能击穿 system_server。
+                // Коли підпис класу ПЗУ посилається на відсутній тип, це розглядається так, ніби ціль не існує, і на системний_сервер неможливо проникнути.
             }
             current = current.superclass
         }
@@ -130,7 +130,7 @@ internal object HookSupport {
             val deoptimized = module.deoptimize(executable)
             logger.debug { "Deopt $description = $deoptimized" }
         } catch (exception: Exception) {
-            logger.warn("Deopt 失败: $description, type=${exception.safeLogType()}")
+            logger.warn("Deopt втратитипоразка: $description, type=${exception.safeLogType()}")
         }
     }
 

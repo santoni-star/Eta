@@ -46,7 +46,7 @@ internal object SpeechSettingsRepository {
         val encrypted = cipher.iv + cipher.doFinal(json.encodeToString(credentials).toByteArray(Charsets.UTF_8))
         check(context.getSharedPreferences("eta_speech_secrets", Context.MODE_PRIVATE).edit()
             .putString("credentials", Base64.getEncoder().encodeToString(encrypted)).commit()) {
-            "语音凭据保存失败"
+            "мовазвукзавідповідно дозберегтижитивтратитипоразка"
         }
     }
 
@@ -64,4 +64,4 @@ internal object SpeechSettingsRepository {
     }
 }
 
-internal class SpeechCredentialsUnavailable : Exception("语音凭据无法解密，请重新填写并保存")
+internal class SpeechCredentialsUnavailable : Exception("мовазвукзавідповідно донемаєЗаконрозв'язатищільний，будь ласкаВажкановийзаповнитиНапишітьізберегтижити")

@@ -12,7 +12,7 @@ import io.github.mangi.eta.ui.components.RoleplayChatUi
 internal data class AgentChatUiState(
     val messages: List<AgentChatMessageUi>,
     val history: List<AgentModelClient.ConversationMessage> = emptyList(),
-    // 完整脱敏历史独立于模型投影；摘要替换 history 时不覆盖 journal。
+    // Повна історія десенсибілізації не залежить від проекції моделі; сумарна заміна історії не перезаписує журнал.
     val journal: List<AgentModelClient.ConversationMessage> = emptyList(),
     val input: String,
     val isStreaming: Boolean,
@@ -28,13 +28,13 @@ internal data class AgentChatUiState(
     val messageEdit: MessageEditUiState? = null,
     val roleplay: RoleplayBinding? = null,
     val roleplayMessages: RoleplayMessageState = RoleplayMessageState(),
-    /** 窗口外但参与正文修订的同批消息原文；仅按需加载，不写入会话元数据。 */
+    /** Оригінальний текст тієї ж партії повідомлень поза вікном, але залучений до перегляду тексту; завантажується лише на вимогу, метадані сеансу не записуються.*/
     val roleplayOriginalContents: Map<String, String> = emptyMap(),
-    /** 会话最近一次发送使用的本地 Model.id；null 表示尚未绑定，跟随默认模型。 */
+    /** Локальний Model.id, використаний в останньому сеансі надсилання; null означає, що він ще не зв’язаний і відповідає типовій моделі.*/
     val modelId: String? = null,
-    /** 未打开的会话仅保留侧栏预览，不能把占位状态写回消息和上下文。 */
+    /** Невідкриті сеанси зберігають лише попередній перегляд бічної панелі, а статус заповнювача не можна записати назад у повідомлення та контекст.*/
     val isConversationLoaded: Boolean = true,
-    /** 当前展示窗口首条消息的持久化 sort_index，保存只更新这一位置之后的后缀。 */
+    /** Постійний sort_index першого повідомлення в поточному вікні відображення, збереження оновлює лише суфікс після цієї позиції.*/
     val messageStartIndex: Int = 0,
     val hasEarlierMessages: Boolean = false,
     val conversationCharacterName: String? = null,
@@ -68,7 +68,7 @@ data class AgentMessageUi(
     val characterEditable: Boolean = false,
     val candidateCount: Int = 1,
     val selectedCandidate: Int = 0,
-    /** 仅当前内存会话展示，不进入消息存储、归档与导出。 */
+    /** Відображається лише поточний сеанс пам’яті, а зберігання, архівація та експорт повідомлень не вводяться.*/
     val searchSuggestionsHtml: List<String> = emptyList(),
 ) : AgentChatMessageUi
 
@@ -87,14 +87,14 @@ enum class SystemNoticeCode(val wireValue: String) {
     }
 }
 
-/** Eta 自己生成的消息只保存稳定状态码，展示时再按当前语言解析。 */
+/** Повідомлення, створені Eta, зберігають лише стабільний код стану, а потім аналізують відповідно до поточної мови під час відображення.*/
 @Immutable
 data class SystemNoticeMessageUi(
     override val id: String,
     val code: SystemNoticeCode,
     val detail: String? = null,
     val contextTokens: Int? = null,
-    /** 仅运行期存在的进行中标记，不随消息持久化；恢复的历史通知始终视为已结束。 */
+    /** Позначка виконання, яка існує лише під час виконання та не зберігається в повідомленні; відновлені історичні сповіщення завжди вважаються завершеними.*/
     val running: Boolean = false,
 ) : AgentChatMessageUi
 
@@ -124,7 +124,7 @@ data class ThinkingMessageUi(
 ) : AgentChatMessageUi
 
 /**
- * 首页的 Run trace 入口卡片：展示 Agent 当前可调用的能力分组。
+ * Запустити картку введення трасування на домашній сторінці: відображає групи можливостей, які зараз викликаються агентом.
  */
 @Immutable
 data class RunTraceMessageUi(
@@ -139,7 +139,7 @@ data class CapabilityUi(
 )
 
 /**
- * 工具调用摘要：出现在消息流中，显示当前/最近一步调用了哪些工具。
+ * Підсумок виклику інструментів: з’являється в потоці повідомлень, показуючи, які інструменти було викликано на поточному/останньому кроці.
  */
 @Immutable
 data class ToolSummaryMessageUi(
@@ -166,7 +166,7 @@ enum class ToolActivityStatusUi {
 }
 
 /**
- * 建议语 chip 行。
+ * Запропонований фрагмент фрази в порядку.
  */
 @Immutable
 data class SuggestionChipsMessageUi(
@@ -207,7 +207,7 @@ data class MessageEditUiState(
     val preserveFollowingMessages: Boolean = false,
 )
 
-/** 角色对话在界面上的身份投影；普通对话返回 null。 */
+/** Проекція ідентичності діалогу персонажа на інтерфейс; нормальний діалог повертає значення null.*/
 internal fun AgentChatHomeUiState.roleplayChatUi(): RoleplayChatUi? = roleplay?.let {
     RoleplayChatUi(characterName = it.characterName, avatarPath = it.avatarPath, userName = it.userName)
 }

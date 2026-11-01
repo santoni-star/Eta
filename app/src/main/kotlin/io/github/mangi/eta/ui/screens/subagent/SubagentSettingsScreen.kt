@@ -140,8 +140,8 @@ internal fun SubagentSettingsScreen(
     val primaryModelName = pickerState.selectedModel?.displayName
     val secondarySummary = when {
         resolvedSecondary != null -> "${resolvedSecondary.provider.name} / ${resolvedSecondary.model.displayName}"
-        !primaryModelName.isNullOrBlank() -> "跟随主模型 ($primaryModelName)"
-        else -> "跟随主模型"
+        !primaryModelName.isNullOrBlank() -> "іСлідуйтехостцвільтипу ($primaryModelName)"
+        else -> "іСлідуйтехостцвільтипу"
     }
 
     val effectiveCapabilities = remember(providers, resolvedSecondary, primaryProviderId, primaryModelId) {
@@ -157,7 +157,7 @@ internal fun SubagentSettingsScreen(
     val effortLabels = remember(effortOptions) {
         effortOptions.map { effort ->
             when (effort) {
-                null -> "跟随模型默认"
+                null -> "іСлідуйтецвільтипумовчазнийрозпізнати"
                 ReasoningEffort.DEFAULT -> "Auto"
                 else -> effort.displayName
             }
@@ -185,14 +185,14 @@ internal fun SubagentSettingsScreen(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Add,
-                    contentDescription = "新建 Subagent",
+                    contentDescription = "новийвстановити Subagent",
                 )
             }
         },
         overlay = {
             OverlayBottomSheet(
                 show = showModelSheet,
-                title = "Subagent 模型",
+                title = "Subagent цвільтипу",
                 onDismissRequest = { showModelSheet = false },
                 insideMargin = DpSize(0.dp, 0.dp),
             ) {
@@ -260,7 +260,7 @@ internal fun SubagentSettingsScreen(
             val activeDraft = editorDraft
             EtaWindowDialog(
                 show = activeDraft != null,
-                title = if (activeDraft?.originalName != null) "编辑 Subagent" else "新建 Subagent",
+                title = if (activeDraft?.originalName != null) "компілюватиредагувати Subagent" else "новийвстановити Subagent",
                 onDismissRequest = { editorDraft = null },
             ) {
                 if (activeDraft != null) {
@@ -275,28 +275,28 @@ internal fun SubagentSettingsScreen(
                             TextField(
                                 value = activeDraft.name,
                                 onValueChange = { editorDraft = activeDraft.copy(name = it) },
-                                label = "名称 (kebab-case，如 bill-analyzer)",
+                                label = "назвасказати (kebab-case，як bill-analyzer)",
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             TextField(
                                 value = activeDraft.description,
                                 onValueChange = { editorDraft = activeDraft.copy(description = it) },
-                                label = "简介 (Description)",
+                                label = "простийміж (Description)",
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             TextField(
                                 value = activeDraft.toolsText,
                                 onValueChange = { editorDraft = activeDraft.copy(toolsText = it) },
-                                label = "可用工具 (逗号分隔，留空默认允许全部非 GUI 工具)",
+                                label = "можевикористовуватипрацюватиІнструмент (дражнитиНомерточкарозділені，ТримайтенульовиймовчазнийрозпізнатидозволяютьтравняПовнийвідділнемає GUI працюватиІнструмент)",
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             TextField(
                                 value = activeDraft.prompt,
                                 onValueChange = { editorDraft = activeDraft.copy(prompt = it) },
-                                label = "角色指令 (System Prompt)",
+                                label = "рігколірзвертатися дозробити (System Prompt)",
                                 minLines = 4,
                                 maxLines = 8,
                                 modifier = Modifier.fillMaxWidth(),
@@ -311,7 +311,7 @@ internal fun SubagentSettingsScreen(
                         }
                         Spacer(modifier = Modifier.height(14.dp))
                         MiuixDialogActions(
-                            confirmText = "保存",
+                            confirmText = "зберегтижити",
                             onCancel = { editorDraft = null },
                             onConfirm = {
                                 scope.launch {
@@ -341,7 +341,7 @@ internal fun SubagentSettingsScreen(
                                             reloadCustomProfiles()
                                         },
                                         onFailure = { error ->
-                                            editorError = error.message ?: "保存失败"
+                                            editorError = error.message ?: "зберегтижитивтратитипоразка"
                                         },
                                     )
                                 }
@@ -353,12 +353,12 @@ internal fun SubagentSettingsScreen(
         },
     ) {
         item(key = "config_title") {
-            EtaPreferenceGroupTitle("通用与模型")
+            EtaPreferenceGroupTitle("Пасвикористовуватиіцвільтипу")
         }
         item(key = "config_group") {
             EtaPreferenceGroup {
                 EtaSwitchPreference(
-                    title = "启用 Subagent",
+                    title = "початоквикористовувати Subagent",
                     checked = subagentEnabled,
                     enabled = agentPrefs != null,
                     startAction = {
@@ -380,7 +380,7 @@ internal fun SubagentSettingsScreen(
                 )
                 EtaPreferenceDivider()
                 EtaArrowPreference(
-                    title = "Subagent 模型",
+                    title = "Subagent цвільтипу",
                     summary = secondarySummary,
                     enabled = subagentEnabled,
                     startAction = {
@@ -394,7 +394,7 @@ internal fun SubagentSettingsScreen(
                 if (effortOptions.size > 1) {
                     EtaPreferenceDivider()
                     EtaOverlayDropdownPreference(
-                        title = "思考强度",
+                        title = "думаюТестпотужнийвитрачати",
                         items = effortLabels,
                         selectedIndex = selectedEffortIndex,
                         enabled = subagentEnabled,
@@ -446,12 +446,12 @@ internal fun SubagentSettingsScreen(
             EtaPreferenceGroup {
                 if (customProfiles.isEmpty()) {
                     ListEmptyState(
-                        title = "暂无自定义 Subagent",
-                        summary = "可在对话中直接让 Eta 创建专属 Subagent（保存在 agents/<name>.md），或点击右上角 + 手动新建",
+                        title = "тимчасовонемаєоскількиЗвичайноправедний Subagent",
+                        summary = "можеіснуютьправильноговоритисерединапрямозловитинехай Eta створитивстановитиСпеціалізуватисярід Subagent（зберегтижитиіснують agents/<name>.md），аботочкаударправильноначальникаріг + рукурухатисяновийвстановити",
                         icon = Icons.Rounded.Extension,
                         action = {
                             EtaTextButton(
-                                text = "新建 Subagent",
+                                text = "новийвстановити Subagent",
                                 onClick = {
                                     editorError = null
                                     editorDraft = CustomSubagentDraft()
@@ -522,7 +522,7 @@ private fun SubagentModelPickerContent(
             onSearch = {},
             expanded = false,
             onExpandedChange = {},
-            label = "搜索模型或服务商",
+            label = "пошукОтжецвільтипуабоОдягобслуговуваннябізнес",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -534,7 +534,7 @@ private fun SubagentModelPickerContent(
             ) {
                 item(key = "filter:all") {
                     EtaChoiceChip(
-                        text = "全部",
+                        text = "Повнийвідділ",
                         selected = providerFilter == null,
                         onClick = { providerFilter = null },
                     )
@@ -561,8 +561,8 @@ private fun SubagentModelPickerContent(
             if (query.isBlank() && providerFilter == null) {
                 item(key = "inherit_primary") {
                     SubagentModelRow(
-                        title = "跟随主模型",
-                        subtitle = primaryModelName?.let { "当前：$it" } ?: "默认继承会话正在使用的主模型",
+                        title = "іСлідуйтехостцвільтипу",
+                        subtitle = primaryModelName?.let { "коливперед：$it" } ?: "мовчазнийрозпізнатислідуватиуспадкуватизасіданняговоритипростоіснуютьзробитивикористовуватизхостцвільтипу",
                         modelId = pickerState.selectedModel?.modelId,
                         sourceType = pickerState.selectedModel?.providerSourceType,
                         selected = selectedSecondaryModelId == null,
@@ -734,7 +734,7 @@ private fun SubagentProfileDetailContent(
             ) {
                 if (onDelete != null) {
                     TextButton(
-                        text = "删除",
+                        text = "видалитивидалити",
                         onClick = onDelete,
                         colors = ButtonDefaults.textButtonColors(
                             textColor = StatusError,
@@ -744,7 +744,7 @@ private fun SubagentProfileDetailContent(
                 }
                 if (onEdit != null) {
                     TextButton(
-                        text = "编辑",
+                        text = "компілюватиредагувати",
                         onClick = onEdit,
                         colors = ButtonDefaults.textButtonColorsPrimary(),
                         modifier = Modifier.weight(1f),

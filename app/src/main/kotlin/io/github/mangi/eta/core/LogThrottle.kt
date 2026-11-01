@@ -3,15 +3,15 @@ package io.github.mangi.eta.core
 import android.os.SystemClock
 import java.util.concurrent.ConcurrentHashMap
 
-/** 进程内日志节流器；使用单调时钟，不受系统时间调整影响。 */
+/** Дросель внутрішнього журналу; використовує монотонний годинник і на нього не впливають налаштування системного часу.*/
 internal class LogThrottle(
     private val uptimeMillis: () -> Long = SystemClock::uptimeMillis
 ) {
     private val lastAcceptedAt = ConcurrentHashMap<String, Long>()
 
     fun shouldLog(key: String, windowMs: Long): Boolean {
-        require(key.isNotBlank()) { "日志节流 key 不能为空" }
-        require(windowMs >= 0L) { "日志节流窗口不能为负数" }
+        require(key.isNotBlank()) { "деньчестолюбствоФестивальпотік key немаєздатнийдлянульовий" }
+        require(windowMs >= 0L) { "деньчестолюбствоФестивальпотіквікноротнемаєздатнийдлятягарномер" }
 
         val now = uptimeMillis()
         var accepted = false

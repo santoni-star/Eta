@@ -51,8 +51,8 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
- * Linux rootfs 只读文件浏览：目录列举与文件读取都经一次性 root Shell 完成，
- * 查看文件时进入屏内查看态，页面返回键先退回列表再退出页面。
+ * Перегляд файлів Linux rootfs лише для читання: перерахування каталогів і читання файлів виконується за допомогою одноразової кореневої оболонки.
+ * Під час перегляду файлу перейдіть у режим перегляду на екрані. Скористайтеся клавішею повернення до сторінки, щоб спочатку повернутися до списку, а потім вийти зі сторінки.
  */
 @Composable
 internal fun LinuxFilesScreen(
@@ -113,7 +113,7 @@ internal fun LinuxFilesScreen(
         fileResult = null
     }
 
-    // 查看文件时系统返回键先退回列表，再退出页面。
+    // Під час перегляду файлів системний ключ повернення спочатку повертає до списку, а потім виходить зі сторінки.
     val viewerBackState = rememberNavigationEventState(NavigationEventInfo.None)
     NavigationBackHandler(
         state = viewerBackState,
@@ -249,7 +249,7 @@ internal fun LinuxFilesScreen(
     }
 }
 
-/** 路径与提示文字和分组标题同一起点。 */
+/** Шлях має ту саму початкову точку, що й текст підказки та назва групи.*/
 @Composable
 private fun PathBar(path: String) {
     Text(

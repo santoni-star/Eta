@@ -19,7 +19,7 @@ import kotlin.math.sqrt
 
 internal const val MAX_AGENT_IMAGE_BYTES = 12 * 1024 * 1024
 
-/** 仅负责为工具截图和聊天预览生成独立的图片副本。 */
+/** Відповідає лише за створення окремих копій зображень для скріншотів інструментів і попереднього перегляду чату.*/
 internal object AgentModelImageEncoder {
     private const val MODEL_JPEG_QUALITY = 95
     private const val PREVIEW_JPEG_QUALITY = 80
@@ -76,7 +76,7 @@ internal object AgentModelImageEncoder {
             bounds = bounds,
             profile = attachmentProfile,
         )
-        // 普通附件保持 JPEG 兼容路径；截图不经过这里的解码与重编码。
+        // Звичайні вкладення зберігають шляхи, сумісні з JPEG; скріншоти тут не проходять декодування та перекодування.
         return encoded
     }
 
@@ -84,10 +84,10 @@ internal object AgentModelImageEncoder {
         bitmap: Bitmap,
         source: String,
     ): AgentModelClient.ModelImage =
-        // Bitmap 尚无文件编码，仅序列化一次 PNG；不缩放、不铺底、不转换像素。
+        // Bitmap ще не має кодування файлів і серіалізує PNG лише один раз; без масштабування, без затінення, без перетворення пікселів.
         encodeBitmap(bitmap, source, screenProfile, flattenAlpha = false).copy(preserveOriginal = true)
 
-    /** 文件工具图片在发送模型前统一编码为 JPEG。 */
+    /** Перед надсиланням моделі зображення файлів уніфіковано кодуються як JPEG.*/
     fun toolVision(
         bytes: ByteArray,
         source: String,
@@ -156,7 +156,7 @@ internal object AgentModelImageEncoder {
         profile: EncodingProfile,
         flattenAlpha: Boolean,
     ): AgentModelClient.ModelImage {
-        require(!bitmap.isRecycled && bitmap.width > 0 && bitmap.height > 0) { "图片位图不可用" }
+        require(!bitmap.isRecycled && bitmap.width > 0 && bitmap.height > 0) { "малюнокшматокбітмалюнокнемаєможевикористовувати" }
         val encodedBitmap = renderBitmap(
             bitmap = bitmap,
             target = targetSize(bitmap.width, bitmap.height, profile),
@@ -169,11 +169,11 @@ internal object AgentModelImageEncoder {
             ).coerceAtLeast(32 * 1024)
             val output = ByteArrayOutputStream(initialCapacity)
             check(encodedBitmap.compress(profile.format, profile.quality, output)) {
-                "图片编码失败"
+                "малюнокшматоккомпілюватикодвтратитипоразка"
             }
             val encoded = output.toByteArray()
             require(encoded.isNotEmpty() && encoded.size <= MAX_AGENT_IMAGE_BYTES) {
-                "图片数据过大：${encoded.size}"
+                "малюнокшматокномервідповідно доПасвеликий：${encoded.size}"
             }
             return AgentModelClient.ModelImage(
                 reference = "data:${profile.mimeType};base64,${Base64.encodeToString(encoded, Base64.NO_WRAP)}",
@@ -216,8 +216,8 @@ internal object AgentModelImageEncoder {
     }
 
     private fun inspectBounds(bytes: ByteArray, mimeHint: String): ImageBounds {
-        require(bytes.isNotEmpty()) { "图片内容为空" }
-        require(bytes.size <= MAX_AGENT_IMAGE_BYTES) { "图片数据过大：${bytes.size}" }
+        require(bytes.isNotEmpty()) { "малюнокшматокВсерединіДозволитидлянульовий" }
+        require(bytes.size <= MAX_AGENT_IMAGE_BYTES) { "малюнокшматокномервідповідно доПасвеликий：${bytes.size}" }
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
         return ImageBounds(
@@ -290,7 +290,7 @@ internal object AgentModelImageEncoder {
         if (uri.scheme == "content") {
             return {
                 context.contentResolver.openInputStream(uri)
-                    ?: error("无法打开本地图片")
+                    ?: error("немаєЗаконбитиВІДЧИНЕНОкнигаземлімалюнокшматок")
             }
         }
         val file = when (uri.scheme) {

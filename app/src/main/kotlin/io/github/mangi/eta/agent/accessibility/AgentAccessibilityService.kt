@@ -79,7 +79,7 @@ class AgentAccessibilityService : AccessibilityService() {
     private val scrollEventObservationGate = ScrollEventObservationGate(
         uptimeMillis = SystemClock::uptimeMillis,
     )
-    // 远端节点查询可能占住线程数秒；只保留一个最新候选，禁止滚动事件形成积压。
+    // Запит віддаленого вузла може займати потік протягом кількох секунд; зберігається лише останній кандидат, і події прокручування забороняють утворювати відставання.
     private val scrollEventExecutor = ThreadPoolExecutor(
         1,
         1,
@@ -136,8 +136,8 @@ class AgentAccessibilityService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     /**
-     * 一次观察与其节点句柄组成不可变快照。调用方必须把同一实例传回节点动作，
-     * 避免其他运行或 wait_for_text 的临时观察改写 index 含义。
+     * Спостереження та його маркер вузла утворюють незмінний знімок. Абонент повинен передати той самий екземпляр назад дії вузла,
+     * Запобігання іншим запускам або тимчасовим спостереженням wait_for_text від перезапису значення індексу.
      */
     fun captureNodeSnapshot(maxNodes: Int): NodeSnapshot? = runOnMainSync {
         val startedAt = SystemClock.elapsedRealtime()
@@ -174,7 +174,7 @@ class AgentAccessibilityService : AccessibilityService() {
         }
     }
 
-    /** 临时查询不发布任何全局节点状态，适用于 wait_for_text。 */
+    /** Спеціальні запити не публікують глобальний статус вузла, застосовний до wait_for_text.*/
     fun queryNodes(maxNodes: Int): List<UiNode> =
         captureNodeSnapshot(maxNodes)?.nodes.orEmpty()
 
@@ -222,8 +222,8 @@ class AgentAccessibilityService : AccessibilityService() {
         } ?: PackageWindowVisibility.UNKNOWN
 
     /**
-     * BACK 只表示系统接收了退出动作；浮窗通常还会执行退出动画。
-     * 等待目标包窗口真正消失并稳定两个采样周期，避免下一步截图抢在 removeView 之前执行。
+     * BACK лише означає, що система отримала дію виходу; плаваючі вікна зазвичай також виконують анімацію виходу.
+     * Зачекайте, поки вікно цільового пакета фактично зникне, і стабілізується протягом двох періодів вибірки, щоб уникнути виконання наступного знімка екрана перед видаленням View.
      */
     fun awaitPackageWindowGone(
         packageName: String,
@@ -286,7 +286,7 @@ class AgentAccessibilityService : AccessibilityService() {
             windowId = event.windowId,
             eventTimeMillis = event.eventTime,
         ) { observation ->
-            // 系统可能在滚动后清掉节点缓存，source 必须复制事件后在后台解析。
+            // Система може очистити кеш вузла після прокручування, а джерело має скопіювати подію та проаналізувати її у фоновому режимі.
             val eventCopy = try {
                 AccessibilityEvent(event)
             } catch (error: RuntimeException) {
@@ -415,19 +415,19 @@ class AgentAccessibilityService : AccessibilityService() {
             if (indexed.clickTarget != null && actionable == null) {
                 NodeActionResult.failure(
                     "STALE_ACTION_TARGET",
-                    "节点的可点击目标已经变化，请重新观察屏幕",
+                    "ФестивальточказможеточкаударГоловазнаквжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран",
                 )
             } else if (actionable != null) {
                 when (performNodeAction(actionable, AccessibilityNodeInfo.ACTION_CLICK)) {
                     ActionDispatch.ACCEPTED -> NodeActionResult.success(method = "ACTION_CLICK")
                     ActionDispatch.REJECTED ->
-                        NodeActionResult.failure("ACTION_FAILED", "目标节点拒绝点击动作")
+                        NodeActionResult.failure("ACTION_FAILED", "ГоловазнакФестивальточкавідхилитиАбсолютноточкаударрухатисяробити")
                     ActionDispatch.OUTCOME_UNKNOWN -> NodeActionResult.outcomeUnknown()
                 }
             } else {
                 val bounds = clippedNodeBounds(node)
                 if (bounds.isEmpty) {
-                    NodeActionResult.failure("INVALID_NODE_BOUNDS", "目标节点没有可点击区域")
+                    NodeActionResult.failure("INVALID_NODE_BOUNDS", "ГоловазнакФестивальточкабезматиможеточкаударрайондомен")
                 } else gestureTap(bounds.centerX().toFloat(), bounds.centerY().toFloat())
             }
         }
@@ -442,19 +442,19 @@ class AgentAccessibilityService : AccessibilityService() {
         if (indexed.longClickTarget != null && actionable == null) {
             NodeActionResult.failure(
                 "STALE_ACTION_TARGET",
-                "节点的可长按目标已经变化，请重新观察屏幕",
+                "Фестивальточказможедовговідповідно доГоловазнаквжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран",
             )
         } else if (actionable != null) {
             when (performNodeAction(actionable, AccessibilityNodeInfo.ACTION_LONG_CLICK)) {
                 ActionDispatch.ACCEPTED -> NodeActionResult.success(method = "ACTION_LONG_CLICK")
                 ActionDispatch.REJECTED ->
-                    NodeActionResult.failure("ACTION_FAILED", "目标节点拒绝长按动作")
+                    NodeActionResult.failure("ACTION_FAILED", "ГоловазнакФестивальточкавідхилитиАбсолютнодовговідповідно дорухатисяробити")
                 ActionDispatch.OUTCOME_UNKNOWN -> NodeActionResult.outcomeUnknown()
             }
         } else {
             val bounds = clippedNodeBounds(node)
             if (bounds.isEmpty) {
-                NodeActionResult.failure("INVALID_NODE_BOUNDS", "目标节点没有可长按区域")
+                NodeActionResult.failure("INVALID_NODE_BOUNDS", "ГоловазнакФестивальточкабезматиможедовговідповідно дорайондомен")
             } else {
                 gestureTap(
                     bounds.centerX().toFloat(),
@@ -477,7 +477,7 @@ class AgentAccessibilityService : AccessibilityService() {
             ?: return ScrollActionResult.failure(
                 direction = direction,
                 code = "SERVICE_TIMEOUT",
-                message = "无障碍服务主线程无响应",
+                message = "немаєбар'єрперешкоджатиОдягобслуговуванняхостДрітПроцедуранемаєкільцевідповідь",
                 targetIndex = index,
             )
         val validationNode = when (validation) {
@@ -494,14 +494,14 @@ class AgentAccessibilityService : AccessibilityService() {
             return ScrollActionResult.failure(
                 direction = direction,
                 code = "STALE_ACTION_TARGET",
-                message = "节点的滚动容器已经变化，请重新观察屏幕",
+                message = "ФестивальточказролрухатисяДозволитипристрійвжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран",
                 targetIndex = index,
             )
         }
         scrollable ?: return ScrollActionResult.failure(
             direction = direction,
             code = "NOT_SCROLLABLE",
-            message = "指定节点及其父节点不可滚动",
+            message = "звертатися доЗвичайноФестивальточкаіщобатькоФестивальточканемаєможеролрухатися",
             targetIndex = index,
         )
         return executeScroll(scrollable, direction, targetIndex = index, amount = amount)
@@ -513,7 +513,7 @@ class AgentAccessibilityService : AccessibilityService() {
         } ?: return ScrollActionResult.failure(
             direction = direction,
             code = "NO_ACTIVE_WINDOW",
-            message = "当前活动窗口不可访问",
+            message = "коливпереджитирухатисявікноротнемаєможевідвідатизапитати",
         )
         return executeScroll(target, direction, targetIndex = null, amount = amount)
     }
@@ -530,7 +530,7 @@ class AgentAccessibilityService : AccessibilityService() {
             return ScrollActionResult.failure(
                 direction = direction,
                 code = "STALE_NODE",
-                message = "滚动目标已经失效，请重新观察屏幕",
+                message = "ролрухатисяГоловазнаквжечерезвтратитиефект，будь ласкаВажкановийпереглянутиоглядатиекранекран",
                 targetIndex = targetIndex,
             )
         }
@@ -538,7 +538,7 @@ class AgentAccessibilityService : AccessibilityService() {
             return ScrollActionResult.failure(
                 direction = direction,
                 code = "AXIS_MISMATCH",
-                message = "目标只支持另一滚动轴；为避免误触侧滑，本次未执行任何动作",
+                message = "ГоловазнакТількивідділенняутримуватиіншеодинролрухатисявісь；дляуникативідмовивсяпомилкадотикбікковзати，книгаДругосортнийще ніВиконатидобрепризначитищорухатисяробити",
                 targetIndex = targetIndex,
                 elapsedMs = SystemClock.elapsedRealtime() - startedAt,
             )
@@ -548,7 +548,7 @@ class AgentAccessibilityService : AccessibilityService() {
         val beforeAnchors = scrollContentAnchors(target)
         val targetIdentity = ScrollTargetIdentity.from(target)
         val beforeSequence = currentScrollEventSequence()
-        // 节点滚动动作固定翻约一屏；小幅滚动只能用手势控制位移。
+        // Дія прокручування вузла фіксується приблизно на одному екрані; невелика прокрутка може використовувати лише жести для керування зміщенням.
         val method = if (amount == ScrollAmount.PAGE) chooseScrollMethod(target, direction) else null
         var methodName = method?.name.orEmpty()
         return withScrollEventObservation(packageName, windowId) {
@@ -559,7 +559,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 return ScrollActionResult.failure(
                     direction = direction,
                     code = "ACTION_OUTCOME_UNKNOWN",
-                    message = "滚动动作可能已提交，但系统未在时限内返回结果；请先重新观察，避免重复滚动",
+                    message = "ролрухатисярухатисяробитиможездатнийвженестиплатити，алеКраваткасистемаще нііснуютьгодинаобмеженняВсерединіповерненняповерненнявузолфрукти；будь ласкапершеВажкановийпереглянутиоглядати，уникативідмовивсяВажкаскладніролрухатися",
                     method = methodName,
                     targetIndex = targetIndex,
                     elapsedMs = SystemClock.elapsedRealtime() - startedAt,
@@ -584,7 +584,7 @@ class AgentAccessibilityService : AccessibilityService() {
                     ?: return ScrollActionResult.failure(
                         direction = direction,
                         code = "INVALID_NODE_BOUNDS",
-                        message = "滚动目标没有足够的可用区域",
+                        message = "ролрухатисяГоловазнакбезматистопадоситьзможевикористовуватирайондомен",
                         targetIndex = targetIndex,
                     )
                 methodName = "GESTURE_SWIPE"
@@ -622,7 +622,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 return ScrollActionResult.failure(
                     direction = direction,
                     code = "ACTION_FAILED",
-                    message = "系统拒绝滚动动作",
+                    message = "КраваткасистемавідхилитиАбсолютноролрухатисярухатисяробити",
                     method = methodName,
                     targetIndex = targetIndex,
                     elapsedMs = SystemClock.elapsedRealtime() - startedAt,
@@ -660,7 +660,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 return ScrollActionResult.failure(
                     direction = direction,
                     code = "DIRECTION_MISMATCH",
-                    message = "界面向请求方向的反方向移动",
+                    message = "межалокшинаназустрічбудь ласкапроситиплощіназустрічзпротилежністьплощіназустрічзмінарухатися",
                     method = methodName,
                     targetIndex = targetIndex,
                     deltaX = delta.takeIf { direction.axis == ScrollAxis.HORIZONTAL },
@@ -701,7 +701,7 @@ class AgentAccessibilityService : AccessibilityService() {
             return ScrollActionResult.failure(
                 direction = direction,
                 code = "ACTION_OUTCOME_UNKNOWN",
-                message = "滚动动作已经发出，但无法确认内容位移；请先重新观察，禁止直接重试",
+                message = "ролрухатисярухатисяробитивжечерезволоссяпоза，аленемаєЗаконправильнорозпізнатиВсерединіДозволитибітзміна；будь ласкапершеВажкановийпереглянутиоглядати，заборонакінецьпрямозловитиВажкаспробувати",
                 method = methodName,
                 targetIndex = targetIndex,
                 deltaX = delta.takeIf { direction.axis == ScrollAxis.HORIZONTAL },
@@ -732,7 +732,7 @@ class AgentAccessibilityService : AccessibilityService() {
         val node = findFocusedEditableNode()
             ?: return@runNodeActionOnMainSync NodeActionResult.failure(
                 "NO_FOCUSED_EDITABLE",
-                "没有获得输入焦点的可编辑节点",
+                "безматиотриматиповиннівтратитивведітьфокусточказможекомпілюватиредагуватиФестивальточка",
             )
         node.incrementalTextValidationError()?.let { error ->
             return@runNodeActionOnMainSync error
@@ -744,7 +744,7 @@ class AgentAccessibilityService : AccessibilityService() {
             selectionEnd = node.textSelectionEnd,
         ) ?: return@runNodeActionOnMainSync NodeActionResult.failure(
             "TEXT_SELECTION_UNAVAILABLE",
-            "当前输入框未提供可靠光标或选区；请用 replace_text 提供完整值",
+            "коливпередвтратитивведітькоробкаще нінестидляможеЗалежить відсвітлознакабовибратирайон；будь ласкавикористовувати replace_text нестидлязакінченовсезначення",
         )
         setNodeText(node, plan.text, plan.cursor)
     }
@@ -756,10 +756,10 @@ class AgentAccessibilityService : AccessibilityService() {
     ): NodeActionResult {
         if (index != null) {
             val requiredSnapshot = snapshot
-                ?: return NodeActionResult.failure("NO_OBSERVATION", "指定 index 需要有效观察快照")
+                ?: return NodeActionResult.failure("NO_OBSERVATION", "звертатися доЗвичайно index потребахочутьматиефектпереглянутиоглядатишвидкийВідповідно до")
             return withValidatedNode(requiredSnapshot, index) { node ->
                 if (!node.isEditable) {
-                    NodeActionResult.failure("NOT_EDITABLE", "指定节点不可编辑")
+                    NodeActionResult.failure("NOT_EDITABLE", "звертатися доЗвичайноФестивальточканемаєможекомпілюватиредагувати")
                 } else {
                     setNodeText(node, text, text.length)
                 }
@@ -769,18 +769,18 @@ class AgentAccessibilityService : AccessibilityService() {
             val node = findFocusedEditableNode()
                 ?: return@runNodeActionOnMainSync NodeActionResult.failure(
                     "NO_FOCUSED_EDITABLE",
-                    "没有获得输入焦点的可编辑节点",
+                    "безматиотриматиповиннівтратитивведітьфокусточказможекомпілюватиредагуватиФестивальточка",
                 )
             setNodeText(node, text, text.length)
         }
     }
 
-    /** 优先直接按选区写入，只有目标拒绝 SET_TEXT 时才回退系统粘贴。 */
+    /** Пріоритезуйте запис безпосередньо відповідно до вибору та повертайтеся до системної вставки лише тоді, коли ціль відхиляє SET_TEXT.*/
     fun pasteText(text: String): NodeActionResult = runNodeActionOnMainSync {
         val node = findFocusedEditableNode()
             ?: return@runNodeActionOnMainSync NodeActionResult.failure(
                 "NO_FOCUSED_EDITABLE",
-                "没有获得输入焦点的可编辑节点",
+                "безматиотриматиповиннівтратитивведітьфокусточказможекомпілюватиредагуватиФестивальточка",
             )
         node.incrementalTextValidationError()?.let { error ->
             return@runNodeActionOnMainSync error
@@ -792,7 +792,7 @@ class AgentAccessibilityService : AccessibilityService() {
             selectionEnd = node.textSelectionEnd,
         ) ?: return@runNodeActionOnMainSync NodeActionResult.failure(
             "TEXT_SELECTION_UNAVAILABLE",
-            "当前输入框未提供可靠光标或选区；请用 replace_text 提供完整值",
+            "коливпередвтратитивведітькоробкаще нінестидляможеЗалежить відсвітлознакабовибратирайон；будь ласкавикористовувати replace_text нестидлязакінченовсезначення",
         )
         val directResult = setNodeText(node, plan.text, plan.cursor)
         if (directResult.ok) {
@@ -815,7 +815,7 @@ class AgentAccessibilityService : AccessibilityService() {
         if (!copied) {
             return@runNodeActionOnMainSync NodeActionResult.failure(
                 "CLIPBOARD_WRITE_FAILED",
-                "写入剪贴板失败",
+                "НапишітьвведітьВирізатипалкаплитавтратитипоразка",
             )
         }
         val pasteResult = try {
@@ -828,7 +828,7 @@ class AgentAccessibilityService : AccessibilityService() {
                     NodeActionResult.outcomeUnknown()
                 }
             } else {
-                NodeActionResult.failure("ACTION_FAILED", "输入节点拒绝粘贴动作")
+                NodeActionResult.failure("ACTION_FAILED", "втратитивведітьФестивальточкавідхилитиАбсолютнопалкапалкарухатисяробити")
             }
         } catch (_: Throwable) {
             NodeActionResult.outcomeUnknown()
@@ -853,7 +853,7 @@ class AgentAccessibilityService : AccessibilityService() {
         val currentClip = runCatching { clipboard.primaryClip }.getOrNull()
             ?: return false
         if (currentClip.description.label?.toString() != temporaryLabel) {
-            // 用户或其他应用已经写入新内容，不能用旧快照覆盖它。
+            // Користувач або інша програма написала новий вміст і не може перезаписати його старим знімком.
             return true
         }
         return runCatching {
@@ -869,12 +869,12 @@ class AgentAccessibilityService : AccessibilityService() {
         val node = findFocusedEditableNode()
             ?: return@runNodeActionOnMainSync NodeActionResult.failure(
                 "NO_FOCUSED_EDITABLE",
-                "没有获得输入焦点的可编辑节点",
+                "безматиотриматиповиннівтратитивведітьфокусточказможекомпілюватиредагуватиФестивальточка",
             )
         if (node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)) {
             NodeActionResult.success(method = "ACTION_IME_ENTER")
         } else {
-            NodeActionResult.failure("ACTION_FAILED", "输入节点拒绝回车动作")
+            NodeActionResult.failure("ACTION_FAILED", "втратитивведітьФестивальточкавідхилитиАбсолютноповерненняавтомобільрухатисяробити")
         }
     }
 
@@ -911,13 +911,13 @@ class AgentAccessibilityService : AccessibilityService() {
             "RECENTS" -> GLOBAL_ACTION_RECENTS
             "NOTIFICATIONS" -> GLOBAL_ACTION_NOTIFICATIONS
             "QUICK_SETTINGS" -> GLOBAL_ACTION_QUICK_SETTINGS
-            else -> return NodeActionResult.failure("INVALID_ARGUMENT", "不支持的系统动作")
+            else -> return NodeActionResult.failure("INVALID_ARGUMENT", "немаєвідділенняутримуватизКраваткасистемарухатисяробити")
         }
         return runNodeActionOnMainSync {
             if (performGlobalAction(action)) {
                 NodeActionResult.success(method = "GLOBAL_ACTION_${name.uppercase()}")
             } else {
-                NodeActionResult.failure("ACTION_FAILED", "系统拒绝全局动作")
+                NodeActionResult.failure("ACTION_FAILED", "КраваткасистемавідхилитиАбсолютноПовнийбюрорухатисяробити")
             }
         }
     }
@@ -948,9 +948,9 @@ class AgentAccessibilityService : AccessibilityService() {
             .put("package", currentPackageName().orEmpty())
 
     /**
-     * 截取当前屏幕，排除 TYPE_ACCESSIBILITY_OVERLAY 浮层（glow/orb/bubble/resultCard/GestureIndicator）。
-     * 从 agent-runtime 子线程调用；takeScreenshotOfWindow 内部 post 到主线程，
-     * callback 在有界后台线程执行位图复制，latch 只阻塞 agent-runtime 工作线程。
+     * Зніміть поточний екран і виключіть плаваючий шар TYPE_ACCESSIBILITY_OVERLAY (світіння/куля/бульбашка/результатна картка/індикатор жестів).
+     * Викликається з підпотоку середовища виконання агента; takeScreenshotOfWindow внутрішній допис до головного потоку,
+     * зворотний виклик виконує копіювання растрового зображення в обмеженому фоновому потоці, блокування блокує лише робочий потік середовища виконання агента.
      */
     fun captureScreenshotExcludingOverlays(
         excludedPackages: Set<String> = emptySet(),
@@ -962,7 +962,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 runCatching { onWindowsSubmitted?.invoke() }
             }
         }
-        // 旧系统没有逐窗口截图，不能用全屏截图绕过入口包与 Eta 浮层排除合同。
+        // У старій системі немає знімків вікон за вікнами, а повноекранні знімки екрана не можна використовувати, щоб обійти вихідний пакет і контракти виключення плаваючого рівня Eta.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             return ScreenshotCaptureResult.unavailable().also { signalWindowsSubmitted() }
         }
@@ -988,8 +988,8 @@ class AgentAccessibilityService : AccessibilityService() {
         }
         val screenBounds = Rect(0, 0, screenW, screenH)
 
-        // 只过滤能确认属于 Eta 的无障碍 overlay；第三方 overlay 必须保留，
-        // 否则截图与实际接收坐标手势的窗口会不一致。
+        // Фільтрувати лише доступні накладки, які можуть бути підтверджені належністю до Eta; сторонні накладки повинні бути збережені.
+        // Інакше знімок екрана буде несумісним із вікном, яке насправді отримує жест координат.
         val windowPackages = allWindows.associate { window ->
             window.id to window.root?.packageName?.toString()
         }
@@ -1110,7 +1110,7 @@ class AgentAccessibilityService : AccessibilityService() {
                 latch.countDown()
             }
         }
-        // 窗口 ID 已固定并全部提交后即可显示 Eta；后续合并和编码不会再把入口浮层拍进去。
+        // Eta може бути відображено після того, як ідентифікатор вікна буде виправлено та всі надіслані; подальше злиття та кодування більше не захоплюватиме вхідний плаваючий шар.
         signalWindowsSubmitted()
         val completed = try {
             latch.await(2, TimeUnit.SECONDS)
@@ -1193,13 +1193,13 @@ class AgentAccessibilityService : AccessibilityService() {
             for (window in sortedWindows) {
                 val pair = screenshots[window.id]
                 if (pair == null) {
-                    // 上层窗口抓取失败时必须遮住其区域，不能向模型暴露实际已被遮挡的底层界面。
+                    // Якщо захоплення верхнього вікна не вдається, його область має бути покрита, і базовий інтерфейс, який фактично заблоковано, не може бути відкритим для моделі.
                     canvas.drawRect(RectF(window.bounds), occlusionPaint)
                 } else {
                     val (bmp, bounds) = pair
                     if (bmp.isRecycled) continue
-                    // 把窗口 bitmap 缩放到其 bounds 尺寸绘制，处理 takeScreenshotOfWindow
-                    // 返回尺寸与 bounds 不一致（逻辑像素 vs 物理像素）的情况。
+                    // Змініть растрове зображення вікна до його розміру, намалюйте його та обробіть takeScreenshotOfWindow
+                    // Повертає випадок, коли розміри не відповідають межам (логічні пікселі проти фізичних пікселів).
                     val src = Rect(0, 0, bmp.width, bmp.height)
                     canvas.drawBitmap(bmp, src, RectF(bounds), null)
                 }
@@ -1212,8 +1212,8 @@ class AgentAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * 输入框的真实内容。空框显示提示文字时 text 返回的是提示语，若当作已有内容，
-     * 追加输入会把提示拼进结果，清空后读回校验也会误报失败。
+     * Фактичний вміст поля введення. Коли в порожньому полі відображається текст підказки, текст повертає текст підказки. Якщо це розглядається як існуючий вміст,
+     *Додаткове введення введе підказку в результат, а повторне читання підтвердження після очищення також призведе до помилкового повідомлення про помилку.
      */
     private fun AccessibilityNodeInfo.realText(): String =
         if (isShowingHintText) "" else text?.toString().orEmpty()
@@ -1227,7 +1227,7 @@ class AgentAccessibilityService : AccessibilityService() {
             putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
         }
         if (!node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, setTextArgs)) {
-            return NodeActionResult.failure("ACTION_FAILED", "输入节点拒绝文本修改动作")
+            return NodeActionResult.failure("ACTION_FAILED", "втратитивведітьФестивальточкавідхилитиАбсолютномистецтвакнигабудуватизмінитирухатисяробити")
         }
         val safeCursor = cursor.coerceIn(0, text.length)
         val selectionArgs = Bundle().apply {
@@ -1269,7 +1269,7 @@ class AgentAccessibilityService : AccessibilityService() {
         if (isPassword || currentText == null) {
             return NodeActionResult.failure(
                 "TEXT_CONTENT_UNAVAILABLE",
-                "当前输入框不允许可靠读取已有文本；请用 replace_text 提供完整值",
+                "коливпередвтратитивведітькоробканемаєдозволяютьтравняможеЗалежить відчитатиВиберітьвжематимистецтвакнига；будь ласкавикористовувати replace_text нестидлязакінченовсезначення",
             )
         }
         if (
@@ -1283,7 +1283,7 @@ class AgentAccessibilityService : AccessibilityService() {
         ) {
             return NodeActionResult.failure(
                 "TEXT_SELECTION_UNAVAILABLE",
-                "当前输入框未提供可靠光标或选区；请用 replace_text 提供完整值",
+                "коливпередвтратитивведітькоробкаще нінестидляможеЗалежить відсвітлознакабовибратирайон；будь ласкавикористовувати replace_text нестидлязакінченовсезначення",
             )
         }
         return null
@@ -1584,7 +1584,7 @@ class AgentAccessibilityService : AccessibilityService() {
         block: (IndexedNode) -> NodeActionResult,
     ): NodeActionResult {
         val validation = runOnMainSync { validateNode(snapshot, index) }
-            ?: return NodeActionResult.failure("SERVICE_TIMEOUT", "无障碍服务主线程无响应")
+            ?: return NodeActionResult.failure("SERVICE_TIMEOUT", "немаєбар'єрперешкоджатиОдягобслуговуванняхостДрітПроцедуранемаєкільцевідповідь")
         return when (validation) {
             is NodeValidation.Invalid -> validation.result
             is NodeValidation.Valid -> block(validation.indexedNode)
@@ -1594,21 +1594,21 @@ class AgentAccessibilityService : AccessibilityService() {
     private fun validateNode(snapshot: NodeSnapshot, index: Int): NodeValidation {
         if (snapshot.serviceToken != serviceToken) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("SERVICE_RECONNECTED", "无障碍服务已重连，请重新观察屏幕"),
+                NodeActionResult.failure("SERVICE_RECONNECTED", "немаєбар'єрперешкоджатиОдягобслуговуваннявжеВажканавіть，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         }
         val indexed = snapshot.indexedNodes.firstOrNull { it.index == index }
             ?: return NodeValidation.Invalid(
-                NodeActionResult.failure("INVALID_NODE_INDEX", "观察快照中不存在节点 index=$index"),
+                NodeActionResult.failure("INVALID_NODE_INDEX", "переглянутиоглядатишвидкийВідповідно досерединанемаєжитиіснуютьФестивальточка index=$index"),
             )
         val activeRoot = rootInActiveWindow
             ?: return NodeValidation.Invalid(
-                NodeActionResult.failure("STALE_WINDOW", "当前活动窗口不可访问，请重新观察屏幕"),
+                NodeActionResult.failure("STALE_WINDOW", "коливпереджитирухатисявікноротнемаєможевідвідатизапитати，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         val activePackage = activeRoot.packageName?.toString().orEmpty()
         if (activeRoot.windowId != snapshot.windowId || activePackage != snapshot.packageName) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("STALE_WINDOW", "活动窗口已经变化，请重新观察屏幕"),
+                NodeActionResult.failure("STALE_WINDOW", "житирухатисявікноротвжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         }
         if (
@@ -1616,23 +1616,23 @@ class AgentAccessibilityService : AccessibilityService() {
             !snapshot.hasUnambiguousIdentity(indexed)
         ) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("STALE_CONTENT", "窗口内容已经变化，请重新观察屏幕"),
+                NodeActionResult.failure("STALE_CONTENT", "вікноротВсерединіДозволитивжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         }
         val node = indexed.node
         if (!runCatching { node.refresh() }.getOrDefault(false)) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("STALE_NODE", "目标节点已经失效，请重新观察屏幕"),
+                NodeActionResult.failure("STALE_NODE", "ГоловазнакФестивальточкавжечерезвтратитиефект，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         }
         if (!indexed.identityMatches(node)) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("IDENTITY_CHANGED", "目标节点内容或身份已经变化，请重新观察屏幕"),
+                NodeActionResult.failure("IDENTITY_CHANGED", "ГоловазнакФестивальточкаВсерединіДозволитиаботілочасткавжечерезЗміназмінити，будь ласкаВажкановийпереглянутиоглядатиекранекран"),
             )
         }
         if (!node.isVisibleToUser || !node.isEnabled) {
             return NodeValidation.Invalid(
-                NodeActionResult.failure("NODE_NOT_ACTIONABLE", "目标节点当前不可见或不可用"),
+                NodeActionResult.failure("NODE_NOT_ACTIONABLE", "ГоловазнакФестивальточкаколивпереднемаєможедивабонемаєможевикористовувати"),
             )
         }
         return NodeValidation.Valid(indexed)
@@ -1682,7 +1682,7 @@ class AgentAccessibilityService : AccessibilityService() {
         }
         traversal.visitedNodes++
         try {
-            // 不可见父节点的后代不会成为可操作目标，尽早裁掉这类大分支。
+            // Нащадки невидимих ​​батьківських вузлів не стануть працездатними цілями, тому відсікайте такі великі гілки якомога раніше.
             val visible = node.isVisibleToUser
             if (depth > 0 && !visible) return
 
@@ -1798,7 +1798,7 @@ class AgentAccessibilityService : AccessibilityService() {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             return NodeActionResult.failure(
                 "GESTURE_NOT_DISPATCHED",
-                "不能在无障碍主线程同步等待手势",
+                "немаєздатнийіснуютьнемаєбар'єрперешкоджатихостДрітПроцедурате самекрокчекатилікуватирукупотенціал",
             )
         }
         val latch = CountDownLatch(1)
@@ -1838,7 +1838,7 @@ class AgentAccessibilityService : AccessibilityService() {
                     GESTURE_CALLBACK_HANDLER,
                 )
             } catch (_: Throwable) {
-                // Binder 事务可能已经送达；异常不能证明手势未执行，禁止 Root 重放。
+                // Можливо, трансакцію Binder було доставлено; виняток не може довести, що жест не було виконано, і повторне відтворення Root заборонено.
                 outcome.set(GestureDispatch.OUTCOME_UNKNOWN)
                 gate.finish()
                 latch.countDown()
@@ -1851,7 +1851,7 @@ class AgentAccessibilityService : AccessibilityService() {
             }
         }
         if (!posted) {
-            return NodeActionResult.failure("GESTURE_NOT_DISPATCHED", "无障碍主线程拒绝手势任务")
+            return NodeActionResult.failure("GESTURE_NOT_DISPATCHED", "немаєбар'єрперешкоджатихостДрітПроцедуравідхилитиАбсолютнорукупотенціалпризначитиобслуговування")
         }
         val finishedInTime = try {
             latch.await(durationMs + GESTURE_CALLBACK_GRACE_MS, TimeUnit.MILLISECONDS)
@@ -1863,7 +1863,7 @@ class AgentAccessibilityService : AccessibilityService() {
             if (gate.cancelIfPending()) {
                 return NodeActionResult.failure(
                     "GESTURE_NOT_DISPATCHED",
-                    "无障碍主线程繁忙，手势已在执行前取消",
+                    "немаєбар'єрперешкоджатихостДрітПроцедураТрадиційнийзайнятий，рукупотенціалвжеіснуютьВиконатидобревпередВиберітьвидалити",
                 )
             }
             return NodeActionResult.outcomeUnknown()
@@ -1873,16 +1873,16 @@ class AgentAccessibilityService : AccessibilityService() {
             GestureDispatch.CANCELLED -> NodeActionResult.outcomeUnknown()
             GestureDispatch.OUTCOME_UNKNOWN -> NodeActionResult.outcomeUnknown()
             GestureDispatch.NOT_DISPATCHED,
-            null -> NodeActionResult.failure("GESTURE_NOT_DISPATCHED", "系统拒绝手势任务")
+            null -> NodeActionResult.failure("GESTURE_NOT_DISPATCHED", "КраваткасистемавідхилитиАбсолютнорукупотенціалпризначитиобслуговування")
         }
     }
 
     private fun runNodeActionOnMainSync(block: () -> NodeActionResult): NodeActionResult =
         when (val result = callOnMainSync(block)) {
             is MainThreadCallResult.Completed -> result.value
-                ?: NodeActionResult.failure("ACTION_FAILED", "无障碍动作执行异常")
+                ?: NodeActionResult.failure("ACTION_FAILED", "немаєбар'єрперешкоджатирухатисяробитиВиконатидобрерізнічасто")
             MainThreadCallResult.NOT_STARTED ->
-                NodeActionResult.failure("SERVICE_TIMEOUT", "无障碍服务主线程无响应，动作未执行")
+                NodeActionResult.failure("SERVICE_TIMEOUT", "немаєбар'єрперешкоджатиОдягобслуговуванняхостДрітПроцедуранемаєкільцевідповідь，рухатисяробитище ніВиконатидобре")
             MainThreadCallResult.OUTCOME_UNKNOWN -> NodeActionResult.outcomeUnknown()
         }
 
@@ -1898,7 +1898,7 @@ class AgentAccessibilityService : AccessibilityService() {
             return try {
                 MainThreadCallResult.Completed(block())
             } catch (_: Throwable) {
-                // 框架调用抛错时无法证明副作用没有发生，禁止调用方回退重放。
+                // Коли виклик фреймворку видає помилку, неможливо довести, що побічних ефектів не виникло, і абоненту заборонено повертатися та відтворювати.
                 MainThreadCallResult.OUTCOME_UNKNOWN
             }
         }
@@ -1927,7 +1927,7 @@ class AgentAccessibilityService : AccessibilityService() {
         }
         if (!completed) {
             if (gate.cancelIfPending()) return MainThreadCallResult.NOT_STARTED
-            // 已开始的副作用不得由调用方回退重做；返回未知结果，让模型先重新观察。
+            // Побічні ефекти, що почалися, не повинні бути відкочені та перероблені абонентом; повертаються невідомі результати, і спочатку проводиться повторне спостереження моделі.
             return MainThreadCallResult.OUTCOME_UNKNOWN
         }
         if (failed) return MainThreadCallResult.OUTCOME_UNKNOWN
@@ -1951,7 +1951,7 @@ class AgentAccessibilityService : AccessibilityService() {
 
             fun outcomeUnknown(): NodeActionResult = failure(
                 code = "ACTION_OUTCOME_UNKNOWN",
-                message = "动作可能已执行，但系统未在时限内返回结果；请先重新观察，避免重复操作",
+                message = "рухатисяробитиможездатнийвжеВиконатидобре，алеКраваткасистемаще нііснуютьгодинаобмеженняВсерединіповерненняповерненнявузолфрукти；будь ласкапершеВажкановийпереглянутиоглядати，уникативідмовивсяВажкаскладніТримайтеробити",
             )
         }
     }
@@ -2125,10 +2125,10 @@ class AgentAccessibilityService : AccessibilityService() {
         val editable: Boolean,
         val password: Boolean,
         val enabled: Boolean,
-        /** 开关、勾选框等的状态；null 表示节点不可勾选。 */
+        /** Стан перемикачів, прапорців і т.д.; null означає, що вузол не можна перевірити.*/
         val checked: Boolean? = null,
         val selected: Boolean = false,
-        /** 输入框提示语，只在内容为空时有意义，用于识别"这是哪个输入框"。 */
+        /** Підказка до поля введення має значення лише тоді, коли вміст порожній, і використовується для визначення того, «яке це поле введення».*/
         val hint: String = "",
     )
 
@@ -2359,8 +2359,8 @@ class AgentAccessibilityService : AccessibilityService() {
         private val GESTURE_CALLBACK_HANDLER = Handler(GESTURE_CALLBACK_THREAD.looper)
 
         /**
-         * 进程级 executor 不在 service 重连时 shutdownNow；否则已经由框架创建、
-         * 尚在队列中的 ScreenshotResult 无法进入回调释放 HardwareBuffer。
+         * Виконавець на рівні процесу не вимикається зараз, коли служба повторно підключається; інакше він був створений фреймворком.
+         * ScreenshotResult, який все ще перебуває в черзі, не може ввести зворотний виклик, щоб звільнити HardwareBuffer.
          */
         private val SCREENSHOT_EXECUTOR: ExecutorService =
             Executors.newFixedThreadPool(2) { runnable ->

@@ -32,7 +32,7 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
     ): ProviderResponse {
         val config = request.effectiveConfig
         require(config.openAiEndpointMode == OpenAiEndpointMode.RESPONSES) {
-            "当前 Provider 未配置为 Responses API"
+            "коливперед Provider ще німатчвстановитидля Responses API"
         }
         val body = buildRequestJson(config, request.messages, request.effectiveTools)
             .toString()
@@ -88,7 +88,7 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
         runController: AgentRunController,
         onEvent: (ProviderEvent) -> Unit,
     ): JSONObject {
-        if (stream == null) error("模型接口未返回响应流")
+        if (stream == null) error("цвільтипузловитиротще ніповерненняповерненнякільцевідповідьпотік")
         val streamedText = StringBuilder()
         val streamedReasoning = StringBuilder()
         val toolCalls = linkedMapOf<String, StreamingFunctionCall>()
@@ -322,15 +322,15 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
                 "response.web_search_call.in_progress",
                 "response.web_search_call.searching" -> {
                     val itemId = event.hostedToolId("web_search")
-                    startHostedTool(itemId, "网页搜索")
+                    startHostedTool(itemId, "чистийСторінкапошукОтже")
                 }
                 "response.web_search_call.completed" -> {
                     val itemId = event.hostedToolId("web_search")
-                    finishHostedTool(itemId, "网页搜索", success = true)
+                    finishHostedTool(itemId, "чистийСторінкапошукОтже", success = true)
                 }
                 "response.web_search_call.failed" -> {
                     val itemId = event.hostedToolId("web_search")
-                    finishHostedTool(itemId, "网页搜索", success = false)
+                    finishHostedTool(itemId, "чистийСторінкапошукОтже", success = false)
                 }
                 "response.completed", "response.done", "response.incomplete", "response.failed" -> {
                     terminal = event.optJSONObject("response") ?: event
@@ -339,7 +339,7 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
                             "completed" -> "response.completed"
                             "failed" -> "response.failed"
                             "incomplete" -> "response.incomplete"
-                            else -> throw AgentModelFailure.incompleteStream("Codex 终止事件缺少有效状态")
+                            else -> throw AgentModelFailure.incompleteStream("Codex кінецькінецьрічштуквідсутністьмаломатиефектформустан")
                         }
                     } else type
                 }
@@ -348,16 +348,16 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
             terminal == null
         }
 
-        if (!sawEvent) throw AgentModelFailure.incompleteStream("模型接口未返回 SSE data chunk")
-        val finalResponse = terminal ?: throw AgentModelFailure.incompleteStream("模型接口 Responses SSE 流缺少合法终止事件")
+        if (!sawEvent) throw AgentModelFailure.incompleteStream("цвільтипузловитиротще ніповерненняповернення SSE data chunk")
+        val finalResponse = terminal ?: throw AgentModelFailure.incompleteStream("цвільтипузловитирот Responses SSE потіквідсутністьмалокомбайнЗаконкінецькінецьрічштук")
         if (terminalType == "response.failed") throwResponseFailure(finalResponse)
 
         val terminalOutput = finalResponse.optJSONArray("output")
         val hasTerminalOutput = terminalOutput != null && terminalOutput.length() > 0
         val output = terminalOutput ?: JSONArray()
         val finalResult = if (terminalType == "response.completed" && !hasTerminalOutput) {
-            // 部分兼容接口只流式下发正文，终态 output 为空。这里只恢复本轮已经收到的
-            // 标准增量；不对非空终态做字段级拼补，也不把本地结果冒充为 opaque items。
+            // Деякі сумісні інтерфейси передають лише основний текст, а кінцевий результат порожній. Тут відновлюється тільки те, що було отримано в цьому раунді.
+            // Стандартний приріст; відсутність виправлення непорожніх кінцевих станів на рівні поля, а також передача локальних результатів як непрозорих елементів.
             finalOutputFromStream(streamedText, streamedReasoning, toolCalls.values)
         } else {
             extractFinalOutput(output)
@@ -434,7 +434,7 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
             }
         }
         hostedTools.filterValues { !it }.forEach { (id, _) ->
-            onEvent(ProviderEvent.HostedToolFinished(id, "网页搜索", success = true))
+            onEvent(ProviderEvent.HostedToolFinished(id, "чистийСторінкапошукОтже", success = true))
         }
 
         parseUsage(finalResponse.optJSONObject("usage"))?.let { onEvent(ProviderEvent.Usage(it)) }
@@ -552,7 +552,7 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
                         if (part.optString("type") != "reasoning_text") return@mapNotNull null
                         contentIndex to part.optString("text")
                     }.ifEmpty {
-                        // 兼容旧接口的单字段形式；已有标准 content 时不再重复追加别名。
+                        // Сумісний з однополевою формою старого інтерфейсу; додаткові псевдоніми не додаються, якщо стандартний вміст уже існує.
                         item.optString("reasoning_text").takeIf { it.isNotEmpty() }
                             ?.let { listOf(0 to it) }.orEmpty()
                     }
@@ -616,21 +616,21 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
 
     private fun throwEventError(event: JSONObject) {
         val error = event.optJSONObject("error") ?: return
-        val message = error.optString("message").ifBlank { "未提供错误信息" }.compactError()
+        val message = error.optString("message").ifBlank { "ще нінестидляповідомлення про помилку" }.compactError()
         val type = error.optString("type").takeIf { it.isNotBlank() }
-        throw AgentModelFailure.stream(error, "模型接口 SSE 返回错误${type?.let { " (type=$it)" }.orEmpty()}：$message")
+        throw AgentModelFailure.stream(error, "цвільтипузловитирот SSE поверненняповерненнянеправильнопомилка${type?.let { " (type=$it)" }.orEmpty()}：$message")
     }
 
     private fun throwTopLevelEventError(event: JSONObject): Nothing {
-        val message = event.optString("message").ifBlank { "未提供错误信息" }.compactError()
+        val message = event.optString("message").ifBlank { "ще нінестидляповідомлення про помилку" }.compactError()
         val code = event.optString("code").takeIf { it.isNotBlank() }
-        throw AgentModelFailure.stream(event, "模型接口 SSE 返回错误${code?.let { " (code=$it)" }.orEmpty()}：$message")
+        throw AgentModelFailure.stream(event, "цвільтипузловитирот SSE поверненняповерненнянеправильнопомилка${code?.let { " (code=$it)" }.orEmpty()}：$message")
     }
 
     private fun throwResponseFailure(response: JSONObject): Nothing {
         val error = response.optJSONObject("error")
-        val message = error?.optString("message").orEmpty().ifBlank { "未提供错误信息" }
-        throw AgentModelFailure.stream(error ?: JSONObject(), "模型接口 Responses 请求失败：${message.compactError()}")
+        val message = error?.optString("message").orEmpty().ifBlank { "ще нінестидляповідомлення про помилку" }
+        throw AgentModelFailure.stream(error ?: JSONObject(), "цвільтипузловитирот Responses будь ласкапроситивтратитипоразка：${message.compactError()}")
     }
 
     private fun JSONObject.intValue(vararg keys: String): Int? {
@@ -661,12 +661,12 @@ internal object OpenAiResponsesProvider : AgentProviderClient {
             .ifBlank { "${fallbackPrefix}_${optInt("output_index", 0)}" }
 
     private fun String.hostedToolDisplayName(): String? = when (this) {
-        "web_search_call" -> "网页搜索"
-        "file_search_call" -> "文件搜索"
-        "code_interpreter_call" -> "代码执行"
-        "computer_call" -> "计算机操作"
-        "image_generation_call" -> "图像生成"
-        "mcp_call" -> "MCP 工具"
+        "web_search_call" -> "чистийСторінкапошукОтже"
+        "file_search_call" -> "мистецтваштукпошукОтже"
+        "code_interpreter_call" -> "поколіннякодВиконатидобре"
+        "computer_call" -> "розраховуватиОбчислитимашинаТримайтеробити"
+        "image_generation_call" -> "малюнокмалюнокнародивсястати"
+        "mcp_call" -> "MCP працюватиІнструмент"
         else -> null
     }
 

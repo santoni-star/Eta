@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** 可见入口先取得前台执行资格，再开始准备或安装；停止通知会取消同一任务。 */
+/** Можна побачити, що вхід спочатку отримує кваліфікацію для зовнішнього виконання перед початком підготовки або встановлення; зупинка сповіщення скасує те саме завдання.*/
 internal fun CoroutineScope.launchForegroundExecution(
     context: Context,
     onUnavailable: () -> Unit,

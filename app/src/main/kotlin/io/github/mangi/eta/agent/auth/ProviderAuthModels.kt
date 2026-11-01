@@ -80,6 +80,6 @@ internal enum class OAuthProvider(
 
     companion object {
         fun fromAuthMode(mode: String): OAuthProvider = entries.firstOrNull { it.authMode == mode }
-            ?: throw ProviderAuthException("unsupported_auth_mode", "当前连接不支持账号登录")
+            ?: throw ProviderAuthException("unsupported_auth_mode", "коливпереднавітьзловитинемаєвідділенняутримуватирахунокНомердошказапис")
     }
 }

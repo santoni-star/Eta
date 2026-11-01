@@ -54,8 +54,8 @@ internal object AgentConversationStore {
         val titles: Map<String, String>,
         val updatedAt: Map<String, Long>,
         /**
-         * 加载后列表下标与库中 sort_index 不一致的会话。流式占位等未入库消息会在排序中留下空洞，
-         * 重启后列表被压紧；增量保存按下标截断后缀，这些会话必须先整段重写一次。
+         * Сеанси, у яких індекс списку після завантаження не узгоджується з sort_index у бібліотеці. Незаписані повідомлення, такі як потокові заповнювачі, залишать прогалини в сортуванні.
+         * Список ущільнюється після перезавантаження; інкрементальне збереження скорочує суфікс на нижній індекс, і ці сеанси повинні бути спочатку переписані повністю.
          */
         val unalignedConversationIds: Set<String> = emptySet(),
     )
@@ -574,5 +574,5 @@ internal object AgentConversationStore {
     private const val TYPE_TOOL = "tool"
     private const val TYPE_TOOL_SUMMARY = "tool_summary"
     private const val MESSAGE_LOAD_PAGE_SIZE = 128
-    private const val LEGACY_UNNAMED_TITLE = "新对话"
+    private const val LEGACY_UNNAMED_TITLE = "новийправильноговорити"
 }

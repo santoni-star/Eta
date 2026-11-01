@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.os.Process
 
 /**
- * 向 system_server 暴露最小连接状态，不返回节点、窗口或用户内容。
+ * Надавати мінімальний стан підключення до system_server, не повертаючи вузол, вікно або вміст користувача.
  */
 class AgentAccessibilityHealthProvider : ContentProvider() {
     override fun onCreate(): Boolean = true

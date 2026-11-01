@@ -6,7 +6,7 @@ internal object BreenoConversationHistory {
     private const val MAX_MESSAGES = 24
     private const val MAX_MESSAGE_CHARS = 16 * 1024
     private const val MAX_TOTAL_CHARS = 48 * 1024
-    private const val TRUNCATED_SUFFIX = "\n[较早内容过长，已截断]"
+    private const val TRUNCATED_SUFFIX = "\n[порівнятиранокВсерединіДозволитиПасдовго，вжевирізатиперерва]"
 
     data class Entry(
         val chatType: Int,
@@ -15,8 +15,8 @@ internal object BreenoConversationHistory {
     )
 
     /**
-     * 小布 DataCenter 已经保存当前房间的展示顺序，这里只投影文本轮次。
-     * 当前问句由 RunRequest.prompt 单独传入，必须从 history 中排除。
+     * Xiaobu DataCenter зберіг порядок відображення поточної кімнати, і тут проектуються лише текстові раунди.
+     * Поточне запитання передається окремо RunRequest.prompt і має бути виключено з історії.
      */
     fun build(
         entries: Iterable<Entry>,

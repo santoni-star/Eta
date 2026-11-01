@@ -22,7 +22,7 @@ internal data class LocalToolRequirement(
     val freshObservation: Boolean = false,
 )
 
-/** 展示、模型目录与执行边界共同使用的本地工具能力合同。未登记的工具不能发布。 */
+/** Контракти про можливості локальних інструментів для використання з презентацією, каталогами моделей і межами виконання. Незареєстровані інструменти не можуть бути опубліковані.*/
 internal object AgentToolRequirements {
     private val definitions = buildMap {
         fun register(root: RootRequirement, vararg names: String) {
@@ -96,7 +96,7 @@ internal object AgentToolRequirements {
             "search_notes", "search_coloros_recordings", "search_recording_summaries",
             "search_system_memories", "search_saved_places",
         ).forEach { name -> put(name, getValue(name).copy(colorOs = true)) }
-        // 系统记忆优先使用 Hook 桥接，框架失联时仍有独立的 Root 快照来源。
+        // Системна пам'ять спочатку використовує Hook bridgeing, і залишається незалежне кореневе джерело знімка, коли структура втрачає зв'язок.
         listOf("search_system_memories", "search_saved_places", "search_personal_orders").forEach { name ->
             put(name, getValue(name).copy(lsposedRequirement = LsposedRequirement.OPTIONAL))
         }
@@ -126,7 +126,7 @@ internal object AgentToolRequirements {
         }
     }
 
-    /** 复制后收窄，不能修改下一轮或另一个 run 共用的原始 Schema。 */
+    /** Після копіювання та звуження вихідну схему, яка використовується в наступному раунді чи іншому циклі, неможливо змінити.*/
     fun project(tools: JSONArray, rootAvailable: Boolean): JSONArray = JSONArray().also { result ->
         for (index in 0 until tools.length()) {
             val original = tools.getJSONObject(index)
@@ -143,11 +143,11 @@ internal object AgentToolRequirements {
         val properties = function.getJSONObject("parameters").optJSONObject("properties")
         if (function.getString("name") in AgentFileToolCatalog.names + AgentTerminalToolCatalog.names) {
             properties?.optJSONObject("identity")?.put("enum", JSONArray().put("user"))
-                ?.put("description", "显式选择宿主身份；当前可用 user（Eta App UID）。省略时沿用本次运行的默认身份。")
+                ?.put("description", "шоуРежимвибративибратипроживанняхосттілочастка；коливпередможевикористовувати user（Eta App UID）。ПровінціязлегкагодинауздовжвикористовуватикнигаДругосортнийтранспортдобрезмовчазнийрозпізнатитілочастка。")
         }
         when (function.getString("name")) {
             "read_image" -> properties?.getJSONObject("path")?.put("description",
-                "当前应用有权读取的绝对图片路径、file URI 或已授权的 content URI。")
+                "коливпередвідповідьвикористовуватиматиправильночитатиВиберітьзАбсолютноправильномалюнокшматокдорогашлях、file URI абовженавчатиправильноз content URI。")
             "press_key" -> properties?.getJSONObject("button")?.let { button ->
                 val values = button.getJSONArray("enum")
                 button.put("enum", JSONArray().also { allowed ->
@@ -156,10 +156,10 @@ internal object AgentToolRequirements {
                         if (!value.equals("PASTE", ignoreCase = true)) allowed.put(value)
                     }
                 })
-                button.put("description", "无障碍支持的系统按键；输入文本请使用 type_text。")
+                button.put("description", "немаєбар'єрперешкоджативідділенняутримуватизКраваткасистемавідповідно доключ；втратитивведітьмистецтвакнигабудь ласказробитивикористовувати type_text。")
             }
             "search_personal_orders" -> function.put("description",
-                "从用户已授权保存的通知历史检索外卖、购物、快递、票券和出行订单。")
+                "відвикористовуватипобутовівженавчатиправильнозберегтижитизПасзнатикалендарісторіїперевіритиОтженазовніПродати、покупкаріч、швидкийпередати、квитоккупоніпозадобрепорядокодин。")
         }
     }
 }

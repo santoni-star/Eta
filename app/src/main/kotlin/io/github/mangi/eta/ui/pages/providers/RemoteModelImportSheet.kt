@@ -43,15 +43,15 @@ import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 import top.yukonga.miuix.kmp.squircle.squircleSurface
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** 一次拉取的待选结果；确认时保留连接和账号绑定，避免将过期目录写到另一连接。 */
+/** Кандидат результати однієї тяги; зберігайте підключення та прив’язку облікового запису під час підтвердження, щоб уникнути запису прострочених каталогів до іншого підключення.*/
 internal data class RemoteModelImport(
     val catalog: RemoteModelCatalog,
     val candidates: List<Model>,
 )
 
 /**
- * 拉取后只列出尚未添加的模型，默认一个都不选：聚合平台返回的模型大多用不到，
- * 由用户挑出需要的再加入。关闭面板不做任何修改。
+ * Після вилучення в списку відображаються лише ті моделі, які не були додані, і жодна не вибрана за замовчуванням: більшість моделей, повернутих платформою агрегації, не використовуються.
+ * Користувач сам вибирає те, що йому потрібно, а потім додає це. Закрийте панель, не вносячи жодних змін.
  */
 @Composable
 internal fun RemoteModelImportSheet(
@@ -65,7 +65,7 @@ internal fun RemoteModelImportSheet(
         onDismissRequest = onDismissRequest,
         insideMargin = DpSize(0.dp, 0.dp),
     ) {
-        // 面板退场动画期间 pending 已为 null，保留最后一次内容避免闪空。
+        // Під час анімації виходу з панелі очікування дорівнює нулю, а останній вміст зберігається, щоб уникнути блимання.
         var shown by remember { mutableStateOf(pending) }
         if (pending != null) shown = pending
         shown?.let { current ->
@@ -93,7 +93,7 @@ private fun RemoteModelImportContent(
     }
     val allVisibleSelected = visible.isNotEmpty() && visible.all { it.modelId in selected }
     val density = LocalDensity.current
-    // 高度固定，搜索结果变化时面板不跳动；键盘弹出时由面板约束压缩列表区域。
+    // Висота фіксована, і панель не стрибає при зміні результатів пошуку; коли з’являється клавіатура, панель обмежує область списку.
     val sheetHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() } * 0.72f
 
     Column(
@@ -211,7 +211,7 @@ private fun RemoteModelRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 远端返回的展示名常常就是 Model ID，相同时不重复显示。
+            // Відображуване ім’я, яке повертається з віддаленого кінця, зазвичай є ідентифікатором моделі, і воно не відображатиметься повторно, якщо воно однакове.
             if (!name.equals(model.modelId, ignoreCase = true)) {
                 Text(
                     text = model.modelId,

@@ -36,7 +36,7 @@ internal object PowerHooks {
     ): HookInstallation {
         val hooks = HookRegistrar(module, rootLogger, "Power")
         return hooks.install {
-            // 当前机型实测证明 OplusSpeechHandler 是必要路径，目标在热路径即时读取。
+            // Фактичне вимірювання поточної моделі доводить, що OplusSpeechHandler є необхідним шляхом, а мета зчитується в режимі реального часу на гарячому шляху.
             hookOplusSpeechHandler(hooks, classLoader)
         }
     }
@@ -54,7 +54,7 @@ internal object PowerHooks {
             hooks.missing(
                 id = "system.power-assist-message",
                 description = "OplusSpeechHandler.handleMessage",
-                detail = "未找到 OplusSpeechHandler.handleMessage(Message)"
+                detail = "ще ніспробуйте знайтиприбути OplusSpeechHandler.handleMessage(Message)"
             )
             return
         }
@@ -79,7 +79,7 @@ internal object PowerHooks {
             val pwm = resolvePhoneWindowManager(chain.getThisObject())
             if (pwm == null) {
                 logger.warnThrottled("oplus_speech_missing_pwm") {
-                    "OplusSpeechHandler 未能解析 PhoneWindowManager，回退原逻辑"
+                    "OplusSpeechHandler ще ніздатнийрозв'язатианалізувати PhoneWindowManager，поверненнявідступОригіналлогікаредагувати"
                 }
                 return@intercept chain.proceed()
             }
@@ -100,7 +100,7 @@ internal object PowerHooks {
                         phoneWindowManager = pwm,
                         source = "OplusSpeechHandler"
                     )
-                    // Activity 兜底能处理本次触发，但仍需后台修复首选 voiceinteraction 路径。
+                    // Діяльність може впоратися з цим тригером, але бажаний шлях голосової взаємодії все одно потрібно відновити у фоновому режимі.
                     scheduleBackgroundRecovery(
                         handler = handler,
                         logger = logger,
@@ -110,7 +110,7 @@ internal object PowerHooks {
                     if (activityStarted) {
                         null
                     } else {
-                        // 当前触发不等待后台修复；所有快速路径失败后立即回退小布。
+                        // Поточний тригер не чекає фонового відновлення; він повернеться до Xiaobu одразу після того, як усі швидкі шляхи зазнають невдачі.
                         chain.proceed()
                     }
                 }
@@ -129,21 +129,21 @@ internal object PowerHooks {
         val context = HookSupport.getFieldValue(phoneWindowManager, "mContext") as? Context
         if (context == null) {
             logger.warnThrottled("${source}_missing_context") {
-                "$source 缺少 mContext，回退原逻辑"
+                "$source відсутністьмало mContext，поверненнявідступОригіналлогікаредагувати"
             }
             return LaunchResult.NOT_HANDLED
         }
 
         if (!HookSupport.isPackageInstalled(context, binding.packageName)) {
             logger.warnThrottled("${source}_${target.persistedValue}_missing") {
-                "$source: ${binding.displayName} 未安装，回退原逻辑"
+                "$source: ${binding.displayName} ще нівстановитиупаковка，поверненнявідступОригіналлогікаредагувати"
             }
             return LaunchResult.NOT_HANDLED
         }
 
         val now = SystemClock.uptimeMillis()
         if (now - lastInterceptUptime <= ModuleConfig.INTERCEPT_DEDUP_WINDOW_MS) {
-            logger.debug { "$source: 命中去重窗口，直接吞掉重复触发" }
+            logger.debug { "$source: життясерединайтиВажкавікнорот，прямозловитиковтатиПрогратиВажкаскладнідотикволосся" }
             return LaunchResult.LAUNCHED
         }
 
@@ -155,7 +155,7 @@ internal object PowerHooks {
                 logFailures = false
             )) {
             finalizeSuccessfulLaunch(logger, phoneWindowManager, source, now)
-            logger.debug { "$source: 已通过 voiceinteraction 启动 ${binding.displayName}" }
+            logger.debug { "$source: вжеПасПас voiceinteraction початокрухатися ${binding.displayName}" }
             return LaunchResult.LAUNCHED
         }
 
@@ -225,14 +225,14 @@ internal object PowerHooks {
         val resolves = runCatching { HookSupport.resolvesActivity(context, intent) }
             .getOrElse { throwable ->
                 logger.warnThrottled("${source}_${action}_resolve_failed") {
-                    "$source: 查询 ${binding.displayName} $action 入口失败，" +
+                    "$source: перевіритиЗапитуйте ${binding.displayName} $action введітьротвтратитипоразка，" +
                         "type=${throwable.safeLogType()}"
                 }
                 false
             }
         if (!resolves) {
             logger.warnThrottled("${source}_${action}_missing") {
-                "$source: ${binding.displayName} 未暴露 $action，回退原逻辑"
+                "$source: ${binding.displayName} ще нінасильствороса $action，поверненнявідступОригіналлогікаредагувати"
             }
             return false
         }
@@ -240,11 +240,11 @@ internal object PowerHooks {
         return runCatching {
             context.startActivity(intent)
             finalizeSuccessfulLaunch(logger, phoneWindowManager, source, now)
-            logger.debug { "$source: 已通过 $action 启动 ${binding.displayName}" }
+            logger.debug { "$source: вжеПасПас $action початокрухатися ${binding.displayName}" }
             true
         }.getOrElse { throwable ->
             logger.warnThrottled("${source}_${action}_failed") {
-                "$source: $action 启动失败，回退原逻辑，type=${throwable.safeLogType()}"
+                "$source: $action початокрухатисявтратитипоразка，поверненнявідступОригіналлогікаредагувати，type=${throwable.safeLogType()}"
             }
             false
         }
@@ -266,12 +266,12 @@ internal object PowerHooks {
         source: String
     ) {
         if (invokeOplusAssistantHapticFeedback(phoneWindowManager)) {
-            logger.debug { "$source: 已补发 Oplus 原生助理震感" }
+            logger.debug { "$source: вжеремонтволосся Oplus Оригіналнародивсядопомогтипричинашоквідчувати" }
             return
         }
 
         logger.warnThrottled("${source}_assistant_haptic_missing") {
-            "$source: 未找到 Oplus 原生长按助理震感入口"
+            "$source: ще ніспробуйте знайтиприбути Oplus Оригіналнародивсядовговідповідно додопомогтипричинашоквідчувативведітьрот"
         }
     }
 
@@ -302,7 +302,7 @@ internal object PowerHooks {
         }
         if (handler == null) {
             logger.warnThrottled("${source}_recovery_missing_handler") {
-                "$source: 无法取得 OplusSpeechHandler 实例，跳过后台配置修复"
+                "$source: немаєЗаконВиберітьповинні OplusSpeechHandler Реальністьприклад，СтрибокПасназадвежаматчвстановитибудуватискладні"
             }
             return
         }
@@ -310,7 +310,7 @@ internal object PowerHooks {
         val context = HookSupport.getFieldValue(phoneWindowManager, "mContext") as? Context
         if (context == null) {
             logger.warnThrottled("${source}_recovery_missing_context") {
-                "$source: 无法取得 mContext，跳过后台配置修复"
+                "$source: немаєЗаконВиберітьповинні mContext，СтрибокПасназадвежаматчвстановитибудуватискладні"
             }
             return
         }
@@ -323,11 +323,11 @@ internal object PowerHooks {
         )
         if (!scheduled) {
             logger.warnThrottled("${source}_configuration_schedule_failed") {
-                "$source: 默认助理后台修复无法入队"
+                "$source: мовчазнийрозпізнатидопомогтипричинаназадвежабудуватискладнінемаєЗаконвведітькоманда"
             }
         } else {
             logger.warnThrottled("${source}_assistant_recovery_pending") {
-                "$source: voiceinteraction 失败，已在后台修复默认助理配置"
+                "$source: voiceinteraction втратитипоразка，вжеіснуютьназадвежабудуватискладнімовчазнийрозпізнатидопомогтипричинаматчвстановити"
             }
         }
     }

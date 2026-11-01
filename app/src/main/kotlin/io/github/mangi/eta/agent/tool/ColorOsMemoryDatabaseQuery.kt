@@ -11,12 +11,12 @@ import org.json.JSONObject
 internal fun quoteColorOsMemoryIdentifier(value: String): String =
     "\"" + value.replace("\"", "\"\"") + "\""
 
-/** 只接受查询调用，兼容宿主的加密数据库连接和普通 SQLite 快照。 */
+/** Приймає лише виклики запитів і сумісний із зашифрованим підключенням до бази даних хоста та звичайними знімками SQLite.*/
 internal fun interface ColorOsMemoryReadDatabase {
     fun rawQuery(sql: String, selectionArgs: Array<String>?): Cursor
 }
 
-/** Runtime 快照和小布进程 Hook 共用固定查询，不暴露任意 SQL 入口。 */
+/** Знімки часу виконання та Hook процесу Xiaobu спільно використовують фіксовані запити та не розкривають жодних записів SQL.*/
 internal object ColorOsMemoryDatabaseQuery {
     fun execute(database: SQLiteDatabase, operation: String, args: JSONObject): String =
         execute(ColorOsMemoryReadDatabase(database::rawQuery), operation, args)
@@ -30,7 +30,7 @@ internal object ColorOsMemoryDatabaseQuery {
             toolName = "search_personal_orders",
         )
         ColorOsMemoryBridgeProtocol.OPERATION_PLACES -> searchPlaces(database, args)
-        else -> error("COLOROS_MEMORY_OPERATION_UNSUPPORTED", "不支持的 ColorOS 系统记忆查询")
+        else -> error("COLOROS_MEMORY_OPERATION_UNSUPPORTED", "немаєвідділенняутримуватиз ColorOS Краваткасистемазапам'ятативідкликатиперевіритиЗапитуйте")
     }
 
     private fun searchMemories(
@@ -41,7 +41,7 @@ internal object ColorOsMemoryDatabaseQuery {
     ): String {
         val memoryColumns = database.tableColumns(MEMORIES_TABLE)
         if (memoryColumns.isEmpty() || "memory_id" !in memoryColumns) {
-            return error("COLOROS_MEMORY_SCHEMA_UNSUPPORTED", "当前系统记忆数据库结构暂不受支持")
+            return error("COLOROS_MEMORY_SCHEMA_UNSUPPORTED", "коливпередКраваткасистемазапам'ятативідкликатиномервідповідно доБібліотекавузолструктуратимчасовонемаєзавідділенняутримувати")
         }
         val projection = CORE_COLUMNS.filter(memoryColumns::contains)
         val keyword = args.optString("query").trim()
@@ -77,7 +77,7 @@ internal object ColorOsMemoryDatabaseQuery {
                 }
             }
             if (orderPredicates.isEmpty()) {
-                return error("COLOROS_ORDER_SCHEMA_UNSUPPORTED", "当前系统记忆没有可用的订单字段")
+                return error("COLOROS_ORDER_SCHEMA_UNSUPPORTED", "коливпередКраваткасистемазапам'ятативідкликатибезматиможевикористовуватизпорядокодинхарактерчастина")
             }
             selectionParts += orderPredicates.joinToString(" OR ", prefix = "(", postfix = ")")
         }
@@ -157,7 +157,7 @@ internal object ColorOsMemoryDatabaseQuery {
     private fun searchPlaces(database: ColorOsMemoryReadDatabase, args: JSONObject): String {
         val columns = database.tableColumns("memory_address")
         if ("memory_id" !in columns) {
-            return error("COLOROS_PLACE_SCHEMA_UNSUPPORTED", "当前系统记忆没有可用的地点字段")
+            return error("COLOROS_PLACE_SCHEMA_UNSUPPORTED", "коливпередКраваткасистемазапам'ятативідкликатибезматиможевикористовуватизземліточкахарактерчастина")
         }
         val projection = PLACE_COLUMNS.filter(columns::contains)
         val keyword = args.optString("query").trim()
@@ -323,7 +323,7 @@ internal object ColorOsMemoryDatabaseQuery {
         "data_text", "data_text_cleanup", "data_abstract", "notes", "app_name", "scene_name", "classify",
     )
     private val ORDER_KEYWORDS = listOf(
-        "订单", "外卖", "取餐", "配送", "骑手", "快递", "车票", "机票", "酒店", "电影票",
+        "порядокодин", "назовніПродати", "Виберітьїжа", "матчдоставити", "їздитируку", "швидкийпередати", "автомобільквиток", "машинаквиток", "лікермагазин", "електроенергіяфільмквиток",
     )
     private val ORDER_PACKAGES = listOf(
         "com.sankuai.meituan", "me.ele", "com.ss.android.ugc.lifeservices",
