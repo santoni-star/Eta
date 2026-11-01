@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">Завдання, що виконуються</string>
+    <string name="execution_title">Eta працює</string>
+    <plurals name="execution_summary">
+        <item quantity="one">%1$d завдання виконується. Поверніться до Eta, щоб переглянути прогрес.</item>
+        <item quantity="few">%1$d завдання виконуються. Поверніться до Eta, щоб переглянути прогрес.</item>
+        <item quantity="many">%1$d завдань виконуються. Поверніться до Eta, щоб переглянути прогрес.</item>
+        <item quantity="other">%1$d завдань виконуються. Поверніться до Eta, щоб переглянути прогрес.</item>
+    </plurals>
+    <string name="execution_stop">Зупинити всі завдання</string>
+    <string name="execution_chip_running">Виконується</string>
+    <string name="execution_chip_answering">Відповідає</string>
+</resources>

@@ -1,6 +1,6 @@
 <h1 align="center">Eta</h1>
 
-<p align="center"><a href="README.md">简体中文</a> | <strong>English</strong></p>
+<p align="center"><a href="README.md">简体中文</a> | <strong>English</strong> | <a href="README.uk.md">Українська</a></p>
 
 <p align="center"><strong>A third-party, system-level AI assistant for Android</strong></p>
 
@@ -181,6 +181,8 @@ These implementation notes are currently in Chinese:
 - [Agent Runtime](docs/AGENT_RUNTIME.md): the agent loop, providers, steering, transcripts, and result recovery.
 - [HyperOS system entry points](docs/HYPEROS_SYSTEM_ENTRY.md): power-button and Circle to Search integration, requirements, and validation coverage.
 - [Native terminal components](docs/TERMINAL_NATIVE.md): PTY and PRoot components, and rebuilding the bundled source.
+
+Ukrainian translations of these notes are available in [docs/uk](docs/uk).
 
 ## Pull Requests and Contributing
 

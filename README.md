@@ -1,6 +1,6 @@
 <h1 align="center">Eta</h1>
 
-<p align="center"><strong>简体中文</strong> | <a href="README_EN.md">English</a></p>
+<p align="center"><strong>简体中文</strong> | <a href="README_EN.md">English</a> | <a href="README.uk.md">Українська</a></p>
 
 <p align="center"><strong>面向 Android 的第三方系统级 AI 助手</strong></p>
 
@@ -194,6 +194,8 @@ Eta 先从现有 Android 上的模型、上下文与工具做起。真正落地�
 - [Agent Runtime](docs/AGENT_RUNTIME.md)：Agent Loop、Provider、steering、transcript 与结果恢复。
 - [HyperOS 系统入口](docs/HYPEROS_SYSTEM_ENTRY.md)：电源键、一圈即搜的适配条件与验证边界。
 - [终端原生组件](docs/TERMINAL_NATIVE.md)：PTY、PRoot 及随包源码的构建方式。
+
+乌克兰语版本见 [docs/uk](docs/uk)。
 
 ## 关于 PR 与贡献
 

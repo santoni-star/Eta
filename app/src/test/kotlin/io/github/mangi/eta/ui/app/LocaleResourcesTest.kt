@@ -19,6 +19,7 @@ class LocaleResourcesTest {
     @Test
     fun supportedLocalesSelectExpectedResourcesAndOthersFallBackToEnglish() {
         assertEquals("Settings", localizedString("en-US", R.string.route_settings))
+        assertEquals("Налаштування", localizedString("uk-UA", R.string.route_settings))
         assertEquals("设置", localizedString("zh-CN", R.string.route_settings))
         assertEquals("设置", localizedString("zh-SG", R.string.route_settings))
         assertEquals("設定", localizedString("zh-TW", R.string.route_settings))
@@ -26,29 +27,37 @@ class LocaleResourcesTest {
         assertEquals("昨日", localizedString("zh-TW", R.string.time_yesterday))
         assertEquals("Settings", localizedString("fr-FR", R.string.route_settings))
         assertEquals("Appearance & Theme", localizedString("en-US", R.string.appearance_title))
+        assertEquals("Вигляд і тема", localizedString("uk-UA", R.string.appearance_title))
         assertEquals("外观与主题", localizedString("zh-CN", R.string.appearance_title))
         assertEquals("外觀與主題", localizedString("zh-TW", R.string.appearance_title))
         assertEquals("Appearance & Theme", localizedString("fr-FR", R.string.appearance_title))
         assertEquals("1 model", localizedQuantity("en-US", R.plurals.provider_models_count, 1))
         assertEquals("2 models", localizedQuantity("en-US", R.plurals.provider_models_count, 2))
+        assertEquals("1 модель", localizedQuantity("uk-UA", R.plurals.provider_models_count, 1))
+        assertEquals("2 моделі", localizedQuantity("uk-UA", R.plurals.provider_models_count, 2))
     }
 
     @Test
     fun supplementalUiResourcesFollowLocaleWhileTechnicalTermsStayEnglish() {
         assertEquals("Current device", localizedString("en-US", R.string.capability_current_device))
+        assertEquals("Поточний пристрій", localizedString("uk-UA", R.string.capability_current_device))
         assertEquals("当前设备", localizedString("zh-CN", R.string.capability_current_device))
         assertEquals("目前裝置", localizedString("zh-TW", R.string.capability_current_device))
         assertEquals("Current device", localizedString("fr-FR", R.string.capability_current_device))
         assertEquals("Eta is running", localizedString("en-US", R.string.execution_title))
+        assertEquals("Eta працює", localizedString("uk-UA", R.string.execution_title))
         assertEquals("Eta 正在运行", localizedString("zh-CN", R.string.execution_title))
         assertEquals("Eta 正在執行", localizedString("zh-TW", R.string.execution_title))
         assertEquals("Environment configuration", localizedString("en-US", R.string.linux_environment_configuration))
+        assertEquals("Налаштування середовища", localizedString("uk-UA", R.string.linux_environment_configuration))
         assertEquals("环境配置", localizedString("zh-CN", R.string.linux_environment_configuration))
         assertEquals("環境設定", localizedString("zh-TW", R.string.linux_environment_configuration))
         assertEquals("View description", localizedString("en-US", R.string.ui_view_description))
+        assertEquals("Переглянути опис", localizedString("uk-UA", R.string.ui_view_description))
         assertEquals("查看说明", localizedString("zh-CN", R.string.ui_view_description))
         assertEquals("查看說明", localizedString("zh-TW", R.string.ui_view_description))
         assertEquals("Retrying model request", localizedString("en-US", R.string.system_notice_model_retry))
+        assertEquals("Повторна спроба запиту до моделі", localizedString("uk-UA", R.string.system_notice_model_retry))
         assertEquals("模型请求重试", localizedString("zh-CN", R.string.system_notice_model_retry))
         assertEquals("模型請求重試", localizedString("zh-TW", R.string.system_notice_model_retry))
         assertEquals(
@@ -60,6 +69,14 @@ class LocaleResourcesTest {
             localizedQuantity("en-US", R.plurals.execution_summary, 2),
         )
         assertEquals(
+            "1 завдання виконується. Поверніться до Eta, щоб переглянути прогрес.",
+            localizedQuantity("uk-UA", R.plurals.execution_summary, 1),
+        )
+        assertEquals(
+            "2 завдання виконуються. Поверніться до Eta, щоб переглянути прогрес.",
+            localizedQuantity("uk-UA", R.plurals.execution_summary, 2),
+        )
+        assertEquals(
             "已导入 1 个文件，其余文件无法读取或超过 32 MiB",
             localizedQuantity("zh-CN", R.plurals.capability_workspace_partial_import, 1),
         )
@@ -67,7 +84,15 @@ class LocaleResourcesTest {
             "已匯入 2 個檔案，其餘檔案無法讀取或超過 32 MiB",
             localizedQuantity("zh-TW", R.plurals.capability_workspace_partial_import, 2),
         )
-        for (locale in listOf("en-US", "zh-CN", "zh-TW", "fr-FR")) {
+        assertEquals(
+            "Імпортовано 1 файл; решту файлів не вдалося прочитати або вони перевищують 32 MiB",
+            localizedQuantity("uk-UA", R.plurals.capability_workspace_partial_import, 1),
+        )
+        assertEquals(
+            "Імпортовано 2 файли; решту файлів не вдалося прочитати або вони перевищують 32 MiB",
+            localizedQuantity("uk-UA", R.plurals.capability_workspace_partial_import, 2),
+        )
+        for (locale in listOf("en-US", "uk-UA", "zh-CN", "zh-TW", "fr-FR")) {
             assertEquals("Skills", localizedString(locale, R.string.route_skills))
             assertEquals("API Key", localizedString(locale, R.string.speech_api_key))
         }
