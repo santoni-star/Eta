@@ -1,7 +1,6 @@
 package io.github.mangi.eta.agent.model
 
 import android.content.Context
-import androidx.compose.ui.res.stringResource
 import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.subagent.AgentSubagentToolCatalog
 import io.github.mangi.eta.agent.subagent.SubagentActivitySnapshot
@@ -12,9 +11,6 @@ import org.json.JSONObject
 
 /** Підсумок інструменту відображається користувачам і не містить конфіденційних параметрів; команди терміналу надаються для перевірки користувача через незалежні поля.*/
 internal class AgentTraceFormatter {
-    companion object {
-        lateinit var context: Context
-    }
 
     /** Повертає український або англійський варіант рядка залежно від поточної локалі. */
     private fun loc(uk: String, en: String): String =
@@ -682,7 +678,8 @@ internal class AgentTraceFormatter {
         else -> "Android"
     }
 
-    private companion object {
+    companion object {
+        lateinit var context: Context
         const val BROWSER_TOOL_NAME = "browser_use"
         const val MAX_DISPLAY_COMMAND_CHARS = 4_000
         const val MAX_QUERY_SUMMARY_CHARS = 30

@@ -54,6 +54,7 @@ class EtaApp : Application(), XposedServiceHelper.OnServiceListener {
                     "Default app language unavailable: type=${error.safeLogType()}"
                 )
             }
+        AgentTraceFormatter.context = this
         Prefs.initLocal(this)
         if (!AppProcessPolicy.shouldInitializeFullRuntime(Application.getProcessName(), packageName)) {
             return
