@@ -1,5 +1,8 @@
 package io.github.mangi.eta.agent.model
 
+import android.content.Context
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.subagent.AgentSubagentToolCatalog
 import io.github.mangi.eta.agent.subagent.SubagentActivitySnapshot
 import io.github.mangi.eta.agent.subagent.SubagentProfile
@@ -9,10 +12,18 @@ import org.json.JSONObject
 
 /** Підсумок інструменту відображається користувачам і не містить конфіденційних параметрів; команди терміналу надаються для перевірки користувача через незалежні поля.*/
 internal class AgentTraceFormatter {
+    companion object {
+        lateinit var context: Context
+    }
+
+    /** Повертає український або англійський варіант рядка залежно від поточної локалі. */
+    private fun loc(uk: String, en: String): String =
+        if (Locale.getDefault().language == "uk") uk else en
+
     fun summarizeArguments(toolCall: AgentModelClient.ToolCall): String =
         when (toolCall.name) {
             BROWSER_TOOL_NAME -> summarizeBrowserArguments(toolCall.argumentsJson)
-            "web_search" -> "пошукОтжечистийСторінка"
+            "web_search" -> loc("Веб-пошук", "Web search")
             "fetch_url" -> summarizeFetchArguments(toolCall.argumentsJson)
             "open_uri" -> summarizeOpenUriArguments(toolCall.argumentsJson)
             in AgentTerminalToolCatalog.names -> summarizeTerminalArguments(toolCall.name, toolCall.argumentsJson)
@@ -143,7 +154,7 @@ internal class AgentTraceFormatter {
                 add(action)
                 environment?.let(::add)
                 identity?.let(::add)
-                if (arguments.optBoolean("async", false)) add("назадвежа")
+                if (arguments.optBoolean("async", false)) add(loc("Асинхронно", "Async"))
             }.joinToString(" · ")
         }.getOrDefault("кінецькінець")
 
@@ -224,11 +235,11 @@ internal class AgentTraceFormatter {
                 .coerceAtLeast(0)
             val duration = if (durationMs >= 1_000) {
                 String.format(Locale.US, "%.1f", durationMs / 1_000f)
-                    .trimEnd('0').trimEnd('.') + " друге"
+                    .trimEnd('0').trimEnd('.') + " " + loc("секунд", "seconds")
             } else {
-                "$durationMs міліметрдруге"
+                "$durationMs " + loc("мс", "ms")
             }
-            "чекатилікувати · $duration"
+            loc("Очікувати", "Wait") · " · " · duration
         }.getOrDefault("чекатилікувати")
 
     private fun summarizeObservationArguments(argumentsJson: String): String =
@@ -536,9 +547,9 @@ internal class AgentTraceFormatter {
 
     private fun formatCharCount(chars: Int): String =
         if (chars >= 10_000) {
-            String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.') + " Десять тисячхарактер"
+            String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.') + " " + loc("тисяч символів", "thousand chars")
         } else {
-            "$chars характер"
+            "$chars " + loc("символів", "chars")
         }
 
     private fun JSONObject.firstNonNegativeInt(vararg keys: String): Int? =
@@ -605,63 +616,63 @@ internal class AgentTraceFormatter {
     }
 
     private fun String.scrollDirectionLabel(): String? = when (lowercase(Locale.US)) {
-        "up" -> "назустрічначальника"
-        "down" -> "назустрічвниз"
-        "left" -> "назустрічЛіворуч"
-        "right" -> "назустрічправильно"
+        "up" -> loc("Вгору", "Up")
+        "down" -> loc("Вниз", "Down")
+        "left" -> loc("Вліво", "Left")
+        "right" -> loc("Вправо", "Right")
         else -> null
     }
 
     private fun String.pressKeyLabel(): String? = when (lowercase(Locale.US)) {
-        "back" -> "поверненняповернення"
-        "home" -> "хостСторінка"
-        "recents", "recent" -> "більшістьзакритипризначитиобслуговування"
-        "notifications" -> "Пасзнатиколонка"
-        "quick_settings" -> "КОНТРОЛЬсистемасерединасерце"
-        "power" -> "електроенергіяджерело"
-        "volume_up" -> "звуккількістьдодати"
-        "volume_down" -> "звуккількістьзменшити"
-        "mute" -> "тихийзвук"
+        "back" -> loc("Назад", "Back")
+        "home" -> loc("Додому", "Home")
+        "recents", "recent" -> loc("Недавні", "Recents")
+        "notifications" -> loc("Сповіщення", "Notifications")
+        "quick_settings" -> loc("Швидкі налаштування", "Quick settings")
+        "power" -> loc("Живлення", "Power")
+        "volume_up" -> loc("Гучність вгору", "Volume up")
+        "volume_down" -> loc("Гучність вниз", "Volume down")
+        "mute" -> loc("Без звуку", "Mute")
         else -> null
     }
 
     private fun terminalLabel(toolName: String): String = when (toolName) {
-        "terminal_job" -> "різнікрокжиттязробити"
-        "terminal_daemon" -> "назадвежаОдягобслуговування"
-        else -> "кінецькінець"
+        "terminal_job" -> loc("Асинхронна команда", "Async command")
+        "terminal_daemon" -> loc("Фонова служба", "Background service")
+        else -> loc("Термінал", "Terminal")
     }
 
     private fun terminalActionLabel(toolName: String, action: String): String = when (toolName) {
         "terminal_job" -> when (action) {
-            "start" -> "початокрухатисяжиттязробити"
-            "list" -> "призначитиобслуговуванняСписокповерхні"
-            "read" -> "читатиВиберітьвтратитипоза"
-            "wait" -> "чекатилікуватизакінченостати"
-            "stop" -> "СТІЙкінецьжиттязробити"
-            else -> "призначитиобслуговуванняТримайтеробити"
+            "start" -> loc("Запустити", "Start")
+            "list" -> loc("Список", "List")
+            "read" -> loc("Читати", "Read")
+            "wait" -> loc("Очікувати", "Wait")
+            "stop" -> loc("Стоп", "Stop")
+            else -> loc("Обслуговування", "Service")
         }
         "terminal_daemon" -> when (action) {
-            "start" -> "початокрухатисяОдягобслуговування"
-            "list" -> "ОдягобслуговуванняСписокповерхні"
-            "logs" -> "перевіритиподивітьсяденьчестолюбство"
-            "stop" -> "СТІЙкінецьОдягобслуговування"
-            else -> "ОдягобслуговуванняТримайтеробити"
+            "start" -> loc("Запустити", "Start")
+            "list" -> loc("Список", "List")
+            "logs" -> loc("Журнали", "Logs")
+            "stop" -> loc("Стоп", "Stop")
+            else -> loc("Обслуговування", "Service")
         }
         else -> action.terminalActionLabel()
     }
 
     private fun String.terminalActionLabel(): String = when (this) {
-        "check_root" -> "перевірититест Root навчатиправильно"
-        "open" -> "створитивстановитизасіданняговорити"
-        "exec" -> "Виконатидобрежиттязробити"
-        "open_and_exec" -> "одинДругосортнийВиконатидобре"
-        "read_async_result" -> "читатиВиберітьназадвежавтратитипоза"
-        "close" -> "закритизакритикінецькінець"
-        "daemon_start" -> "початокрухатисязберегтизахиститипризначитиобслуговування"
-        "daemon_list" -> "зберегтизахиститипризначитиобслуговуванняСписокповерхні"
-        "daemon_logs" -> "перевіритиподивітьсязберегтизахиститиденьчестолюбство"
-        "daemon_stop" -> "СТІЙкінецьзберегтизахиститипризначитиобслуговування"
-        else -> "кінецькінецьТримайтеробити"
+        "check_root" -> loc("Перевірити Root", "Check root")
+        "open" -> loc("Відкрити", "Open")
+        "exec" -> loc("Виконати", "Execute")
+        "open_and_exec" -> loc("Відкрити і виконати", "Open and execute")
+        "read_async_result" -> loc("Прочитати результат", "Read async result")
+        "close" -> loc("Закрити", "Close")
+        "daemon_start" -> loc("Запустити демон", "Start daemon")
+        "daemon_list" -> loc("Список démonів", "Daemon list")
+        "daemon_logs" -> loc("Журнали démonа", "Daemon logs")
+        "daemon_stop" -> loc("Зупинити демон", "Stop daemon")
+        else -> loc("Термінал", "Terminal")
     }
 
     private fun String.terminalEnvironmentLabel(): String = when (this) {

@@ -1403,6 +1403,10 @@
     <string name="tool_grep_files_description">Шукати текст UTF-8 і повертати шляхи збігів, номери рядків і діапазон збору.</string>
     <string name="tool_web_search">Пошук у вебі</string>
     <string name="tool_web_search_description">Пошук у публічних веб-сторінках, якщо пошук постачальника не використовується; повертає заголовки, посилання та фрагменти. У веб-інструментах можна вибрати вбудований пошук, DeepSeek або власну кінцеву точку.</string>
+    <string name="web_search_label">Веб-пошук</string>
+    <string name="web_search_failed">Веб-пошук не вдався</string>
+    <string name="web_search_no_results">Результатів не знайдено</string>
+    <string name="web_search_results">%d результатів знайдено</string>
     <string name="tool_fetch_url">Читати вміст сторінки</string>
     <string name="tool_fetch_url_description">Читання вмісту сторінки з посторінковим продовженням. Підтримує вбудоване статичне отримання, DeepSeek або власні кінцеві точки; у разі помилки автоматично переходить до локального статичного отримання.</string>
     <string name="chat_edit_character_reply">Редагувати відповідь персонажа</string>
