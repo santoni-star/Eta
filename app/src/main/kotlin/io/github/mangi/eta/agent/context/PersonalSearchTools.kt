@@ -1,5 +1,7 @@
 package io.github.mangi.eta.agent.context
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -8,20 +10,26 @@ internal object PersonalSearchTools {
     data class Search(
         val name: String,
         val source: String,
-        val title: String,
-        val description: String,
-    )
+        private val titleRes: Int,
+        private val titleFallback: String,
+        private val descriptionRes: Int,
+        private val descriptionFallback: String,
+    ) {
+        val title: String get() = AppStrings.get(titleRes, titleFallback)
+        val description: String get() = AppStrings.get(descriptionRes, descriptionFallback)
+        fun localizedTitle(): String = title
+    }
 
     val searches =
         listOf(
-            Search("search_bills", "bills", "查询账单", "按商户、内容和时间查找账单记录。"),
-            Search("search_todos", "todos", "查询待办线索", "查询系统从个人信息中提取的待办线索，未识别时间的记录不能按时间命中。"),
-            Search("search_calendar_todos", "calendar_todos", "查询日历待办", "查询日历中的待办及其计划时间。"),
-            Search("search_memory_collections", "collections", "查询记忆合集", "查找已保存的记忆合集，不支持业务时间筛选。"),
-            Search("search_daily_events", "events", "查询生活事件", "查找系统记录或推断的生活事件，不把推断当成确认事实。"),
-            Search("search_flights", "flights", "查询航班行程", "按航班、机场和计划起飞时间检索行程。"),
-            Search("search_hotels", "hotels", "查询酒店预订", "按酒店、地址、订单和入住时间检索预订。"),
-            Search("search_trains", "trains", "查询火车行程", "按车次、车站和出发时间检索行程。"),
+            Search("search_bills", "bills", R.string.tool_title_search_bills, "Search bills", R.string.tool_desc_search_bills, "Search bill records by merchant, content, and time."),
+            Search("search_todos", "todos", R.string.tool_title_search_todos, "Search to-do clues", R.string.tool_desc_search_todos, "Query to-do clues extracted from personal info; items without detected time cannot match time filters."),
+            Search("search_calendar_todos", "calendar_todos", R.string.tool_title_search_calendar_todos, "Search calendar to-dos", R.string.tool_desc_search_calendar_todos, "Search calendar to-dos and their scheduled times."),
+            Search("search_memory_collections", "collections", R.string.tool_title_search_memory_collections, "Search memory collections", R.string.tool_desc_search_memory_collections, "Find saved memory collections (business time filtering not supported)."),
+            Search("search_daily_events", "events", R.string.tool_title_search_daily_events, "Search life events", R.string.tool_desc_search_daily_events, "Search recorded or inferred life events without treating inferences as confirmed facts."),
+            Search("search_flights", "flights", R.string.tool_title_search_flights, "Search flights", R.string.tool_desc_search_flights, "Search flight itineraries by flight number, airport, and scheduled departure time."),
+            Search("search_hotels", "hotels", R.string.tool_title_search_hotels, "Search hotel bookings", R.string.tool_desc_search_hotels, "Search hotel bookings by hotel, address, order, and check-in time."),
+            Search("search_trains", "trains", R.string.tool_title_search_trains, "Search trains", R.string.tool_desc_search_trains, "Search train itineraries by train number, station, and departure time."),
         )
     val names =
         searches.mapTo(linkedSetOf()) { it.name } + setOf("read_personal_item", "summarize_bills")
@@ -92,7 +100,7 @@ internal class IndexedPersonalSearch(private val service: PersonalContextQuerySe
                         item.put("ref", "eta-index:$source:$it")
                     }
             }
-            result.put("reference_scope", "索引引用仅用于读取；修改原始应用记录必须重新核对原始对象 ID")
+            result.put("reference_scope", AppStrings.get(R.string.personal_search_ref_scope, "Index references are read-only; modifying original app records requires verifying the raw object ID."))
         }
     }
 
@@ -103,5 +111,5 @@ internal class IndexedPersonalSearch(private val service: PersonalContextQuerySe
         JSONObject()
             .put("ok", false)
             .put("code", "INVALID_ARGUMENT")
-            .put("message", "必须提供查询结果返回的完整 ref")
+            .put("message", AppStrings.get(R.string.personal_search_invalid_ref, "Must provide the complete ref returned by the search result."))
 }

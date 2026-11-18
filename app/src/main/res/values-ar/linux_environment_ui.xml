@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">تهيئة البيئة</string>
+    <string name="linux_environment_files">الملفات والأدلة</string>
+    <string name="linux_environment_base_ready">البيئة الأساسية جاهزة؛ ثبّت الأدوات الأساسية بعد ذلك</string>
+    <string name="linux_environment_tools_ready">الأدوات الأساسية جاهزة؛ ثبّت الأدوات الإضافية حسب الحاجة</string>
+    <string name="linux_environment_shared_folders_summary">توصيل أدلة Android في بيئة Linux</string>
+    <string name="linux_debian_repair_failed">لم يكتمل فحص حزم Debian أو استعادتها. تأكد من عدم تشغيل أي مهمة أخرى لمدير الحزم، ثم أعد المحاولة. إذا استمر الفشل، فشغّل dpkg --configure -a وapt-get --fix-broken install في طرفية Debian لفحص الخطأ.</string>
+    <string name="linux_debian_install_timeout">انتهت مهلة تثبيت أدوات Debian الأساسية. أعد المحاولة لفحص عمليات الحزم غير المكتملة واستعادتها.</string>
+    <string name="linux_debian_install_failed">فشل تثبيت أدوات Debian الأساسية. تحقق من المستودعات ومهام مدير الحزم الأخرى ومساحة التخزين المتاحة في طرفية Debian.</string>
+</resources>

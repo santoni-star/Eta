@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.screens.characters
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -53,19 +55,19 @@ internal fun CharacterEditorScreen(
     var worldbookExpanded by rememberSaveable { mutableStateOf(false) }
     var worldbookEntry by rememberSaveable { mutableStateOf<Int?>(null) }
     val card = store.draft
-    val pageTitle = if (id == null) "创建角色" else "编辑角色"
+    val pageTitle = stringResource(if (id == null) R.string.char_create else R.string.route_character_editor)
     val canSave = !store.busy && store.draftName.isNotBlank()
     val uiStyle = LocalUiStyle.current
 
     val listContent: LazyListScope.() -> Unit = {
         if (card == null) {
-            item { CharacterPageMessage(if (store.busy) "正在读取…" else "无法读取角色，请返回重试") }
+            item { CharacterPageMessage(stringResource(if (store.busy) R.string.char_loading_short else R.string.char_load_failed_back)) }
         } else {
-            item(key = "name") { CharacterTextField("名称", store.draftName, store::updateName, !store.busy, singleLine = true) }
-            item(key = "description-title") { CharacterSectionHeader("角色设定") }
-            item(key = "description") { CharacterTextField("外貌、性格与经历", card.description, { value -> store.updateDraft { it.withEdits(description = value) } }, !store.busy, minLines = 5) }
-            item(key = "greeting-title") { CharacterSectionHeader("开场白") }
-            item(key = "greeting") { CharacterTextField("默认开场白", card.firstMessage, { value -> store.updateDraft { it.withEdits(firstMessage = value) } }, !store.busy) }
+            item(key = "name") { CharacterTextField(stringResource(R.string.char_field_name), store.draftName, store::updateName, !store.busy, singleLine = true) }
+            item(key = "description-title") { CharacterSectionHeader(stringResource(R.string.char_section_profile)) }
+            item(key = "description") { CharacterTextField(stringResource(R.string.char_field_appearance_bio), card.description, { value -> store.updateDraft { it.withEdits(description = value) } }, !store.busy, minLines = 5) }
+            item(key = "greeting-title") { CharacterSectionHeader(stringResource(R.string.char_section_greetings)) }
+            item(key = "greeting") { CharacterTextField(stringResource(R.string.char_greeting_default), card.firstMessage, { value -> store.updateDraft { it.withEdits(firstMessage = value) } }, !store.busy) }
             itemsIndexed(card.alternateGreetings, key = { index, _ -> "alternate-$index" }) { index, value ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp),
@@ -73,7 +75,7 @@ internal fun CharacterEditorScreen(
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         CharacterTextField(
-                            label = "开场白 ${index + 2}",
+                            label = stringResource(R.string.char_greeting_indexed, index + 2),
                             value = value,
                             onChange = { updated ->
                                 store.updateDraft { it.withEdits(alternateGreetings = it.alternateGreetings.toMutableList().apply { this[index] = updated }) }
@@ -92,7 +94,7 @@ internal fun CharacterEditorScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = "移除此开场白",
+                            contentDescription = stringResource(R.string.char_remove_greeting),
                             tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                         )
                     }
@@ -104,7 +106,7 @@ internal fun CharacterEditorScreen(
                 }
                 if (uiStyle == AppearanceUiStyle.COUI) {
                     CouiButton(
-                        text = "添加备用开场白",
+                        text = stringResource(R.string.char_add_alt_greeting),
                         onClick = onAddGreeting,
                         enabled = !store.busy,
                         modifier = Modifier
@@ -113,7 +115,7 @@ internal fun CharacterEditorScreen(
                     )
                 } else {
                     TextButton(
-                        text = "添加备用开场白",
+                        text = stringResource(R.string.char_add_alt_greeting),
                         onClick = onAddGreeting,
                         enabled = !store.busy,
                         modifier = Modifier
@@ -126,8 +128,8 @@ internal fun CharacterEditorScreen(
                 if (uiStyle == AppearanceUiStyle.COUI) {
                     Group {
                         CouiPreference(
-                            title = "高级设置",
-                            summary = "性格、背景、示例对话、提示词、作者信息与世界书",
+                            title = stringResource(R.string.char_advanced_settings),
+                            summary = stringResource(R.string.char_advanced_summary),
                             onClick = { advanced = !advanced },
                         )
                     }
@@ -137,25 +139,25 @@ internal fun CharacterEditorScreen(
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                     ) {
                         ArrowPreference(
-                            title = "高级设置",
-                            summary = "性格、背景、示例对话、提示词、作者信息与世界书",
+                            title = stringResource(R.string.char_advanced_settings),
+                            summary = stringResource(R.string.char_advanced_summary),
                             onClick = { advanced = !advanced },
                         )
                     }
                 }
             }
             if (advanced) {
-                item(key = "personality") { CharacterTextField("性格与说话风格", card.personality, { value -> store.updateDraft { it.withEdits(personality = value) } }, !store.busy) }
-                item(key = "scenario") { CharacterTextField("故事背景", card.scenario, { value -> store.updateDraft { it.withEdits(scenario = value) } }, !store.busy) }
-                item(key = "examples") { CharacterTextField("示例对话", card.exampleMessages, { value -> store.updateDraft { it.withEdits(exampleMessages = value) } }, !store.busy, minLines = 4) }
-                item(key = "prompts-title") { CharacterSectionHeader("提示词") }
-                item(key = "system") { CharacterTextField("系统提示词", card.systemPrompt, { value -> store.updateDraft { it.withEdits(systemPrompt = value) } }, !store.busy) }
-                item(key = "post-history") { CharacterTextField("对话后置指令", card.postHistoryInstructions, { value -> store.updateDraft { it.withEdits(postHistoryInstructions = value) } }, !store.busy) }
-                item(key = "credits-title") { CharacterSectionHeader("作者信息") }
-                item(key = "creator-notes") { CharacterTextField("作者备注", card.creatorNotes, { value -> store.updateDraft { it.withEdits(creatorNotes = value) } }, !store.busy) }
-                item(key = "tags") { CharacterTextField("标签（每行一个）", card.tags.joinToString("\n"), { value -> store.updateDraft { it.withEdits(tags = value.lines()) } }, !store.busy) }
-                item(key = "creator") { CharacterTextField("作者", card.creator, { value -> store.updateDraft { it.withEdits(creator = value) } }, !store.busy, singleLine = true) }
-                item(key = "version") { CharacterTextField("角色版本", card.version, { value -> store.updateDraft { it.withEdits(version = value) } }, !store.busy, singleLine = true) }
+                item(key = "personality") { CharacterTextField(stringResource(R.string.char_field_personality), card.personality, { value -> store.updateDraft { it.withEdits(personality = value) } }, !store.busy) }
+                item(key = "scenario") { CharacterTextField(stringResource(R.string.char_field_scenario), card.scenario, { value -> store.updateDraft { it.withEdits(scenario = value) } }, !store.busy) }
+                item(key = "examples") { CharacterTextField(stringResource(R.string.char_field_examples), card.exampleMessages, { value -> store.updateDraft { it.withEdits(exampleMessages = value) } }, !store.busy, minLines = 4) }
+                item(key = "prompts-title") { CharacterSectionHeader(stringResource(R.string.char_section_prompts)) }
+                item(key = "system") { CharacterTextField(stringResource(R.string.char_field_system_prompt), card.systemPrompt, { value -> store.updateDraft { it.withEdits(systemPrompt = value) } }, !store.busy) }
+                item(key = "post-history") { CharacterTextField(stringResource(R.string.char_field_post_history), card.postHistoryInstructions, { value -> store.updateDraft { it.withEdits(postHistoryInstructions = value) } }, !store.busy) }
+                item(key = "credits-title") { CharacterSectionHeader(stringResource(R.string.char_section_credits)) }
+                item(key = "creator-notes") { CharacterTextField(stringResource(R.string.char_field_creator_notes), card.creatorNotes, { value -> store.updateDraft { it.withEdits(creatorNotes = value) } }, !store.busy) }
+                item(key = "tags") { CharacterTextField(stringResource(R.string.char_field_tags), card.tags.joinToString("\n"), { value -> store.updateDraft { it.withEdits(tags = value.lines()) } }, !store.busy) }
+                item(key = "creator") { CharacterTextField(stringResource(R.string.char_field_creator), card.creator, { value -> store.updateDraft { it.withEdits(creator = value) } }, !store.busy, singleLine = true) }
+                item(key = "version") { CharacterTextField(stringResource(R.string.char_field_version), card.version, { value -> store.updateDraft { it.withEdits(version = value) } }, !store.busy, singleLine = true) }
                 characterWorldbookEditor(
                     store = store,
                     expanded = worldbookExpanded,
@@ -163,10 +165,10 @@ internal fun CharacterEditorScreen(
                     onToggleExpanded = { worldbookExpanded = !worldbookExpanded },
                     onExpandEntry = { worldbookEntry = it },
                 )
-                item(key = "compatibility") { CharacterPageMessage("角色卡中的第三方脚本与扩展界面不会执行，相关数据会保留在导出的角色卡中。") }
+                item(key = "compatibility") { CharacterPageMessage(stringResource(R.string.char_compat_warning_editor)) }
             }
             item(key = "save") {
-                val saveText = if (store.busy) "正在处理…" else "保存角色"
+                val saveText = stringResource(if (store.busy) R.string.char_saving else R.string.char_save)
                 if (uiStyle == AppearanceUiStyle.COUI) {
                     CouiButton(
                         text = saveText,
@@ -200,7 +202,7 @@ internal fun CharacterEditorScreen(
                 actions = {
                     CouiTopAppBarIconButton(
                         icon = Icons.Rounded.Check,
-                        contentDescription = "保存角色",
+                        contentDescription = stringResource(R.string.char_save),
                         enabled = canSave,
                         onClick = { store.saveEditor(onSaved) },
                     )
@@ -218,7 +220,7 @@ internal fun CharacterEditorScreen(
                         onClick = { store.saveEditor(onSaved) },
                         enabled = canSave,
                     ) {
-                        Icon(Icons.Rounded.Check, contentDescription = "保存角色")
+                        Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.char_save))
                     }
                 },
                 content = listContent,

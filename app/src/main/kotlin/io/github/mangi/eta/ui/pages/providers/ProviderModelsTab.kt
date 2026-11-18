@@ -3,6 +3,7 @@
 package io.github.mangi.eta.ui.pages.providers
 
 import androidx.compose.animation.AnimatedVisibility
+import io.github.mangi.eta.core.AppStrings
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.expandVertically
@@ -249,7 +250,7 @@ internal fun ProviderModelsTab(
                 if (ProviderAuthModes.isOAuth(provider.authMode)) {
                     val sync = ModelRepository.syncRemoteCatalog(catalog)
                     RuntimeConfigRepository.syncToRemotePreferences(EtaApp.serviceInstance)
-                    message = "已同步 ${sync.fetchedCount} 个远端模型"
+                    message = AppStrings.get(R.string.provider_models_synced, "Synced %1\$d remote models", sync.fetchedCount)
                     return@launch
                 }
                 val candidates = ModelRepository.newRemoteModels(provider.id, catalog.models)
@@ -1007,9 +1008,9 @@ private fun ModelEditDialog(
         modelId.isNotBlank() &&
         contextError == null
     val contextValue = contextWindowOverrideText.toIntOrNull()
-    val thinkingTitle = if (nativeGemini) "配置思考档位" else stringResource(R.string.ui_support_thinking_5b9e4c)
+    val thinkingTitle = if (nativeGemini) stringResource(R.string.provider_thinking_levels) else stringResource(R.string.ui_support_thinking_5b9e4c)
     val thinkingSummary = if (nativeGemini) {
-        "关闭时仅使用 Default，不发送档位参数；不会关闭模型自身的思考。"
+        stringResource(R.string.provider_thinking_off_note)
     } else if (reasoningOverrideActive) {
         stringResource(R.string.page_covered_model_automatic_capabilities_3fa7d4)
     } else {
@@ -1156,7 +1157,7 @@ private fun ModelEditDialog(
                                 }
                             }
                             CouiText(
-                                text = if (nativeGemini) "可手动选择档位，是否支持由服务端校验。Default 始终可用。"
+                                text = if (nativeGemini) stringResource(R.string.provider_thinking_server_note)
                                 else stringResource(R.string.ui_only_check_the_ranges_actually_supported_by_the_mode_2c343d),
                                 kind = CouiTextKind.GroupFooter,
                                 color = colors.summary,
@@ -1343,7 +1344,7 @@ private fun ModelEditDialog(
                             }
                         }
                         Text(
-                            text = if (nativeGemini) "可手动选择档位，是否支持由服务端校验。Default 始终可用。"
+                            text = if (nativeGemini) stringResource(R.string.provider_thinking_server_note)
                             else stringResource(R.string.ui_only_check_the_ranges_actually_supported_by_the_mode_2c343d),
                             style = MiuixTheme.textStyles.footnote2,
                             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,

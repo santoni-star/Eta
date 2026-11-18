@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Cấu hình môi trường</string>
+    <string name="linux_environment_files">Tệp và thư mục</string>
+    <string name="linux_environment_base_ready">Môi trường cơ sở đã sẵn sàng; tiếp theo hãy cài đặt các công cụ cơ bản</string>
+    <string name="linux_environment_tools_ready">Công cụ cơ bản đã sẵn sàng; cài đặt thêm công cụ mở rộng khi cần</string>
+    <string name="linux_environment_shared_folders_summary">Gắn thư mục Android vào môi trường Linux</string>
+    <string name="linux_debian_repair_failed">Quá trình kiểm tra hoặc khôi phục gói Debian chưa hoàn tất. Hãy đảm bảo không có tác vụ trình quản lý gói nào khác đang chạy rồi thử lại. Nếu vẫn lỗi, hãy chạy dpkg --configure -a và apt-get --fix-broken install trong terminal Debian để kiểm tra lỗi.</string>
+    <string name="linux_debian_install_timeout">Quá trình cài đặt công cụ cơ bản Debian đã hết thời gian chờ. Hãy thử lại để kiểm tra và khôi phục các thao tác gói chưa hoàn tất.</string>
+    <string name="linux_debian_install_failed">Cài đặt công cụ cơ bản Debian thất bại. Hãy kiểm tra kho lưu trữ, các tác vụ trình quản lý gói khác và dung lượng trống trong terminal Debian.</string>
+</resources>

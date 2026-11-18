@@ -88,8 +88,8 @@ internal fun ProviderConnectionFields(
             if (accountMode != null) {
                 Divider()
                 CouiDropdownPreference(
-                    title = "认证方式",
-                    items = listOf("API Key", "账号登录"),
+                    title = stringResource(R.string.provider_auth_mode),
+                    items = listOf(stringResource(R.string.provider_auth_api_key), stringResource(R.string.provider_auth_account_login)),
                     selectedIndex = if (oauth) 1 else 0,
                     enabled = enabled,
                     onSelectedIndexChange = { index ->
@@ -215,8 +215,8 @@ internal fun ProviderConnectionFields(
             }
             if (accountMode != null) {
                 WindowSpinnerPreference(
-                    title = "认证方式",
-                    items = listOf(DropdownItem(text = "API Key"), DropdownItem(text = "账号登录")),
+                    title = stringResource(R.string.provider_auth_mode),
+                    items = listOf(DropdownItem(text = stringResource(R.string.provider_auth_api_key)), DropdownItem(text = stringResource(R.string.provider_auth_account_login))),
                     selectedIndex = if (oauth) 1 else 0,
                     enabled = enabled,
                     onSelectedIndexChange = { index ->

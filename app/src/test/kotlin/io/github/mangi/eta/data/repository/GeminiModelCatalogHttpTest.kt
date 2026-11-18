@@ -95,7 +95,7 @@ class GeminiModelCatalogHttpTest {
         )) { url, requests ->
             val result = RemoteModelFetcher.fetchCatalog(provider(url), OkHttpClient(), noOAuth)
             assertTrue(result.isFailure)
-            assertTrue(result.exceptionOrNull()!!.message!!.contains("大小限制"))
+            assertTrue(result.exceptionOrNull()!!.message!!.contains("size limit"))
             assertEquals(2, requests.size)
         }
     }

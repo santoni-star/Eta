@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.app
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.model.AgentModelClient
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.runtime.AgentRuntimeWire
 import io.github.mangi.eta.agent.runtime.AgentUiHandoffPayload
 import io.github.mangi.eta.ui.model.AgentChatHomeUiState
@@ -56,7 +58,11 @@ internal object AgentPendingResultRecovery {
                     runId = runId,
                     messages = state.messages,
                     ok = result.ok,
-                    detail = if (result.ok) "上下文压缩完成" else result.error ?: "上下文压缩失败",
+                    detail = if (result.ok) {
+                        AppStrings.get(R.string.state_compaction_completed, "Context compaction completed")
+                    } else {
+                        result.error ?: AppStrings.get(R.string.state_compaction_failed, "Context compaction failed")
+                    },
                 )), false)
         }
 

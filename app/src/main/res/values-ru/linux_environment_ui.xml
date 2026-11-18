@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Конфигурация среды</string>
+    <string name="linux_environment_files">Файлы и каталоги</string>
+    <string name="linux_environment_base_ready">Базовая среда готова; далее установите базовые инструменты</string>
+    <string name="linux_environment_tools_ready">Базовые инструменты готовы; при необходимости установите дополнительные инструменты</string>
+    <string name="linux_environment_shared_folders_summary">Монтировать каталоги Android в среде Linux</string>
+    <string name="linux_debian_repair_failed">Проверка или восстановление пакетов Debian не завершены. Убедитесь, что не запущены другие задачи менеджера пакетов, и повторите попытку. Если ошибка сохраняется, выполните dpkg --configure -a и apt-get --fix-broken install в терминале Debian для диагностики.</string>
+    <string name="linux_debian_install_timeout">Превышено время ожидания установки базовых инструментов Debian. Повторите попытку для проверки и восстановления незавершённых операций с пакетами.</string>
+    <string name="linux_debian_install_failed">Не удалось установить базовые инструменты Debian. Проверьте репозитории, другие задачи менеджера пакетов и доступное место в терминале Debian.</string>
+</resources>

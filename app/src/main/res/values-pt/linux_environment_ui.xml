@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Configuração do ambiente</string>
+    <string name="linux_environment_files">Arquivos e diretórios</string>
+    <string name="linux_environment_base_ready">Ambiente base pronto; instale as ferramentas base a seguir</string>
+    <string name="linux_environment_tools_ready">Ferramentas base prontas; instale ferramentas de extensão conforme necessário</string>
+    <string name="linux_environment_shared_folders_summary">Montar diretórios do Android no ambiente Linux</string>
+    <string name="linux_debian_repair_failed">As verificações ou a recuperação de pacotes Debian não foram concluídas. Certifique-se de que nenhuma outra tarefa do gerenciador de pacotes esteja em execução e tente novamente. Se ainda falhar, execute dpkg --configure -a e apt-get --fix-broken install no terminal Debian para inspecionar o erro.</string>
+    <string name="linux_debian_install_timeout">A instalação das ferramentas base do Debian expirou. Tente novamente para verificar e recuperar operações de pacotes inacabadas.</string>
+    <string name="linux_debian_install_failed">Falha na instalação das ferramentas base do Debian. Verifique os repositórios, outras tarefas do gerenciador de pacotes e o armazenamento disponível no terminal Debian.</string>
+</resources>

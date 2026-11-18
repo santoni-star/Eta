@@ -1,9 +1,11 @@
 package io.github.mangi.eta.agent.subagent
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.context.PersonalSearchTools
 import io.github.mangi.eta.agent.model.AgentFileToolCatalog
 import io.github.mangi.eta.agent.model.AgentPhoneToolCatalog
 import io.github.mangi.eta.agent.model.AgentTerminalToolCatalog
+import io.github.mangi.eta.core.AppStrings
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -166,7 +168,7 @@ internal data class SubagentProfile(
 
         val EXPLORE = SubagentProfile(
             name = TYPE_EXPLORE,
-            summary = "只读探索与多源信息检索",
+            summary = AppStrings.get(R.string.subagent_profile_explore_summary, "Read-only exploration & multi-source search"),
             whenToUse = "Fast read-only agent specialized for exploring files, personal device data (calendar, notes, messages, notifications, bills, media, system memories), logs, and web pages. Specify desired thoroughness in the prompt: \"quick\", \"medium\", or \"thorough\".",
             toolHighlights = listOf("read_file", "glob_files", "grep_files", "web_search", "fetch_url", "personal_data", "get_logcat"),
             roleInstruction = "你是只读探索 Subagent（explore）。你的职责是快速、准确地检索文件、设备个人数据、系统状态或网页资料，" +
@@ -177,7 +179,7 @@ internal data class SubagentProfile(
 
         val CODER = SubagentProfile(
             name = TYPE_CODER,
-            summary = "工程执行、文件编辑与终端任务",
+            summary = AppStrings.get(R.string.subagent_profile_coder_summary, "Engineering, file editing & terminal tasks"),
             whenToUse = "General engineering and terminal agent with file-editing and shell execution tools; use it for delegated tasks that run commands, analyze APKs, edit files, or execute scripts.",
             toolHighlights = listOf("terminal", "read_file", "write_file", "edit_file", "glob_files", "grep_files", "web_search"),
             roleInstruction = "你是工程与终端执行 Subagent（coder）。执行代码开发、Git、Python/Node 脚本、文本处理或 APK 分析时，终端与文件工具均应显式使用 environment=\"linux\"；操作 Android 系统命令或设备状态时使用 environment=\"android\"；工作区与共享目录在两端对应同一物理文件夹，按操作性质选择环境与对应路径，无需重复搬运文件。你的最后一条消息就是交给主 Agent 的完整交接报告：" +
@@ -188,7 +190,7 @@ internal data class SubagentProfile(
 
         val PLAN = SubagentProfile(
             name = TYPE_PLAN,
-            summary = "只读架构分析与分步方案设计",
+            summary = AppStrings.get(R.string.subagent_profile_plan_summary, "Read-only architecture analysis & step-by-step planning"),
             whenToUse = "Read-only planning agent. Use when you need a step-by-step implementation or execution plan, key file/data identification, and trade-off analysis before making changes.",
             toolHighlights = listOf("read_file", "glob_files", "grep_files", "web_search", "fetch_url", "skills_read"),
             roleInstruction = "你是只读规划 Subagent（plan）。你拥有只读检索能力，不得修改文件或执行破坏性操作。" +
@@ -243,7 +245,9 @@ internal data class SubagentProfile(
             }
             return SubagentProfile(
                 name = ephemeralName,
-                summary = cleanRole.ifEmpty { "临时专职 Subagent" },
+                summary = cleanRole.ifEmpty {
+                    AppStrings.get(R.string.subagent_profile_ephemeral_summary, "Temporary dedicated subagent")
+                },
                 whenToUse = cleanRole,
                 toolHighlights = if (cleanTools.isNotEmpty()) {
                     cleanTools.take(8)

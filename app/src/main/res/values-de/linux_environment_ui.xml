@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Umgebungskonfiguration</string>
+    <string name="linux_environment_files">Dateien und Verzeichnisse</string>
+    <string name="linux_environment_base_ready">Basisumgebung bereit; installiere als Nächstes die Basistools</string>
+    <string name="linux_environment_tools_ready">Basistools bereit; installiere bei Bedarf Erweiterungstools</string>
+    <string name="linux_environment_shared_folders_summary">Android-Verzeichnisse in der Linux-Umgebung einhängen</string>
+    <string name="linux_debian_repair_failed">Debian-Paketprüfungen oder -Wiederherstellung wurden nicht abgeschlossen. Stelle sicher, dass keine andere Paketmanager-Aufgabe läuft, und versuche es erneut. Falls es weiterhin fehlschlägt, führe dpkg --configure -a und apt-get --fix-broken install im Debian-Terminal aus, um den Fehler zu prüfen.</string>
+    <string name="linux_debian_install_timeout">Zeitüberschreitung bei der Installation der Debian-Basistools. Versuche es erneut, um unvollständige Paketvorgänge zu prüfen und wiederherzustellen.</string>
+    <string name="linux_debian_install_failed">Installation der Debian-Basistools fehlgeschlagen. Prüfe Paketquellen, andere Paketmanager-Aufgaben und den verfügbaren Speicherplatz im Debian-Terminal.</string>
+</resources>

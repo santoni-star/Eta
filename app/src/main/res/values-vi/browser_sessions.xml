@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Xóa toàn bộ dữ liệu trình duyệt</string>
+    <string name="browser_clear_shared_data_message">Tất cả các trang sẽ bị đóng. Cookie, bộ nhớ đệm và dữ liệu trang web, bao gồm cả phiên đăng nhập, sẽ bị xóa.</string>
+    <string name="browser_user_action_failed">Không thể hoàn tất thao tác trình duyệt. Vui lòng thử lại.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Borrar todos los datos del navegador</string>
+    <string name="browser_clear_shared_data_message">Se cerrarán todas las páginas. Se borrarán las cookies, la caché y los datos de los sitios web, incluidas las sesiones iniciadas.</string>
+    <string name="browser_user_action_failed">No se pudo completar la acción del navegador. Inténtalo de nuevo.</string>
+</resources>

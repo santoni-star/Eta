@@ -1,6 +1,7 @@
 package io.github.mangi.eta.ui.components
 
 import androidx.compose.foundation.background
+import io.github.mangi.eta.core.AppStrings
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -158,22 +159,22 @@ internal fun TurnStatsPill(
             ChatStatsPopoverPopup(onDismissRequest = { open = false }) {
                 StatsSectionHeader(
                     icon = ChatActionIcons.Gauge,
-                    title = "会话统计",
-                    value = "1 轮 $steps 步",
+                    title = stringResource(R.string.stats_session_title),
+                    value = stringResource(R.string.stats_single_turn_steps, steps),
                 )
                 StatsSectionDivider()
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (llmMs > 0L) {
-                        StatsDetailRow(label = "模型用时", value = formatStatDuration(llmMs))
+                        StatsDetailRow(label = stringResource(R.string.stats_model_time), value = formatStatDuration(llmMs))
                     }
                     if (toolMs > 0L) {
-                        StatsDetailRow(label = "工具调用用时", value = formatStatDuration(toolMs))
+                        StatsDetailRow(label = stringResource(R.string.stats_tool_time), value = formatStatDuration(toolMs))
                     }
                     if (avgTtftMs != null && avgTtftMs > 0L) {
-                        StatsDetailRow(label = "首 token 平均（TTFT）", value = formatStatDuration(avgTtftMs))
+                        StatsDetailRow(label = stringResource(R.string.stats_ttft_avg), value = formatStatDuration(avgTtftMs))
                     }
                     if (speedText != null) {
-                        StatsDetailRow(label = "输出速度（TPS）", value = speedText)
+                        StatsDetailRow(label = stringResource(R.string.stats_tps), value = speedText)
                     }
                 }
             }
@@ -210,7 +211,7 @@ internal fun ContextUsageStatsPopoverPopup(
     ChatStatsPopoverPopup(onDismissRequest = onDismissRequest) {
         StatsSectionHeader(
             icon = ChatActionIcons.Database,
-            title = if (stats.hasTokenUsage) "Token 用量" else stringResource(R.string.ui_contextual_usage_d12810),
+            title = if (stats.hasTokenUsage) stringResource(R.string.stats_token_usage) else stringResource(R.string.ui_contextual_usage_d12810),
             value = if (stats.hasTokenUsage) "${formatExactTokenCount(stats.totalTokens)} tok" else null,
         )
         StatsSectionDivider()
@@ -233,21 +234,21 @@ internal fun ContextUsageStatsPopoverPopup(
             if (stats.hasTokenUsage) {
                 if (stats.promptTokens > 0 || stats.outputTokens > 0) {
                     if (cacheHit != null) {
-                        StatsDetailRow(label = "缓存命中", value = "$cacheHit%")
+                        StatsDetailRow(label = stringResource(R.string.stats_cache_hit), value = "$cacheHit%")
                     }
                     StatsDetailRow(
-                        label = "未命中",
+                        label = stringResource(R.string.stats_cache_miss),
                         value = "${formatExactTokenCount(stats.uncachedInputTokens)} tok",
                     )
                     if (stats.hasCacheWriteTokens || stats.cacheWriteTokens > 0) {
                         StatsDetailRow(
-                            label = "缓存写入",
+                            label = stringResource(R.string.stats_cache_write),
                             value = "${formatExactTokenCount(stats.cacheWriteTokens)} tok",
                         )
                     }
                     if (stats.cachedTokens > 0) {
                         StatsDetailRow(
-                            label = "缓存读取",
+                            label = stringResource(R.string.stats_cache_read),
                             value = "${formatExactTokenCount(stats.cachedTokens)} tok",
                         )
                     }
@@ -262,42 +263,46 @@ internal fun ContextUsageStatsPopoverPopup(
                     val lastHit = formatCacheHitPercent(lastCached, lastIn)
                     val label = when {
                         stats.compactionCount == 1 && stats.lastCompactionArchiveId.isNotBlank() ->
-                            "最近压缩（${stats.lastCompactionArchiveId}）"
-                        stats.compactionCount == 1 -> "最近压缩"
-                        else -> "压缩请求（${stats.compactionCount} 次）"
+                            stringResource(R.string.stats_last_compaction_id, stats.lastCompactionArchiveId)
+                        stats.compactionCount == 1 -> stringResource(R.string.stats_last_compaction)
+                        else -> stringResource(R.string.stats_compaction_requests, stats.compactionCount)
                     }
                     val detailValue = buildString {
                         append("${formatExactTokenCount(lastIn)} tok")
-                        lastHit?.let { append(" · 命中 $it%") }
+                        lastHit?.let { append(stringResource(R.string.stats_hit_percent_suffix, it)) }
                     }
                     StatsDetailRow(label = label, value = detailValue)
                     if (stats.compactionCount > 1) {
                         StatsDetailRow(
-                            label = "压缩累计",
+                            label = stringResource(R.string.stats_compaction_total),
                             value = "${formatExactTokenCount(stats.compactionPromptTokens + stats.compactionOutputTokens)} tok",
                         )
                     }
                     stats.lastCompactionPaybackTurns?.let { paybackTurns ->
                         val paybackValue = if (stats.lastCompactionPaidBack) {
-                            "已回本（已 ${stats.lastCompactionTurnsAfter} 轮）"
+                            stringResource(R.string.stats_payback_done, stats.lastCompactionTurnsAfter)
                         } else {
-                            "需 $paybackTurns 轮（已 ${stats.lastCompactionTurnsAfter} 轮）"
+                            stringResource(R.string.stats_payback_needed, paybackTurns, stats.lastCompactionTurnsAfter)
                         }
-                        StatsDetailRow(label = "压缩回本", value = paybackValue)
+                        StatsDetailRow(label = stringResource(R.string.stats_compaction_payback), value = paybackValue)
                     }
                 }
                 if (stats.subagentCount > 0) {
-                    val subLabel = if (stats.subagentCount == 1) "子智能体" else "子智能体（${stats.subagentCount} 次）"
+                    val subLabel = if (stats.subagentCount == 1) {
+                        stringResource(R.string.stats_subagent_single)
+                    } else {
+                        stringResource(R.string.stats_subagent_multi, stats.subagentCount)
+                    }
                     val subHit = formatCacheHitPercent(stats.subagentCachedTokens, stats.subagentPromptTokens)
                     val subValue = buildString {
                         append("${formatExactTokenCount(stats.subagentPromptTokens)} tok")
-                        subHit?.let { append(" · 命中 $it%") }
+                        subHit?.let { append(stringResource(R.string.stats_hit_percent_suffix, it)) }
                     }
                     StatsDetailRow(label = subLabel, value = subValue)
                 }
                 if (stats.ttlOrPrefixMissTokens > 5_000) {
                     StatsDetailRow(
-                        label = "非增量未命中",
+                        label = stringResource(R.string.stats_non_incremental_miss),
                         value = "${formatExactTokenCount(stats.ttlOrPrefixMissTokens)} tok",
                     )
                 }
@@ -308,22 +313,22 @@ internal fun ContextUsageStatsPopoverPopup(
             Spacer(Modifier.height(14.dp))
             StatsSectionHeader(
                 icon = ChatActionIcons.Gauge,
-                title = "会话统计",
-                value = "${stats.turns} 轮 ${stats.steps} 步",
+                title = stringResource(R.string.stats_session_title),
+                value = stringResource(R.string.stats_multi_turns_steps, stats.turns, stats.steps),
             )
             StatsSectionDivider()
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (stats.llmMs > 0L) {
-                    StatsDetailRow(label = "模型用时", value = formatStatDuration(stats.llmMs))
+                    StatsDetailRow(label = stringResource(R.string.stats_model_time), value = formatStatDuration(stats.llmMs))
                 }
                 if (stats.toolMs > 0L) {
-                    StatsDetailRow(label = "工具调用用时", value = formatStatDuration(stats.toolMs))
+                    StatsDetailRow(label = stringResource(R.string.stats_tool_time), value = formatStatDuration(stats.toolMs))
                 }
                 if (avgTtftMs != null && avgTtftMs > 0L) {
-                    StatsDetailRow(label = "首 token 平均（TTFT）", value = formatStatDuration(avgTtftMs))
+                    StatsDetailRow(label = stringResource(R.string.stats_ttft_avg), value = formatStatDuration(avgTtftMs))
                 }
                 if (sessionSpeed != null) {
-                    StatsDetailRow(label = "输出速度（TPS）", value = sessionSpeed)
+                    StatsDetailRow(label = stringResource(R.string.stats_tps), value = sessionSpeed)
                 }
             }
         }
@@ -533,7 +538,7 @@ private fun StatsOutputRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "输出",
+            text = stringResource(R.string.stats_output),
             style = MiuixTheme.textStyles.footnote1.copy(
                 fontSize = 12.sp,
                 lineHeight = 18.sp,
@@ -547,7 +552,7 @@ private fun StatsOutputRow(
             }
             if (reasoningTokens > 0) {
                 withStyle(SpanStyle(color = labelColor)) {
-                    append("（其中推理 ${formatExactTokenCount(reasoningTokens)} tok）")
+                    append(AppStrings.get(R.string.stats_reasoning_tokens, " (reasoning %1\$s tok)", formatExactTokenCount(reasoningTokens)))
                 }
             }
         }
@@ -603,12 +608,13 @@ internal fun formatStatDuration(ms: Long): String {
         val tenths = (seconds * 10.0).roundToLong()
         val whole = tenths / 10L
         val decimal = tenths % 10L
-        return if (decimal == 0L) "${whole}秒" else "$whole.${decimal}秒"
+        val numStr = if (decimal == 0L) "$whole" else "$whole.$decimal"
+        return AppStrings.get(R.string.stats_duration_seconds, "%1\$ss", numStr)
     }
     val totalSeconds = seconds.roundToLong()
     val minutes = totalSeconds / 60L
     val remSeconds = totalSeconds % 60L
-    return "${minutes}分${remSeconds}秒"
+    return AppStrings.get(R.string.stats_duration_minutes_seconds, "%1\$dm %2\$ds", minutes, remSeconds)
 }
 
 internal fun formatTokensPerSecond(tps: Double): String {

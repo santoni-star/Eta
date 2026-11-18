@@ -1,7 +1,9 @@
 package io.github.mangi.eta.agent.subagent
 
 import android.os.SystemClock
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.memory.AgentMemoryContext
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.model.AgentModelClient
 import io.github.mangi.eta.agent.model.AgentModelExecutionException
 import io.github.mangi.eta.agent.runtime.AgentEvent
@@ -403,7 +405,7 @@ internal class SubagentExecutor(
         private val lock = Any()
         private val steps = mutableListOf<SubagentStepSnapshot>()
         private var status = SubagentActivitySnapshot.STATUS_RUNNING
-        private var currentAction = "正在思考…"
+        private var currentAction = AppStrings.get(R.string.subagent_status_thinking, "Thinking…")
         private val roundTexts = linkedMapOf<Int, StringBuilder>()
         private var finalOutput = ""
         private var errorText: String? = null
@@ -419,7 +421,11 @@ internal class SubagentExecutor(
         fun onChildEvent(event: AgentEvent): Boolean = synchronized(lock) {
             when (event) {
                 is AgentEvent.RoundStarted -> {
-                    currentAction = if (event.round <= 1) "正在思考…" else "第 ${event.round} 轮思考…"
+                    currentAction = if (event.round <= 1) {
+                        AppStrings.get(R.string.subagent_status_thinking, "Thinking…")
+                    } else {
+                        AppStrings.get(R.string.subagent_status_thinking_round, "Thinking (round %1\$d)…", event.round)
+                    }
                     true
                 }
 
@@ -437,18 +443,18 @@ internal class SubagentExecutor(
                             steps += SubagentStepSnapshot(
                                 id = stepId,
                                 kind = SubagentStepSnapshot.KIND_THINKING,
-                                title = "思考",
+                                title = AppStrings.get(R.string.subagent_step_thinking, "Thinking"),
                                 detail = event.delta.takeLast(MAX_STEP_DETAIL_CHARS),
                                 status = SubagentStepSnapshot.STATUS_RUNNING,
                             )
                         }
-                        currentAction = "正在思考…"
+                        currentAction = AppStrings.get(R.string.subagent_status_thinking, "Thinking…")
                         false
                     }
 
                     AgentEvent.AssistantBlockKind.TEXT -> {
                         roundTexts.getOrPut(event.round) { StringBuilder() }.append(event.delta)
-                        currentAction = "正在整理汇报…"
+                        currentAction = AppStrings.get(R.string.subagent_status_summarizing, "Preparing report…")
                         false
                     }
 
@@ -519,7 +525,7 @@ internal class SubagentExecutor(
                             detail = combinedDetail,
                         )
                     }
-                    currentAction = "正在分析结果…"
+                    currentAction = AppStrings.get(R.string.subagent_status_analyzing, "Analyzing results…")
                     true
                 }
 
@@ -555,7 +561,11 @@ internal class SubagentExecutor(
             status = SubagentActivitySnapshot.STATUS_COMPLETED
             finalOutput = content.trim().take(MAX_OUTPUT_CHARS)
             val tools = toolCount()
-            currentAction = if (tools > 0) "完成 · $tools 次工具调用" else "完成"
+            currentAction = if (tools > 0) {
+                AppStrings.get(R.string.subagent_status_done_tools, "Done · %1\$d tool calls", tools)
+            } else {
+                AppStrings.get(R.string.subagent_status_done, "Done")
+            }
         }
 
         fun markFailed(error: String, partial: String) = synchronized(lock) {
@@ -563,15 +573,17 @@ internal class SubagentExecutor(
             status = SubagentActivitySnapshot.STATUS_FAILED
             errorText = error.take(1_000)
             if (partial.isNotBlank()) finalOutput = partial.take(MAX_OUTPUT_CHARS)
-            currentAction = error.lineSequence().firstOrNull()?.take(80) ?: "执行失败"
+            currentAction = error.lineSequence().firstOrNull()?.take(80)
+                ?: AppStrings.get(R.string.subagent_status_failed, "Failed")
         }
 
         fun markCancelled(partial: String) = synchronized(lock) {
             finishAllRunningSteps(SubagentStepSnapshot.STATUS_FAILED)
             status = SubagentActivitySnapshot.STATUS_CANCELLED
-            errorText = "已停止"
+            val stopped = AppStrings.get(R.string.subagent_status_stopped, "Stopped")
+            errorText = stopped
             if (partial.isNotBlank()) finalOutput = partial.take(MAX_OUTPUT_CHARS)
-            currentAction = "已停止"
+            currentAction = stopped
         }
 
         fun partialOutput(): String = synchronized(lock) {

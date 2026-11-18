@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Șterge toate datele browserului</string>
+    <string name="browser_clear_shared_data_message">Toate paginile se vor închide. Cookie-urile, memoria cache și datele site-urilor, inclusiv sesiunile de conectare, vor fi șterse.</string>
+    <string name="browser_user_action_failed">Acțiunea din browser nu a putut fi finalizată. Te rugăm să încerci din nou.</string>
+</resources>

@@ -94,8 +94,16 @@ internal object CacheUsageDiagnostics {
             when (message) {
                 is SystemNoticeMessageUi -> {
                     if (message.code == SystemNoticeCode.ContextCompaction && !message.running) {
+                        val detailLower = message.detail?.lowercase().orEmpty()
                         val isFailure = message.detail?.contains("失败") == true ||
-                            message.detail?.contains("中断") == true
+                            message.detail?.contains("失敗") == true ||
+                            message.detail?.contains("中断") == true ||
+                            message.detail?.contains("中斷") == true ||
+                            detailLower.contains("failed") ||
+                            detailLower.contains("interrupted") ||
+                            detailLower.contains("cancelled") ||
+                            detailLower.contains("помилк") ||
+                            detailLower.contains("перерван")
                         if (!isFailure && (message.usage != null || message.archiveId.isNotBlank())) {
                             val breakdown = message.usage?.let(::resolvePromptBreakdown)
                             currentCompaction = ActiveCompaction(

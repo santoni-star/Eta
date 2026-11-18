@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Limpar todos os dados do navegador</string>
+    <string name="browser_clear_shared_data_message">Todas as páginas serão fechadas. Cookies, cache e dados de sites, incluindo sessões com login iniciado, serão limpos.</string>
+    <string name="browser_user_action_failed">Não foi possível concluir a ação do navegador. Tente novamente.</string>
+</resources>

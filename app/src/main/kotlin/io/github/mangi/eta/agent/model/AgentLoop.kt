@@ -1,6 +1,8 @@
 package io.github.mangi.eta.agent.model
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.runtime.AgentEvent
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.runtime.AgentRunController
 import io.github.mangi.eta.agent.runtime.AgentTokenUsage
 import io.github.mangi.eta.agent.roleplay.RoleplayRunContext
@@ -143,7 +145,11 @@ internal class AgentLoop(
                         if (!purpose.allowsTools && (providerEvent is ProviderEvent.HostedToolStarted ||
                                 providerEvent is ProviderEvent.SearchSuggestions ||
                                 providerEvent is ProviderEvent.BlockStart && providerEvent.kind == AssistantBlockKind.TOOL_CALL)) {
-                            throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "改写回复时模型请求了工具，已停止；原回复未改变。")
+                            throw AgentModelFailure(
+                                "REPLY_REWRITE_TOOL_CALL",
+                                false,
+                                AppStrings.get(R.string.loop_err_rewrite_tool_call, "Model requested a tool while rewriting reply; stopped with original reply unchanged."),
+                            )
                         }
                         if (providerEvent is ProviderEvent.RequestStarted) {
                             stepStartedAtMs = monotonicNowMs()
@@ -195,10 +201,18 @@ internal class AgentLoop(
             val assistantMessage = providerResponse.assistantMessage
             val toolCalls = AgentConversationCodec.parseToolCalls(assistantMessage)
             if (!purpose.allowsTools && toolCalls.isNotEmpty()) {
-                throw AgentModelFailure("REPLY_REWRITE_TOOL_CALL", false, "改写回复时模型请求了工具，已停止；原回复未改变。")
+                throw AgentModelFailure(
+                    "REPLY_REWRITE_TOOL_CALL",
+                    false,
+                    AppStrings.get(R.string.loop_err_rewrite_tool_call, "Model requested a tool while rewriting reply; stopped with original reply unchanged."),
+                )
             }
             if (purpose == ProviderRequestPurpose.REPLY_REWRITE && providerResponse.stopReason != AssistantStopReason.END_TURN) {
-                throw AgentModelFailure("REPLY_REWRITE_INCOMPLETE", false, "模型未返回完整的改写回复；原回复未改变。")
+                throw AgentModelFailure(
+                    "REPLY_REWRITE_INCOMPLETE",
+                    false,
+                    AppStrings.get(R.string.loop_err_rewrite_incomplete, "Model did not return a complete rewritten reply; original reply unchanged."),
+                )
             }
             val assistantReasoning = assistantMessage.optString("reasoning_content")
             if (
@@ -255,8 +269,13 @@ internal class AgentLoop(
 
             val content = assistantMessage.optString("content").trim()
             if (content.isBlank() || content == "null") {
-                val finishReason = assistantMessage.optString("finish_reason")
-                error("模型接口第 $round 轮返回为空${finishReason.takeIf { it.isNotBlank() }?.let { "：$it" }.orEmpty()}")
+                val finishReason = assistantMessage.optString("finish_reason").trim()
+                val msg = if (finishReason.isNotEmpty()) {
+                    AppStrings.get(R.string.loop_err_empty_round_reason, "Model API returned empty response in round %1\$d: %2\$s", round, finishReason)
+                } else {
+                    AppStrings.get(R.string.loop_err_empty_round, "Model API returned empty response in round %1\$d", round)
+                }
+                error(msg)
             }
 
             publishTranscript()
@@ -285,9 +304,9 @@ internal class AgentLoop(
             "MODEL_CONTENT_FILTER",
             false,
             buildString {
-                append("模型服务商拦截了本次回复，未完成的内容已丢弃。")
-                explanation?.let { append("服务商说明：").append(it) }
-                append("请修改或删除触发拦截的请求后重试，或换用其他模型。")
+                append(AppStrings.get(R.string.loop_err_blocked_prefix, "Provider blocked this reply; incomplete content was discarded."))
+                explanation?.let { append(AppStrings.get(R.string.loop_err_blocked_reason, " Provider reason: %1\$s", it)) }
+                append(AppStrings.get(R.string.loop_err_blocked_suffix, " Please edit or remove the triggering content and retry, or switch models."))
             },
         )
     }
@@ -299,8 +318,8 @@ internal class AgentLoop(
         if (content.isNotBlank() && content != "null") return
         throw when (response.stopReason) {
             AssistantStopReason.OUTPUT_LIMIT ->
-                AgentModelFailure("MODEL_OUTPUT_LIMIT", false, "模型输出额度已耗尽但未生成正文，请检查输出上限或降低思考强度。")
-            else -> AgentModelFailure("MODEL_EMPTY_RESPONSE", false, "模型未返回正文或工具调用，请检查服务商状态。")
+                AgentModelFailure("MODEL_OUTPUT_LIMIT", false, AppStrings.get(R.string.loop_err_output_limit, "Model output limit reached without generating text; check max output tokens or lower reasoning effort."))
+            else -> AgentModelFailure("MODEL_EMPTY_RESPONSE", false, AppStrings.get(R.string.loop_err_empty_response, "Model returned neither text nor tool calls; check provider status."))
         }
     }
 

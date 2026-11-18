@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">पर्यावरण कॉन्फ़िगरेशन</string>
+    <string name="linux_environment_files">फ़ाइलें और डायरेक्टरी</string>
+    <string name="linux_environment_base_ready">आधार पर्यावरण तैयार है; आगे बेस टूल इंस्टॉल करें</string>
+    <string name="linux_environment_tools_ready">बेस टूल तैयार हैं; आवश्यकतानुसार एक्सटेंशन टूल इंस्टॉल करें</string>
+    <string name="linux_environment_shared_folders_summary">Linux पर्यावरण में Android डायरेक्टरी माउंट करें</string>
+    <string name="linux_debian_repair_failed">Debian पैकेज जांच या रिकवरी पूरी नहीं हो सकी। सुनिश्चित करें कि कोई अन्य पैकेज प्रबंधक कार्य नहीं चल रहा है, फिर पुनः प्रयास करें। यदि समस्या बनी रहे, तो त्रुटि देखने के लिए Debian टर्मिनल में dpkg --configure -a और apt-get --fix-broken install चलाएं।</string>
+    <string name="linux_debian_install_timeout">Debian बेस टूल इंस्टॉलेशन का समय समाप्त हो गया। अधूरे पैकेज संचालन जांचने और ठीक करने के लिए पुनः प्रयास करें।</string>
+    <string name="linux_debian_install_failed">Debian बेस टूल इंस्टॉलेशन विफल रहा। Debian टर्मिनल में रिपॉज़िटरी, अन्य पैकेज प्रबंधक कार्य और उपलब्ध स्टोरेज जांचें।</string>
+</resources>

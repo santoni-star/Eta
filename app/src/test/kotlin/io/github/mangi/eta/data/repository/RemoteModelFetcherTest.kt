@@ -49,7 +49,7 @@ class RemoteModelFetcherTest {
             val error = assertThrows(IllegalArgumentException::class.java) {
                 RemoteModelFetcher.parseGrokModels("""{"data":[{"id":"model","apiBackend":"$backend"}]}""")
             }
-            assertTrue(error.message.orEmpty().contains("当前订阅连接"))
+            assertTrue(error.message.orEmpty().contains("Current subscription connection"))
         }
         assertTrue(RemoteModelFetcher.parseGrokModels("""{"data":[]}""").isEmpty())
         assertTrue(RemoteModelFetcher.parseGrokModels("""{"data":[{"id":"hidden","hidden":true}]}""").isEmpty())

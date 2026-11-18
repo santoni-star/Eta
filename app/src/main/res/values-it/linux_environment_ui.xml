@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Configurazione ambiente</string>
+    <string name="linux_environment_files">File e directory</string>
+    <string name="linux_environment_base_ready">Ambiente di base pronto; installa ora gli strumenti di base</string>
+    <string name="linux_environment_tools_ready">Strumenti di base pronti; installa gli strumenti di estensione se necessario</string>
+    <string name="linux_environment_shared_folders_summary">Monta directory Android nell\'ambiente Linux</string>
+    <string name="linux_debian_repair_failed">La verifica o il ripristino dei pacchetti Debian non è riuscito. Assicurati che non ci siano altre attività del gestore pacchetti in esecuzione, quindi riprova. Se il problema persiste, esegui dpkg --configure -a e apt-get --fix-broken install nel terminale Debian per ispezionare l\'errore.</string>
+    <string name="linux_debian_install_timeout">Timeout durante l\'installazione degli strumenti di base Debian. Riprova per verificare e recuperare le operazioni sui pacchetti rimaste in sospeso.</string>
+    <string name="linux_debian_install_failed">Installazione degli strumenti di base Debian non riuscita. Controlla i repository, le altre attività del gestore pacchetti e lo spazio disponibile nel terminale Debian.</string>
+</resources>

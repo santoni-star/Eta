@@ -42,7 +42,7 @@ class GeminiModelFailureTest {
     fun parameterDiagnosticsDoNotMaskBillingFailures() {
         val body = """{"error":{"status":"FAILED_PRECONDITION","message":"billing is required"}}"""
         val failure = AgentModelFailure.http(400, body, includeParameterDetails = true)
-        assertTrue(failure.message.orEmpty().contains("额度或计费受限"))
+        assertTrue(failure.message.orEmpty().contains("quota or billing limit"))
         assertFalse(failure.retryable)
     }
 

@@ -1,5 +1,7 @@
 package io.github.mangi.eta.data.provider
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.model.GeminiProviderSetting
 import io.github.mangi.eta.data.model.AnthropicProviderSetting
 import io.github.mangi.eta.data.model.OpenAiCompatibleProviderSetting
@@ -47,7 +49,7 @@ internal object BuiltinProviders {
         ),
         OpenAiCompatibleProviderSetting(
             id = BAILIAN_ID,
-            name = "阿里百炼",
+            name = AppStrings.get(R.string.provider_builtin_bailian, "Alibaba Bailian"),
             baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
             sourceType = ProviderSourceTypes.BAILIAN,
             isBuiltIn = true,
@@ -101,7 +103,7 @@ internal object BuiltinProviders {
         ),
         OpenAiCompatibleProviderSetting(
             id = SILICONFLOW_ID,
-            name = "硅基流动",
+            name = AppStrings.get(R.string.provider_builtin_siliconflow, "SiliconFlow"),
             baseUrl = "https://api.siliconflow.cn/v1",
             sourceType = ProviderSourceTypes.SILICONFLOW,
             isBuiltIn = true,

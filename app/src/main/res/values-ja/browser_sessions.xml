@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">ブラウザデータをすべて消去</string>
+    <string name="browser_clear_shared_data_message">すべてのページが閉じられます。ログインセッションを含む Cookie、キャッシュ、ウェブサイトデータが消去されます。</string>
+    <string name="browser_user_action_failed">ブラウザ操作を完了できませんでした。もう一度お試しください。</string>
+</resources>

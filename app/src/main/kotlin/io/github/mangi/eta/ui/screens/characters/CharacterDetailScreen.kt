@@ -10,7 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import com.itos.coui.dialog.CouiDialogDefaults
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider
@@ -42,7 +45,11 @@ import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowDialog
 
-internal fun greetingTitle(index: Int) = if (index == 0) "默认开场白" else "开场白 ${index + 1}"
+internal fun greetingTitle(index: Int) = if (index == 0) {
+    AppStrings.get(R.string.char_greeting_default, "Default greeting")
+} else {
+    AppStrings.get(R.string.char_greeting_indexed, "Greeting %1\$d", index + 1)
+}
 
 private data class CharacterTextPreview(val title: String, val text: String)
 
@@ -67,7 +74,8 @@ internal fun CharacterDetailScreen(
         if (uri != null) store.changeAvatar(id, uri)
     }
     val profile = store.selected?.takeIf { it.id == id }
-    val userName = if (store.usePersona) store.persona.name.ifBlank { "用户" } else "用户"
+    val userFallback = stringResource(R.string.char_user_fallback)
+    val userName = if (store.usePersona) store.persona.name.ifBlank { userFallback } else userFallback
 
     when (LocalUiStyle.current) {
         AppearanceUiStyle.COUI -> {
@@ -75,7 +83,7 @@ internal fun CharacterDetailScreen(
             val dialogColors = CouiDialogDefaults.themeColors()
             CouiScaffoldPage(title = "", onBack = onBack, compactTitle = true) {
                 if (profile == null) {
-                    CharacterPageMessage(if (store.busy) "正在读取角色…" else "无法读取角色，请返回后重试")
+                    CharacterPageMessage(stringResource(if (store.busy) R.string.char_loading else R.string.char_load_failed_back))
                     return@CouiScaffoldPage
                 }
                 CharacterHero(
@@ -86,7 +94,7 @@ internal fun CharacterDetailScreen(
                     onStart = { store.startConversation(id, onStart) },
                     onReadDescription = {
                         preview = CharacterTextPreview(
-                            "角色设定",
+                            AppStrings.get(R.string.char_section_profile, "Character profile"),
                             CharacterMacros.expand(profile.card.description, profile.card, userName),
                         )
                     },
@@ -94,18 +102,18 @@ internal fun CharacterDetailScreen(
                 )
                 Group {
                     CouiSwitchPreference(
-                        title = "使用我的人设",
-                        summary = store.persona.name.ifBlank { "未设置称呼" },
+                        title = stringResource(R.string.char_use_persona),
+                        summary = store.persona.name.ifBlank { stringResource(R.string.char_persona_name_unset) },
                         checked = store.usePersona,
                         onCheckedChange = { store.usePersona = it },
                     )
                     Divider()
                     CouiPreference(
-                        title = "编辑我的人设",
+                        title = stringResource(R.string.char_edit_persona),
                         onClick = { onNavigate(AppRoute.CharacterPersona) },
                     )
                 }
-                CouiSectionTitle(text = "开场白")
+                CouiSectionTitle(text = stringResource(R.string.char_section_greetings))
                 val greetings = remember(profile.card, userName) {
                     (listOf(profile.card.firstMessage) + profile.card.alternateGreetings)
                         .map { CharacterMacros.expand(it, profile.card, userName) }
@@ -116,9 +124,9 @@ internal fun CharacterDetailScreen(
                     onSelect = { store.greetingIndex = it },
                     onRead = { index -> preview = CharacterTextPreview(greetingTitle(index), greetings[index]) },
                 )
-                Group(title = "管理") {
+                Group(title = stringResource(R.string.char_section_manage)) {
                     CouiPreference(
-                        title = "编辑角色",
+                        title = stringResource(R.string.route_character_editor),
                         enabled = !store.busy,
                         onClick = {
                             store.discardEditor()
@@ -127,25 +135,25 @@ internal fun CharacterDetailScreen(
                     )
                     Divider()
                     CouiPreference(
-                        title = "剧情记忆",
-                        summary = "此角色各次对话共享的故事与关系记录",
+                        title = stringResource(R.string.route_character_memory),
+                        summary = stringResource(R.string.char_memory_summary),
                         onClick = { onNavigate(AppRoute.CharacterMemory(id)) },
                     )
                     Divider()
                     CouiPreference(
-                        title = "复制角色",
+                        title = stringResource(R.string.char_duplicate),
                         enabled = !store.busy,
                         onClick = { store.duplicate(id) { onNavigate(AppRoute.CharacterDetail(it)) } },
                     )
                     Divider()
                     CouiPreference(
-                        title = "导出 PNG 角色卡",
+                        title = stringResource(R.string.char_export_png),
                         enabled = !store.busy,
                         onClick = { pngExporter.launch(characterExportName(profile.card.name, "png")) },
                     )
                     Divider()
                     CouiPreference(
-                        title = "导出 JSON 角色卡",
+                        title = stringResource(R.string.char_export_json),
                         enabled = !store.busy,
                         onClick = { jsonExporter.launch(characterExportName(profile.card.name, "json")) },
                     )
@@ -153,8 +161,8 @@ internal fun CharacterDetailScreen(
                 if (store.compatibilityWarnings.isNotEmpty()) {
                     Group {
                         CouiPreference(
-                            title = "兼容说明",
-                            summary = "${store.compatibilityWarnings.size} 项内容按兼容范围处理",
+                            title = stringResource(R.string.char_compat_notes),
+                            summary = stringResource(R.string.char_compat_summary, store.compatibilityWarnings.size),
                             onClick = { showCompatibility = !showCompatibility },
                         )
                         if (showCompatibility) {
@@ -172,7 +180,7 @@ internal fun CharacterDetailScreen(
                 }
                 Group {
                     CouiPreference(
-                        title = "删除角色",
+                        title = stringResource(R.string.char_delete),
                         titleColor = dialogColors.destructive,
                         enabled = !store.busy,
                         showChevron = false,
@@ -186,7 +194,7 @@ internal fun CharacterDetailScreen(
         AppearanceUiStyle.MIUIX -> {
             MiuixScaffoldPage(title = "", onBack = onBack, compactTitle = true) {
                 if (profile == null) {
-                    item { CharacterPageMessage(if (store.busy) "正在读取角色…" else "无法读取角色，请返回后重试") }
+                    item { CharacterPageMessage(stringResource(if (store.busy) R.string.char_loading else R.string.char_load_failed_back)) }
                     return@MiuixScaffoldPage
                 }
                 item(key = "hero") {
@@ -198,7 +206,7 @@ internal fun CharacterDetailScreen(
                         onStart = { store.startConversation(id, onStart) },
                         onReadDescription = {
                             preview = CharacterTextPreview(
-                                "角色设定",
+                                AppStrings.get(R.string.char_section_profile, "Character profile"),
                                 CharacterMacros.expand(profile.card.description, profile.card, userName),
                             )
                         },
@@ -212,16 +220,16 @@ internal fun CharacterDetailScreen(
                             .padding(bottom = 12.dp),
                     ) {
                         SwitchPreference(
-                            title = "使用我的人设",
-                            summary = store.persona.name.ifBlank { "未设置称呼" },
+                            title = stringResource(R.string.char_use_persona),
+                            summary = store.persona.name.ifBlank { stringResource(R.string.char_persona_name_unset) },
                             checked = store.usePersona,
                             onCheckedChange = { store.usePersona = it },
                         )
-                        ArrowPreference(title = "编辑我的人设", onClick = { onNavigate(AppRoute.CharacterPersona) })
+                        ArrowPreference(title = stringResource(R.string.char_edit_persona), onClick = { onNavigate(AppRoute.CharacterPersona) })
                     }
                 }
                 item(key = "greetings") {
-                    SmallTitle("开场白")
+                    SmallTitle(stringResource(R.string.char_section_greetings))
                     val greetings = remember(profile.card, userName) {
                         (listOf(profile.card.firstMessage) + profile.card.alternateGreetings)
                             .map { CharacterMacros.expand(it, profile.card, userName) }
@@ -234,29 +242,29 @@ internal fun CharacterDetailScreen(
                     )
                 }
                 item(key = "management") {
-                    SmallTitle("管理")
+                    SmallTitle(stringResource(R.string.char_section_manage))
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
                             .padding(bottom = 12.dp),
                     ) {
-                        ArrowPreference(title = "编辑角色", enabled = !store.busy, onClick = {
+                        ArrowPreference(title = stringResource(R.string.route_character_editor), enabled = !store.busy, onClick = {
                             store.discardEditor()
                             onNavigate(AppRoute.CharacterEditor(id))
                         })
-                        ArrowPreference(title = "剧情记忆", summary = "此角色各次对话共享的故事与关系记录", onClick = {
+                        ArrowPreference(title = stringResource(R.string.route_character_memory), summary = stringResource(R.string.char_memory_summary), onClick = {
                             onNavigate(AppRoute.CharacterMemory(id))
                         })
-                        ArrowPreference(title = "复制角色", enabled = !store.busy, onClick = {
+                        ArrowPreference(title = stringResource(R.string.char_duplicate), enabled = !store.busy, onClick = {
                             store.duplicate(id) { onNavigate(AppRoute.CharacterDetail(it)) }
                         })
                         ArrowPreference(
-                            title = "导出 PNG 角色卡",
+                            title = stringResource(R.string.char_export_png),
                             enabled = !store.busy,
                             onClick = { pngExporter.launch(characterExportName(profile.card.name, "png")) },
                         )
                         ArrowPreference(
-                            title = "导出 JSON 角色卡",
+                            title = stringResource(R.string.char_export_json),
                             enabled = !store.busy,
                             onClick = { jsonExporter.launch(characterExportName(profile.card.name, "json")) },
                         )
@@ -270,8 +278,8 @@ internal fun CharacterDetailScreen(
                                 .padding(bottom = 12.dp),
                         ) {
                             ArrowPreference(
-                                title = "兼容说明",
-                                summary = "${store.compatibilityWarnings.size} 项内容按兼容范围处理",
+                                title = stringResource(R.string.char_compat_notes),
+                                summary = stringResource(R.string.char_compat_summary, store.compatibilityWarnings.size),
                                 onClick = { showCompatibility = !showCompatibility },
                             )
                             if (showCompatibility) {
@@ -294,7 +302,7 @@ internal fun CharacterDetailScreen(
                             .padding(bottom = 12.dp),
                     ) {
                         ArrowPreference(
-                            title = "删除角色",
+                            title = stringResource(R.string.char_delete),
                             titleColor = BasicComponentDefaults.titleColor(color = MiuixTheme.colorScheme.error),
                             enabled = !store.busy,
                             onClick = { showDeleteConfirm = true },
@@ -306,7 +314,7 @@ internal fun CharacterDetailScreen(
     }
 
     if (showDeleteConfirm && profile != null) {
-        val message = "「${profile.card.name}」将从角色库移除，角色图片与剧情记忆一并删除；已有对话保留。此操作无法撤销。"
+        val message = stringResource(R.string.char_delete_confirm_msg, profile.card.name)
         val onConfirmDelete: () -> Unit = {
             showDeleteConfirm = false
             store.delete(id) { onBack() }
@@ -315,9 +323,9 @@ internal fun CharacterDetailScreen(
             AppearanceUiStyle.COUI -> {
                 CouiConfirmDialog(
                     visible = true,
-                    title = "删除角色",
+                    title = stringResource(R.string.char_delete),
                     message = message,
-                    confirmText = "删除",
+                    confirmText = stringResource(R.string.action_delete),
                     confirmEnabled = !store.busy,
                     destructive = true,
                     onConfirm = onConfirmDelete,
@@ -327,12 +335,12 @@ internal fun CharacterDetailScreen(
             AppearanceUiStyle.MIUIX -> {
                 WindowDialog(
                     show = true,
-                    title = "删除角色",
+                    title = stringResource(R.string.char_delete),
                     summary = message,
                     onDismissRequest = { showDeleteConfirm = false },
                 ) {
                     MiuixDialogActions(
-                        confirmText = "删除",
+                        confirmText = stringResource(R.string.action_delete),
                         destructive = true,
                         confirmEnabled = !store.busy,
                         onCancel = { showDeleteConfirm = false },
@@ -354,6 +362,6 @@ internal fun CharacterDetailScreen(
 
 private fun characterExportName(name: String, extension: String): String {
     val basename = name.map { if (it.isISOControl() || it in "\\/:*?\"<>|") '_' else it }
-        .joinToString("").trim().trimEnd('.').take(64).ifBlank { "角色" }
+        .joinToString("").trim().trimEnd('.').take(64).ifBlank { AppStrings.get(R.string.char_export_fallback_name, "Character") }
     return "$basename.$extension"
 }

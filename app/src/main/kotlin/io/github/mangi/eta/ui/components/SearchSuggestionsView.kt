@@ -12,6 +12,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import io.github.mangi.eta.R
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -96,9 +97,9 @@ internal class SearchSuggestionsWebView(
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         })
                     } catch (_: ActivityNotFoundException) {
-                        Toast.makeText(context, "没有可打开链接的浏览器", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.browser_no_app_to_open_link), Toast.LENGTH_SHORT).show()
                     } catch (_: SecurityException) {
-                        Toast.makeText(context, "当前无法打开链接", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.browser_cannot_open_link), Toast.LENGTH_SHORT).show()
                     }
                 }
                 return true

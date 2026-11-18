@@ -49,9 +49,15 @@ internal fun LanguagePreference(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val locales = repository.supportedLocales
+    val locales = remember(repository) {
+        repository.supportedLocales.sortedBy { it.getDisplayName(it).lowercase(it) }
+    }
     val labels = listOf(stringResource(R.string.settings_language_system)) +
-        locales.map { it.getDisplayName(it) }
+        locales.map { locale ->
+            locale.getDisplayName(locale).replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(locale) else it.toString()
+            }
+        }
     val selectedIndex = selectedLocale?.let { selected ->
         locales.indexOfFirst { LocaleList.matchesLanguageAndScript(it, selected) } + 1
     } ?: 0

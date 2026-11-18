@@ -2,7 +2,9 @@ package io.github.mangi.eta.data.repository
 
 import android.content.Context
 import android.util.AtomicFile
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.model.AgentHttpClient
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.model.CustomProviderSetting
 import io.github.mangi.eta.data.model.Model
 import io.github.mangi.eta.data.model.ModelSource
@@ -78,9 +80,11 @@ internal object CommunityCatalogRepository {
             }
             val raw = try {
                 call.execute().use { response ->
-                    if (!response.isSuccessful) error("目录更新失败：HTTP ${response.code}")
+                    if (!response.isSuccessful) {
+                        error(AppStrings.get(R.string.community_err_http, "Catalog update failed: HTTP %1\$d", response.code))
+                    }
                     if (!response.header("Content-Type").orEmpty().startsWith("application/json", ignoreCase = true)) {
-                        error("目录更新失败：响应格式不是 JSON")
+                        error(AppStrings.get(R.string.community_err_not_json, "Catalog update failed: response is not JSON"))
                     }
                     response.body.byteStream().use { it.readUtf8Limited() }
                 }
@@ -94,7 +98,10 @@ internal object CommunityCatalogRepository {
                     fetchedAt = System.currentTimeMillis(),
                 )
             } catch (failure: Exception) {
-                throw IllegalStateException("目录数据格式无效", failure)
+                throw IllegalStateException(
+                    AppStrings.get(R.string.community_err_invalid_format, "Invalid catalog data format"),
+                    failure,
+                )
             }
             val file = AtomicFile(cacheFile(context.applicationContext))
             val output = file.startWrite()
@@ -114,9 +121,13 @@ internal object CommunityCatalogRepository {
     }
 
     fun newProvider(selection: CommunityCatalogProvider, modelIds: Set<String>): ProviderSetting {
-        require(modelIds.isNotEmpty()) { "请至少选择一个模型" }
+        require(modelIds.isNotEmpty()) {
+            AppStrings.get(R.string.community_err_select_model, "Select at least one model")
+        }
         val models = selection.models.filter { it.modelId in modelIds }
-        require(models.size == modelIds.size) { "选中的模型已不在目录中，请重新选择" }
+        require(models.size == modelIds.size) {
+            AppStrings.get(R.string.community_err_models_missing, "Selected models are no longer in the catalog; please re-select")
+        }
         return CustomProviderSetting(
             id = UUID.randomUUID().toString(),
             name = selection.name,
@@ -150,7 +161,9 @@ internal object CommunityCatalogRepository {
         while (true) {
             val count = read(buffer)
             if (count < 0) break
-            if (output.size() + count > MAX_JSON_BYTES) error("模型目录超出大小限制")
+            if (output.size() + count > MAX_JSON_BYTES) {
+                error(AppStrings.get(R.string.community_err_size_limit, "Model catalog exceeded size limit"))
+            }
             output.write(buffer, 0, count)
         }
         return output.toString(Charsets.UTF_8.name())

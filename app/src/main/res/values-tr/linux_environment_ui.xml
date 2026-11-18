@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Ortam yapılandırması</string>
+    <string name="linux_environment_files">Dosyalar ve dizinler</string>
+    <string name="linux_environment_base_ready">Temel ortam hazır; sonraki adımda temel araçları yükleyin</string>
+    <string name="linux_environment_tools_ready">Temel araçlar hazır; gerektiğinde ek araçları yükleyin</string>
+    <string name="linux_environment_shared_folders_summary">Android dizinlerini Linux ortamına bağla</string>
+    <string name="linux_debian_repair_failed">Debian paket denetimleri veya kurtarma işlemi tamamlanamadı. Başka bir paket yöneticisi görevinin çalışmadığından emin olun ve tekrar deneyin. Sorun devam ederse hatayı incelemek için Debian terminalinde dpkg --configure -a ve apt-get --fix-broken install komutlarını çalıştırın.</string>
+    <string name="linux_debian_install_timeout">Debian temel araç kurulumu zaman aşımına uğradı. Tamamlanmamış paket işlemlerini denetlemek ve kurtarmak için tekrar deneyin.</string>
+    <string name="linux_debian_install_failed">Debian temel araç kurulumu başarısız oldu. Debian terminalinde depoları, diğer paket yöneticisi görevlerini ve kullanılabilir depolama alanını kontrol edin.</string>
+</resources>

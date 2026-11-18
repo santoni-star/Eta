@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">المهام الجارية</string>
+    <string name="execution_title">Eta قيد التشغيل</string>
+    <plurals name="execution_summary">
+        <item quantity="zero">لا توجد مهام قيد التشغيل (%1$d). عُد إلى Eta لمتابعة التقدم.</item>
+        <item quantity="one">مهمة واحدة (%1$d) قيد التشغيل. عُد إلى Eta لمتابعة التقدم.</item>
+        <item quantity="two">مهمتان (%1$d) قيد التشغيل. عُد إلى Eta لمتابعة التقدم.</item>
+        <item quantity="few">%1$d مهام قيد التشغيل. عُد إلى Eta لمتابعة التقدم.</item>
+        <item quantity="many">%1$d مهمة قيد التشغيل. عُد إلى Eta لمتابعة التقدم.</item>
+        <item quantity="other">%1$d مهمة قيد التشغيل. عُد إلى Eta لمتابعة التقدم.</item>
+    </plurals>
+    <string name="execution_stop">إيقاف المهام الجارية</string>
+    <string name="execution_chip_running">قيد العمل</string>
+    <string name="execution_chip_answering">يجيب</string>
+</resources>

@@ -1,5 +1,7 @@
 package io.github.mangi.eta.data.repository
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.model.Model
 import io.github.mangi.eta.data.model.ModelSource
 import io.github.mangi.eta.data.model.ProviderAuthModes
@@ -59,7 +61,9 @@ internal fun reconcileRemoteModels(
         }
         remoteByKey.forEach { (key, remote) ->
             if (key !in consumed && key in adopted) {
-                require(remote.id.isNotBlank()) { "远端模型缺少本地标识" }
+                require(remote.id.isNotBlank()) {
+                    AppStrings.get(R.string.remote_model_err_missing_id, "Remote model is missing local identifier")
+                }
                 add(remote.copy(
                     modelId = remote.modelId.trim(),
                     displayName = remote.displayName.trim().ifBlank { remote.modelId.trim() },

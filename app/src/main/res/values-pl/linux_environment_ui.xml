@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Konfiguracja środowiska</string>
+    <string name="linux_environment_files">Pliki i katalogi</string>
+    <string name="linux_environment_base_ready">Środowisko bazowe jest gotowe; zainstaluj teraz narzędzia podstawowe</string>
+    <string name="linux_environment_tools_ready">Narzędzia podstawowe są gotowe; w razie potrzeby zainstaluj narzędzia rozszerzeń</string>
+    <string name="linux_environment_shared_folders_summary">Montuj katalogi systemu Android w środowisku Linux</string>
+    <string name="linux_debian_repair_failed">Sprawdzanie lub naprawa pakietów Debian nie zostały ukończone. Upewnij się, że nie działa żadne inne zadanie menedżera pakietów, i spróbuj ponownie. Jeśli problem nadal występuje, uruchom dpkg --configure -a oraz apt-get --fix-broken install w terminalu Debian, aby sprawdzić błąd.</string>
+    <string name="linux_debian_install_timeout">Przekroczono limit czasu instalacji narzędzi podstawowych Debian. Ponów próbę, aby sprawdzić i dokończyć niedokończone operacje na pakietach.</string>
+    <string name="linux_debian_install_failed">Instalacja narzędzi podstawowych Debian nie powiodła się. Sprawdź repozytoria, inne zadania menedżera pakietów oraz dostępne miejsce w terminalu Debian.</string>
+</resources>

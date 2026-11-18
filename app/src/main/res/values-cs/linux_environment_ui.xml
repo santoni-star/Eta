@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Konfigurace prostředí</string>
+    <string name="linux_environment_files">Soubory a adresáře</string>
+    <string name="linux_environment_base_ready">Základní prostředí je připraveno; dále nainstalujte základní nástroje</string>
+    <string name="linux_environment_tools_ready">Základní nástroje jsou připraveny; podle potřeby nainstalujte rozšiřující nástroje</string>
+    <string name="linux_environment_shared_folders_summary">Připojit adresáře Androidu v prostředí Linux</string>
+    <string name="linux_debian_repair_failed">Kontrola nebo oprava balíčků Debian se nedokončila. Ujistěte se, že neběží žádná jiná úloha správce balíčků, a zkuste to znovu. Pokud problém přetrvává, spusťte v terminálu Debian příkazy dpkg --configure -a a apt-get --fix-broken install a zkontrolujte chybu.</string>
+    <string name="linux_debian_install_timeout">Vypršel časový limit instalace základních nástrojů Debian. Opakováním zkontrolujete a obnovíte nedokončené operace s balíčky.</string>
+    <string name="linux_debian_install_failed">Instalace základních nástrojů Debian selhala. Zkontrolujte repozitáře, ostatní úlohy správce balíčků a dostupné úložiště v terminálu Debian.</string>
+</resources>

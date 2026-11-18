@@ -323,9 +323,10 @@ private fun ToolCategoryFilterStrip(
     val totalEnabled = groups.sumOf { group ->
         group.tools.count { Prefs.isToolEnabledInSet(it.id, disabledTools) }
     }
-    val chips = remember(groups, totalEnabled, totalCount, disabledTools) {
+    val allChipLabel = stringResource(R.string.tools_filter_all_ratio, totalEnabled, totalCount)
+    val chips = remember(groups, totalEnabled, totalCount, disabledTools, allChipLabel) {
         buildList {
-            add(ALL_GROUP_FILTER to "全部 $totalEnabled/$totalCount")
+            add(ALL_GROUP_FILTER to allChipLabel)
             groups.forEach { group ->
                 val enabled = group.tools.count { Prefs.isToolEnabledInSet(it.id, disabledTools) }
                 add(group.id to "${group.title} $enabled/${group.tools.size}")
@@ -426,7 +427,7 @@ internal fun GroupBatchTogglePill(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val label = if (allEnabled) "全部禁用" else "全部启用"
+    val label = stringResource(if (allEnabled) R.string.tools_disable_all else R.string.tools_enable_all)
     val isCoui = LocalUiStyle.current == AppearanceUiStyle.COUI
     val source = remember { MutableInteractionSource() }
     if (isCoui) {

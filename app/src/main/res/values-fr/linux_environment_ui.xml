@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Configuration de l\'environnement</string>
+    <string name="linux_environment_files">Fichiers et répertoires</string>
+    <string name="linux_environment_base_ready">Environnement de base prêt ; installez ensuite les outils de base</string>
+    <string name="linux_environment_tools_ready">Outils de base prêts ; installez des extensions si nécessaire</string>
+    <string name="linux_environment_shared_folders_summary">Monter des répertoires Android dans l\'environnement Linux</string>
+    <string name="linux_debian_repair_failed">La vérification ou la réparation des paquets Debian n\'a pas abouti. Assurez-vous qu\'aucune autre tâche de gestionnaire de paquets n\'est en cours, puis réessayez. Si le problème persiste, exécutez dpkg --configure -a et apt-get --fix-broken install dans le terminal Debian pour inspecter l\'erreur.</string>
+    <string name="linux_debian_install_timeout">L\'installation des outils de base Debian a expiré. Réessayez pour vérifier et récupérer les opérations de paquets inachevées.</string>
+    <string name="linux_debian_install_failed">L\'installation des outils de base Debian a échoué. Vérifiez les dépôts, les autres tâches de gestionnaire de paquets et l\'espace de stockage disponible dans le terminal Debian.</string>
+</resources>

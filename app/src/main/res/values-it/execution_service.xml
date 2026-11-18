@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">Attività in esecuzione</string>
+    <string name="execution_title">Eta è in esecuzione</string>
+    <plurals name="execution_summary">
+        <item quantity="one">%1$d attività in esecuzione. Torna su Eta per controllare l\'avanzamento.</item>
+        <item quantity="other">%1$d attività in esecuzione. Torna su Eta per controllare l\'avanzamento.</item>
+    </plurals>
+    <string name="execution_stop">Interrompi attività in esecuzione</string>
+    <string name="execution_chip_running">Elaborazione</string>
+    <string name="execution_chip_answering">Risposta</string>
+</resources>

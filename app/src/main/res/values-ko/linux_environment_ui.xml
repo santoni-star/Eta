@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">환경 구성</string>
+    <string name="linux_environment_files">파일 및 디렉터리</string>
+    <string name="linux_environment_base_ready">기본 환경이 준비되었습니다. 다음으로 기본 도구를 설치하세요</string>
+    <string name="linux_environment_tools_ready">기본 도구가 준비되었습니다. 필요에 따라 확장 도구를 설치하세요</string>
+    <string name="linux_environment_shared_folders_summary">Linux 환경에 Android 디렉터리를 마운트합니다</string>
+    <string name="linux_debian_repair_failed">Debian 패키지 확인 또는 복구를 완료하지 못했습니다. 다른 패키지 관리자 작업이 실행 중이 아닌지 확인한 후 다시 시도하세요. 계속 실패하면 Debian 터미널에서 dpkg --configure -a 및 apt-get --fix-broken install을 실행하여 오류를 확인하세요.</string>
+    <string name="linux_debian_install_timeout">Debian 기본 도구 설치 시간이 초과되었습니다. 다시 시도하여 완료되지 않은 패키지 작업을 확인하고 복구하세요.</string>
+    <string name="linux_debian_install_failed">Debian 기본 도구 설치에 실패했습니다. Debian 터미널에서 저장소, 다른 패키지 관리자 작업 및 사용 가능한 저장 공간을 확인하세요.</string>
+</resources>

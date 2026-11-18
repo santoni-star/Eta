@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_view_description">विवरण देखें</string>
+    <string name="ui_description_named">%1$s का विवरण देखें</string>
+    <string name="skills_more_named">%1$s के लिए अधिक क्रियाएं</string>
+    <string name="tools_manage_permissions">अनुमतियां प्रबंधित करें</string>
+    <string name="tools_view_enhancements">सिस्टम संवर्धन देखें</string>
+</resources>

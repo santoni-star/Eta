@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.screens.characters
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -96,7 +98,7 @@ internal fun CharacterPortraitCard(
             ) {
                 Icon(
                     imageVector = if (card.favorite) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                    contentDescription = if (card.favorite) "取消收藏" else "收藏",
+                    contentDescription = stringResource(if (card.favorite) R.string.char_unfavorite else R.string.char_favorite),
                     modifier = Modifier.size(16.dp),
                     tint = if (card.favorite) FavoriteColor else Color.White,
                 )
@@ -181,7 +183,7 @@ internal fun CharacterAddTile(
                 Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.size(24.dp), tint = colors.primary)
             }
             Spacer(Modifier.height(12.dp))
-            Text("新建角色", style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.Medium, color = colors.onSurface)
+            Text(stringResource(R.string.char_new_card), style = MiuixTheme.textStyles.body2, fontWeight = FontWeight.Medium, color = colors.onSurface)
         }
         Box(
             modifier = Modifier
@@ -199,7 +201,7 @@ internal fun CharacterAddTile(
         ) {
             Icon(Icons.Rounded.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp), tint = colors.onSurfaceVariantSummary)
             Spacer(Modifier.width(6.dp))
-            Text("导入角色卡", style = MiuixTheme.textStyles.footnote1, color = colors.onSurfaceVariantSummary)
+            Text(stringResource(R.string.char_import_card), style = MiuixTheme.textStyles.footnote1, color = colors.onSurfaceVariantSummary)
         }
     }
 }

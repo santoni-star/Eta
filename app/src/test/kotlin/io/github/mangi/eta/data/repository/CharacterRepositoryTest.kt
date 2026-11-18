@@ -59,7 +59,7 @@ class CharacterRepositoryTest {
     @Test
     fun defaultCharacterSeedsOnlyIntoEmptyLibraryAndNeverResurrects() = runBlocking {
         CharacterRepository.ensureDefaultCharacter()
-        assertEquals(listOf("小满"), CharacterRepository.list().map { it.card.name })
+        assertEquals(listOf("Xiaoman"), CharacterRepository.list().map { it.card.name })
         CharacterRepository.ensureDefaultCharacter()
         assertEquals(1, CharacterRepository.list().size)
         CharacterRepository.delete(CharacterRepository.list().single().id)
@@ -67,7 +67,7 @@ class CharacterRepositoryTest {
         assertEquals(emptyList<String>(), CharacterRepository.list().map { it.id })
         // 用户主动恢复时不受播种标记限制。
         CharacterRepository.createDefaultCharacter()
-        assertEquals(listOf("小满"), CharacterRepository.list().map { it.card.name })
+        assertEquals(listOf("Xiaoman"), CharacterRepository.list().map { it.card.name })
     }
 
     @Test

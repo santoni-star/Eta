@@ -3,6 +3,8 @@ package io.github.mangi.eta.data.repository
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.datastore.SettingsDataStore
 import io.github.mangi.eta.data.model.AsrProvider
 import io.github.mangi.eta.data.model.DeepSeekAsrConfig
@@ -98,7 +100,7 @@ internal object SpeechSettingsRepository {
         val encrypted = cipher.iv + cipher.doFinal(json.encodeToString(credentials).toByteArray(Charsets.UTF_8))
         check(context.getSharedPreferences("eta_speech_secrets", Context.MODE_PRIVATE).edit()
             .putString("credentials", Base64.getEncoder().encodeToString(encrypted)).commit()) {
-            "语音凭据保存失败"
+            AppStrings.get(R.string.speech_err_save_credentials, "Failed to save speech credentials")
         }
     }
 
@@ -116,4 +118,9 @@ internal object SpeechSettingsRepository {
     }
 }
 
-internal class SpeechCredentialsUnavailable : Exception("语音凭据无法解密，请重新填写并保存")
+internal class SpeechCredentialsUnavailable : Exception(
+    AppStrings.get(
+        R.string.speech_err_decrypt_credentials,
+        "Speech credentials could not be decrypted; please re-enter and save",
+    ),
+)

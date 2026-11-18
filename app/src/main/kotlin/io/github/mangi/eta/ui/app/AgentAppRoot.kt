@@ -824,22 +824,22 @@ fun AgentAppRoot(
             AppearanceUiStyle.COUI -> {
                 CouiNoticeDialog(
                     visible = true,
-                    title = "角色",
+                    title = stringResource(R.string.route_characters),
                     message = notice,
-                    confirmText = "知道了",
+                    confirmText = stringResource(R.string.action_got_it),
                     onDismissRequest = characterStore::dismissNotice,
                 )
             }
             AppearanceUiStyle.MIUIX -> {
                 WindowDialog(
                     show = true,
-                    title = "角色",
+                    title = stringResource(R.string.route_characters),
                     summary = notice,
                     cornerRadius = DialogDefaults.CornerRadius,
                     onDismissRequest = characterStore::dismissNotice,
                 ) {
                     top.yukonga.miuix.kmp.basic.TextButton(
-                        text = "知道了", onClick = characterStore::dismissNotice, modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.action_got_it), onClick = characterStore::dismissNotice, modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }

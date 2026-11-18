@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">चल रहे कार्य</string>
+    <string name="execution_title">Eta चल रहा है</string>
+    <plurals name="execution_summary">
+        <item quantity="one">%1$d कार्य चल रहा है। प्रगति देखने के लिए Eta पर वापस जाएं।</item>
+        <item quantity="other">%1$d कार्य चल रहे हैं। प्रगति देखने के लिए Eta पर वापस जाएं।</item>
+    </plurals>
+    <string name="execution_stop">चल रहे कार्य रोकें</string>
+    <string name="execution_chip_running">कार्य जारी</string>
+    <string name="execution_chip_answering">उत्तर दे रहा है</string>
+</resources>

@@ -101,8 +101,8 @@ internal fun ModelProviderListScreen(
 
                 ProviderSection(title = stringResource(R.string.ui_add_new_provider_74df54)) {
                     CouiPreference(
-                        title = "从 models.dev 添加",
-                        summary = "浏览 models.dev 社区目录并选择模型",
+                        title = stringResource(R.string.route_community_catalog),
+                        summary = stringResource(R.string.provider_catalog_summary),
                         icon = {
                             CouiSettingsIcon(
                                 icon = Icons.Rounded.TravelExplore,
@@ -127,8 +127,8 @@ internal fun ModelProviderListScreen(
                     )
                     CouiIconDivider()
                     CouiPreference(
-                        title = "新增 Gemini",
-                        summary = "使用 API Key 连接原生 Interactions API",
+                        title = stringResource(R.string.provider_add_gemini_title),
+                        summary = stringResource(R.string.provider_add_gemini_summary),
                         icon = { ProviderBrandIcon(ProviderSourceTypes.GEMINI) },
                         onClick = { onNavigate(AppRoute.ModelProviderNew(NewProviderType.Gemini)) },
                     )
@@ -207,8 +207,8 @@ internal fun ModelProviderListScreen(
                 item(key = "create_section") {
                     ProviderSection(title = stringResource(R.string.ui_add_new_provider_74df54)) {
                         ArrowPreference(
-                            title = "从 models.dev 添加",
-                            summary = "浏览 models.dev 社区目录并选择模型",
+                            title = stringResource(R.string.route_community_catalog),
+                            summary = stringResource(R.string.provider_catalog_summary),
                             startAction = {
                                 Box(
                                     modifier = Modifier
@@ -243,8 +243,8 @@ internal fun ModelProviderListScreen(
                             onClick = { onNavigate(AppRoute.ModelProviderNew(NewProviderType.Anthropic)) },
                         )
                         ArrowPreference(
-                            title = "新增 Gemini",
-                            summary = "使用 API Key 连接原生 Interactions API",
+                            title = stringResource(R.string.provider_add_gemini_title),
+                            summary = stringResource(R.string.provider_add_gemini_summary),
                             startAction = { ProviderBrandIcon(ProviderSourceTypes.GEMINI) },
                             onClick = { onNavigate(AppRoute.ModelProviderNew(NewProviderType.Gemini)) },
                         )

@@ -67,19 +67,19 @@ internal fun ProviderHeadersSection(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
-    ProviderSection(title = "自定义请求头") {
+    ProviderSection(title = stringResource(R.string.provider_headers_title)) {
         val chevronRotation by animateFloatAsState(if (expanded) 180f else 0f)
         when (LocalUiStyle.current) {
             AppearanceUiStyle.COUI -> {
                 val colors = CouiPageDefaults.themeColors()
                 CouiPreference(
-                    title = if (headers.isEmpty()) "未设置" else "已设置 ${headers.size} 项",
-                    summary = "可覆盖 User-Agent；认证与传输请求头由系统管理。",
+                    title = if (headers.isEmpty()) stringResource(R.string.provider_headers_empty) else stringResource(R.string.provider_headers_count, headers.size),
+                    summary = stringResource(R.string.provider_headers_summary),
                     showChevron = false,
                     trailing = {
                         CouiIcon(
                             imageVector = Icons.Rounded.ExpandMore,
-                            contentDescription = if (expanded) "收起" else "展开",
+                            contentDescription = stringResource(if (expanded) R.string.provider_headers_collapse else R.string.provider_headers_expand),
                             tint = colors.summary,
                             modifier = Modifier
                                 .size(22.dp)
@@ -108,7 +108,7 @@ internal fun ProviderHeadersSection(
                     }
                     Divider()
                     CouiPreference(
-                        title = "添加请求头",
+                        title = stringResource(R.string.provider_headers_add),
                         titleColor = colors.accent,
                         showChevron = false,
                         onClick = { onHeadersChange(headers + ProviderHeaderDraft()) },
@@ -117,12 +117,12 @@ internal fun ProviderHeadersSection(
             }
             AppearanceUiStyle.MIUIX -> {
                 BasicComponent(
-                    title = if (headers.isEmpty()) "未设置" else "已设置 ${headers.size} 项",
-                    summary = "可覆盖 User-Agent；认证与传输请求头由系统管理。",
+                    title = if (headers.isEmpty()) stringResource(R.string.provider_headers_empty) else stringResource(R.string.provider_headers_count, headers.size),
+                    summary = stringResource(R.string.provider_headers_summary),
                     endActions = {
                         Icon(
                             imageVector = Icons.Rounded.ExpandMore,
-                            contentDescription = if (expanded) "收起" else "展开",
+                            contentDescription = stringResource(if (expanded) R.string.provider_headers_collapse else R.string.provider_headers_expand),
                             tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
                             modifier = Modifier.rotate(chevronRotation),
                         )
@@ -147,7 +147,7 @@ internal fun ProviderHeadersSection(
                         )
                     }
                     BasicComponent(
-                        title = "添加请求头",
+                        title = stringResource(R.string.provider_headers_add),
                         titleColor = BasicComponentDefaults.titleColor(color = MiuixTheme.colorScheme.primary),
                         startAction = {
                             Icon(
@@ -187,13 +187,13 @@ private fun ProviderHeaderRow(
                     CouiTextField(
                         value = row.header.name,
                         onValueChange = onNameChange,
-                        label = "名称",
+                        label = stringResource(R.string.provider_header_name),
                         singleLine = true,
                     )
                     CouiTextField(
                         value = row.header.value,
                         onValueChange = onValueChange,
-                        label = "值",
+                        label = stringResource(R.string.provider_header_value),
                         singleLine = true,
                         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
@@ -243,14 +243,14 @@ private fun ProviderHeaderRow(
                     TextField(
                         value = row.header.name,
                         onValueChange = onNameChange,
-                        label = "名称",
+                        label = stringResource(R.string.provider_header_name),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     TextField(
                         value = row.header.value,
                         onValueChange = onValueChange,
-                        label = "值",
+                        label = stringResource(R.string.provider_header_value),
                         singleLine = true,
                         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {

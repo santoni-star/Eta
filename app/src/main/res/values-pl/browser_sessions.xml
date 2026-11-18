@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Wyczyść wszystkie dane przeglądarki</string>
+    <string name="browser_clear_shared_data_message">Wszystkie strony zostaną zamknięte. Pliki cookie, pamięć podręczna i dane witryn, w tym sesje logowania, zostaną wyczyszczone.</string>
+    <string name="browser_user_action_failed">Nie udało się ukończyć działania przeglądarki. Spróbuj ponownie.</string>
+</resources>

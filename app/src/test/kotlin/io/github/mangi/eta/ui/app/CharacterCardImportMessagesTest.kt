@@ -10,7 +10,7 @@ class CharacterCardImportMessagesTest {
     fun damagedPriorityV3ExplainsThatV2WasNotUsed() {
         val message = checkNotNull(characterCardImportMessage("CARD_V3_INVALID"))
         assertTrue(message.contains("V3"))
-        assertTrue(message.contains("未回退到 V2"))
+        assertTrue(message.contains("not falling back to V2"))
     }
 
     @Test

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Effacer toutes les données du navigateur</string>
+    <string name="browser_clear_shared_data_message">Toutes les pages seront fermées. Les cookies, le cache et les données des sites web, y compris les sessions de connexion, seront effacés.</string>
+    <string name="browser_user_action_failed">L\'action du navigateur n\'a pas pu être effectuée. Veuillez réessayer.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">環境設定</string>
+    <string name="linux_environment_files">ファイルとディレクトリ</string>
+    <string name="linux_environment_base_ready">ベース環境の準備が整いました。次に基本ツールをインストールしてください</string>
+    <string name="linux_environment_tools_ready">基本ツールの準備が整いました。必要に応じて拡張ツールをインストールしてください</string>
+    <string name="linux_environment_shared_folders_summary">Android のディレクトリを Linux 環境にマウントします</string>
+    <string name="linux_debian_repair_failed">Debian パッケージの確認または修復が完了しませんでした。他のパッケージマネージャータスクが実行されていないことを確認してから再試行してください。引き続き失敗する場合は、Debian ターミナルで dpkg --configure -a と apt-get --fix-broken install を実行してエラーを確認してください。</string>
+    <string name="linux_debian_install_timeout">Debian 基本ツールのインストールがタイムアウトしました。再試行して未完了のパッケージ操作を確認・復旧してください。</string>
+    <string name="linux_debian_install_failed">Debian 基本ツールのインストールに失敗しました。Debian ターミナルでリポジトリ、他のパッケージマネージャータスク、および空き容量を確認してください。</string>
+</resources>

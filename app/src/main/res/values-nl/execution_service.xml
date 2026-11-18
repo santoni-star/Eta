@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">Actieve taken</string>
+    <string name="execution_title">Eta wordt uitgevoerd</string>
+    <plurals name="execution_summary">
+        <item quantity="one">Er wordt %1$d taak uitgevoerd. Keer terug naar Eta om de voortgang te bekijken.</item>
+        <item quantity="other">Er worden %1$d taken uitgevoerd. Keer terug naar Eta om de voortgang te bekijken.</item>
+    </plurals>
+    <string name="execution_stop">Actieve taken stoppen</string>
+    <string name="execution_chip_running">Bezig</string>
+    <string name="execution_chip_answering">Antwoorden</string>
+</resources>

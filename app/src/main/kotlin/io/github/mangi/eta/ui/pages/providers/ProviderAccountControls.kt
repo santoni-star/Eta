@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.mangi.eta.R
 import io.github.mangi.eta.data.model.AppearanceUiStyle
 import io.github.mangi.eta.data.model.ProviderAuthModes
 import io.github.mangi.eta.ui.app.LocalUiStyle
@@ -41,23 +43,22 @@ internal fun ProviderAccountControls(
     val loggedIn = account != null && !account.needsReauthentication
     val needsLogin = !loggedIn || !account.planEnabled
     val brand = if (authMode == ProviderAuthModes.XAI_GROK) "Grok" else "Codex"
-    val title = account?.email ?: account?.displayName ?: "$brand 账号"
+    val title = account?.email ?: account?.displayName ?: stringResource(R.string.provider_account_brand, brand)
     val summary = browserError ?: state.message ?: when (state.phase) {
-        ProviderLoginPhase.Loading -> "正在读取登录状态…"
-        ProviderLoginPhase.Saving -> "正在保存配置…"
-        ProviderLoginPhase.Disconnecting -> "正在退出登录…"
-        ProviderLoginPhase.Authorizing -> if (prompt == null) "正在准备授权…" else "请在浏览器中完成授权"
-        ProviderLoginPhase.SyncingModels -> "登录成功，正在拉取最新模型…"
+        ProviderLoginPhase.Loading -> stringResource(R.string.provider_login_loading)
+        ProviderLoginPhase.Saving -> stringResource(R.string.provider_login_saving)
+        ProviderLoginPhase.Disconnecting -> stringResource(R.string.provider_login_disconnecting)
+        ProviderLoginPhase.Authorizing -> stringResource(if (prompt == null) R.string.provider_login_preparing else R.string.provider_login_in_browser)
+        ProviderLoginPhase.SyncingModels -> stringResource(R.string.provider_login_syncing)
         ProviderLoginPhase.Idle -> when {
-            account == null -> if (authMode == ProviderAuthModes.OPENAI_CHATGPT) {
-                "使用 ChatGPT 账号登录 Codex"
-            } else {
-                "登录后使用 Grok 订阅额度"
-            }
-            account.needsReauthentication -> "请重新登录"
-            !account.planEnabled -> "账号尚未授予模型调用权限"
-            authMode == ProviderAuthModes.OPENAI_CHATGPT -> "已登录 Codex"
-            else -> "已登录 Grok"
+            account == null -> stringResource(
+                if (authMode == ProviderAuthModes.OPENAI_CHATGPT) R.string.provider_login_codex_prompt
+                else R.string.provider_login_grok_prompt
+            )
+            account.needsReauthentication -> stringResource(R.string.provider_login_reauth)
+            !account.planEnabled -> stringResource(R.string.provider_login_no_plan)
+            authMode == ProviderAuthModes.OPENAI_CHATGPT -> stringResource(R.string.provider_login_codex_ok)
+            else -> stringResource(R.string.provider_login_grok_ok)
         }
     }
 
@@ -82,7 +83,7 @@ internal fun ProviderAccountControls(
                     if (state.isBusy) {
                         if (prompt != null) {
                             CouiButton(
-                                text = "打开浏览器",
+                                text = stringResource(R.string.provider_open_browser),
                                 onClick = onOpenBrowser,
                                 role = CouiButtonRole.Primary,
                                 modifier = Modifier.weight(1f),
@@ -90,7 +91,7 @@ internal fun ProviderAccountControls(
                         }
                         if (state.phase in setOf(ProviderLoginPhase.Saving, ProviderLoginPhase.Authorizing, ProviderLoginPhase.SyncingModels)) {
                             CouiButton(
-                                text = "取消",
+                                text = stringResource(R.string.action_cancel),
                                 onClick = onCancel,
                                 modifier = Modifier.weight(1f),
                             )
@@ -98,7 +99,7 @@ internal fun ProviderAccountControls(
                     } else {
                         if (needsLogin) {
                             CouiButton(
-                                text = if (loggedIn) "重新授权" else "使用 $brand 登录",
+                                text = if (loggedIn) stringResource(R.string.provider_reauthorize) else stringResource(R.string.provider_sign_in_with, brand),
                                 enabled = enabled,
                                 onClick = onLogin,
                                 role = CouiButtonRole.Primary,
@@ -106,7 +107,7 @@ internal fun ProviderAccountControls(
                             )
                         } else if (authMode == ProviderAuthModes.OPENAI_CHATGPT) {
                             CouiButton(
-                                text = "管理用量",
+                                text = stringResource(R.string.provider_manage_usage),
                                 enabled = enabled,
                                 onClick = onManageUsage,
                                 modifier = Modifier.weight(1f),
@@ -114,7 +115,7 @@ internal fun ProviderAccountControls(
                         }
                         if (loggedIn) {
                             CouiButton(
-                                text = "退出登录",
+                                text = stringResource(R.string.provider_sign_out),
                                 enabled = enabled,
                                 onClick = onDisconnect,
                                 role = CouiButtonRole.Destructive,
@@ -140,24 +141,24 @@ internal fun ProviderAccountControls(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (state.isBusy) {
                         if (prompt != null) {
-                            TextButton(text = "打开浏览器", onClick = onOpenBrowser, modifier = Modifier.weight(1f))
+                            TextButton(text = stringResource(R.string.provider_open_browser), onClick = onOpenBrowser, modifier = Modifier.weight(1f))
                         }
                         if (state.phase in setOf(ProviderLoginPhase.Saving, ProviderLoginPhase.Authorizing, ProviderLoginPhase.SyncingModels)) {
-                            TextButton(text = "取消", onClick = onCancel, modifier = Modifier.weight(1f))
+                            TextButton(text = stringResource(R.string.action_cancel), onClick = onCancel, modifier = Modifier.weight(1f))
                         }
                     } else {
                         if (needsLogin) {
                             TextButton(
-                                text = if (loggedIn) "重新授权" else "使用 $brand 登录",
+                                text = if (loggedIn) stringResource(R.string.provider_reauthorize) else stringResource(R.string.provider_sign_in_with, brand),
                                 enabled = enabled,
                                 onClick = onLogin,
                                 modifier = Modifier.weight(1f),
                             )
                         } else if (authMode == ProviderAuthModes.OPENAI_CHATGPT) {
-                            TextButton(text = "管理用量", enabled = enabled, onClick = onManageUsage, modifier = Modifier.weight(1f))
+                            TextButton(text = stringResource(R.string.provider_manage_usage), enabled = enabled, onClick = onManageUsage, modifier = Modifier.weight(1f))
                         }
                         if (loggedIn) {
-                            TextButton(text = "退出登录", enabled = enabled, onClick = onDisconnect, modifier = Modifier.weight(1f))
+                            TextButton(text = stringResource(R.string.provider_sign_out), enabled = enabled, onClick = onDisconnect, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -170,7 +171,7 @@ internal fun openProviderAccountLink(context: Context, url: String): String? = t
     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     null
 } catch (_: ActivityNotFoundException) {
-    "未找到可用浏览器"
+    io.github.mangi.eta.core.AppStrings.get(R.string.provider_no_browser, "No available browser found")
 } catch (_: SecurityException) {
-    "无法打开浏览器，请检查系统设置"
+    io.github.mangi.eta.core.AppStrings.get(R.string.provider_cannot_open_browser, "Cannot open browser, please check system settings")
 }

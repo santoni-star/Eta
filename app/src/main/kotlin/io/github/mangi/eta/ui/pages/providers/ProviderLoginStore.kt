@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.pages.providers
 
 import io.github.mangi.eta.EtaApp
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.auth.ProviderAccountSummary
 import io.github.mangi.eta.agent.auth.ProviderAuthException
 import io.github.mangi.eta.agent.auth.ProviderLoginPrompt
@@ -62,7 +64,7 @@ internal class ProviderLoginStore(
             val account = withContext(ioDispatcher) { operations.account(providerId, authMode) }
             mutableState.value = mutableState.value.copy(
                 account = account,
-                message = if (interrupted) "登录已中断，请重试" else null,
+                message = if (interrupted) AppStrings.get(R.string.provider_login_interrupted, "Sign-in interrupted, please retry") else null,
             )
         }
     }
@@ -86,7 +88,9 @@ internal class ProviderLoginStore(
             }
             mutableState.value = mutableState.value.copy(account = account, prompt = null, phase = ProviderLoginPhase.SyncingModels)
             val count = withContext(ioDispatcher) { operations.syncModels(providerId, provider.authMode) }
-            mutableState.value = mutableState.value.copy(message = "已登录，已同步 $count 个远端模型")
+            mutableState.value = mutableState.value.copy(
+                message = AppStrings.get(R.string.provider_login_synced_count, "Signed in, synced %1\$d remote models", count),
+            )
         }
     }
 
@@ -97,7 +101,11 @@ internal class ProviderLoginStore(
             val revoked = withContext(ioDispatcher) { operations.disconnect(providerId, authMode, activeController) }
             mutableState.value = mutableState.value.copy(
                 account = null,
-                message = if (revoked == false) "已退出登录，远端撤销未确认" else "已退出登录",
+                message = if (revoked == false) {
+                    AppStrings.get(R.string.provider_logout_unconfirmed, "Signed out, remote revocation unconfirmed")
+                } else {
+                    AppStrings.get(R.string.provider_logout_ok, "Signed out")
+                },
             )
         }
     }
@@ -134,11 +142,11 @@ internal class ProviderLoginStore(
                 if (generation == attempt && !activeController.isCancelled) {
                     mutableState.value = mutableState.value.copy(
                         message = when (mutableState.value.phase) {
-                            ProviderLoginPhase.SyncingModels -> "已登录，模型同步失败，请在模型页重新拉取"
+                            ProviderLoginPhase.SyncingModels -> AppStrings.get(R.string.provider_login_sync_failed, "Signed in, but model sync failed; please refresh on the Models tab")
                             else -> (error as? ProviderAuthException)?.message ?: when (phase) {
-                                ProviderLoginPhase.Loading -> "无法读取登录状态，请重试"
-                                ProviderLoginPhase.Disconnecting -> "退出登录失败，请重试"
-                                else -> "登录失败，请重试"
+                                ProviderLoginPhase.Loading -> AppStrings.get(R.string.provider_login_read_failed, "Could not read sign-in status, please retry")
+                                ProviderLoginPhase.Disconnecting -> AppStrings.get(R.string.provider_logout_failed, "Sign-out failed, please retry")
+                                else -> AppStrings.get(R.string.provider_login_failed, "Sign-in failed, please retry")
                             }
                         },
                     )
@@ -184,9 +192,14 @@ private object RepositoryProviderLoginOperations : ProviderLoginOperations {
     ): ProviderAccountSummary = ProviderCredentialRepository.login(providerId, authMode, controller, onPrompt)
 
     override suspend fun syncModels(providerId: String, authMode: String): Int {
-        val provider = requireNotNull(ProviderRepository.providerById(providerId)) { "服务商连接不存在" }
+        val provider = requireNotNull(ProviderRepository.providerById(providerId)) {
+            AppStrings.get(R.string.provider_connection_missing, "Provider connection does not exist")
+        }
         if (provider.authMode != authMode) {
-            throw ProviderAuthException("oauth_session_changed", "服务商登录方式已变更，请重新拉取模型")
+            throw ProviderAuthException(
+                "oauth_session_changed",
+                AppStrings.get(R.string.provider_oauth_changed, "Provider sign-in method changed, please re-fetch models"),
+            )
         }
         val catalog = RemoteModelFetcher.fetchCatalog(provider).getOrThrow()
         val result = ModelRepository.syncRemoteCatalog(catalog)

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Cancella tutti i dati del browser</string>
+    <string name="browser_clear_shared_data_message">Tutte le pagine verranno chiuse. Cookie, cache e dati dei siti web, incluse le sessioni di accesso, verranno cancellati.</string>
+    <string name="browser_user_action_failed">Impossibile completare l\'azione del browser. Riprova.</string>
+</resources>

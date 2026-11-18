@@ -1,14 +1,17 @@
 package io.github.mangi.eta.ui.app
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
+
 /** 导入只公开受控分类，文件内容与底层异常文本不进入界面。 */
 internal fun characterCardImportMessage(code: String?): String? = when (code) {
-    "CARD_V3_INVALID" -> "PNG 中优先使用的 V3 角色数据损坏，未回退到 V2。请重新下载原始角色卡。"
-    "CARD_METADATA_MISSING" -> "这张 PNG 没有角色卡信息，请选择原始角色卡图片，而不是截图或压缩后的图片。"
-    "CARD_INVALID_JSON" -> "角色卡 JSON 格式无效，请检查文件是否完整。"
-    "CARD_TOO_LARGE" -> "角色卡超出大小限制，请简化设定或选择更小的文件。"
-    "CARD_INVALID_UTF8" -> "角色卡文本编码无效，需要 UTF-8 编码的 JSON 文件。"
-    "CARD_UNSUPPORTED_SPEC" -> "暂不支持这份角色卡声明的格式，请导出为 V2 或 V3 角色卡后重试。"
-    "CARD_INVALID_PNG" -> "PNG 文件损坏或结构不完整，请重新下载原始角色卡。"
-    "CARD_INVALID_DATA" -> "角色卡字段格式无效，请检查名称、文本、开场白及内嵌世界书数据。"
+    "CARD_V3_INVALID" -> AppStrings.get(R.string.char_import_v3_invalid, "Preferred V3 data in PNG is corrupted (not falling back to V2). Please re-download the original card.")
+    "CARD_METADATA_MISSING" -> AppStrings.get(R.string.char_import_metadata_missing, "This PNG has no character card metadata; please select the original image instead of a screenshot or compressed copy.")
+    "CARD_INVALID_JSON" -> AppStrings.get(R.string.char_import_invalid_json, "Invalid character card JSON format; check that the file is complete.")
+    "CARD_TOO_LARGE" -> AppStrings.get(R.string.char_import_too_large, "Character card exceeds size limit; simplify or choose a smaller file.")
+    "CARD_INVALID_UTF8" -> AppStrings.get(R.string.char_import_invalid_utf8, "Invalid character card text encoding; UTF-8 JSON is required.")
+    "CARD_UNSUPPORTED_SPEC" -> AppStrings.get(R.string.char_import_unsupported_spec, "Unsupported character card spec; please export as a V2 or V3 card and retry.")
+    "CARD_INVALID_PNG" -> AppStrings.get(R.string.char_import_invalid_png, "Corrupted or incomplete PNG file; please re-download the original card.")
+    "CARD_INVALID_DATA" -> AppStrings.get(R.string.char_import_invalid_data, "Invalid character card fields; check name, text, greetings, and embedded worldbook.")
     else -> null
 }

@@ -6,6 +6,8 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.app.ActivityOptions
 import android.app.PendingIntent
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.ui.MainActivity
 import android.os.Build
 import android.content.Context
@@ -212,7 +214,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         setKeepScreenOn(false)
         runs.all().forEach { run ->
             run.releaseIncoming()
-            run.session.cancel("Agent Runtime 服务已停止")
+            run.session.cancel(AppStrings.get(R.string.runtime_err_service_stopped, "Agent Runtime service stopped"))
         }
         displayedRun = null
         serviceScope.cancel()
@@ -250,7 +252,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 AgentRuntimeWire.MSG_START_RUN -> {
                     val data = msg.data
                     if (data == null) {
-                        finishWithFailure("Agent Runtime 请求缺少消息体", msg.replyTo)
+                        finishWithFailure(AppStrings.get(R.string.runtime_err_missing_payload, "Agent Runtime request missing payload"), msg.replyTo)
                         return
                     }
                     val incoming = runCatching {
@@ -259,13 +261,13 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                         AndroidAgentLogger.warnThrottled("runtime_invalid_start_request") {
                             "Agent runtime rejected invalid start request: type=${throwable.safeLogType()}"
                         }
-                        finishWithFailure("Agent Runtime 请求格式无效", msg.replyTo)
+                        finishWithFailure(AppStrings.get(R.string.runtime_err_invalid_payload, "Invalid Agent Runtime request format"), msg.replyTo)
                         return
                     }
                     val request = incoming.request
                     if (request.runId.isBlank() || (request.operation != AgentRuntimeWire.OP_COMPACT && request.prompt.isBlank() && incoming.images.isEmpty() && !incoming.hasDeferredPrompt)) {
                         incoming.close()
-                        finishWithFailure("Agent Runtime 请求缺少 runId 或用户输入", msg.replyTo)
+                        finishWithFailure(AppStrings.get(R.string.runtime_err_missing_run_id, "Agent Runtime request missing runId or user input"), msg.replyTo)
                         return
                     }
                     ingestRunRequest(incoming, msg.replyTo, msg.sendingUid == android.os.Process.myUid())
@@ -292,7 +294,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                     dispatchResultIo {
                         val target = AgentRuntimeResultStore.readOwned(this@AgentRuntimeService, runId, owner)
                         sendResultNow(replyTo, target?.result ?: AgentRuntimeWire.RunResult(
-                            runId, false, "", "完整运行结果不可用", contextSnapshotRef = runId,
+                            runId, false, "", AppStrings.get(R.string.runtime_err_result_unavailable, "Full run result unavailable"), contextSnapshotRef = runId,
                         ))
                     }
                 }
@@ -372,10 +374,10 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                             run,
                             when (throwable) {
                                 is AgentRuntimeImageTransfer.ImageTransferException ->
-                                    throwable.message ?: "Agent Runtime 无法读取图片"
+                                    throwable.message ?: AppStrings.get(R.string.runtime_err_read_image, "Agent Runtime could not read image")
                                 is RuntimeConfigUnavailableException ->
-                                    "请先在 Eta 中配置可用的模型"
-                                else -> "Agent Runtime 无法准备请求"
+                                    AppStrings.get(R.string.runtime_err_no_model, "Please configure an available model in Eta first")
+                                else -> AppStrings.get(R.string.runtime_err_prepare_failed, "Agent Runtime could not prepare request")
                             },
                         )
                     },
@@ -401,7 +403,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         if (destroyed) {
             incoming?.close()
             sendRequestIngestedTo(replyTo, request.runId)
-            sendResultTo(replyTo, AgentRuntimeWire.RunResult(request.runId, false, "", "Agent Runtime 服务已停止"))
+            sendResultTo(replyTo, AgentRuntimeWire.RunResult(request.runId, false, "", AppStrings.get(R.string.runtime_err_service_stopped, "Agent Runtime service stopped")))
             return null
         }
         val admission = runs.admit(request) {
@@ -438,7 +440,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                         resultSink = { result -> sendResultTo(replyTo, result) },
                     )
                     if (!attached) sendResultTo(replyTo, AgentRuntimeWire.RunResult(
-                        request.runId, false, "", "任务已结束，请恢复完整结果",
+                        request.runId, false, "", AppStrings.get(R.string.runtime_err_finished_recover, "Task finished; please recover full result"),
                         contextSnapshotRef = request.runId, operation = request.operation,
                     ))
                 }
@@ -461,7 +463,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
             this, "run:${request.runId}", allowBoundFallback = allowBoundFallback,
         ) { mainHandler.post { cancelRun(request.runId) } }
         if (!executionHeld && !allowBoundFallback) {
-            failBeforeExecution(run, "无法启动后台执行服务，请返回 Eta 后重试")
+            failBeforeExecution(run, AppStrings.get(R.string.runtime_err_start_fg, "Could not start background execution service; return to Eta and retry"))
             return null
         }
         admission.replacedRuns.forEach { cancelRun(it.runId) }
@@ -607,7 +609,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                     enterFinalState(
                         AgentOverlayState(
                             phase = AgentOverlayPhase.FAILED,
-                            status = if (result.error == "已停止") {
+                            status = if (result.error == "已停止" || result.error == AppStrings.get(R.string.subagent_status_stopped, "Stopped")) {
                                 AgentOverlayStatus.Stopped
                             } else {
                                 AgentOverlayStatus.RunFailed
@@ -671,7 +673,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
             }
             // 不把传输失败伪装成已交付终态；引用使新客户端保留 outbox，等待完整恢复。
             val fallback = AgentRuntimeWire.RunResult(result.runId, false, "",
-                "完整结果传输失败，已保存的历史未删除。请重新打开会话恢复。",
+                AppStrings.get(R.string.runtime_err_transfer_failed, "Full result transfer failed; saved history was kept. Reopen conversation to recover."),
                 contextSnapshotRef = result.runId, operation = result.operation)
             try {
                 target?.send(Message.obtain(null, AgentRuntimeWire.MSG_RESULT).apply {
@@ -841,7 +843,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
         val run = runs.get(runId) ?: return
         if (run.preparing) {
             run.session.controller.cancel()
-            failBeforeExecution(run, "已停止")
+            failBeforeExecution(run, AppStrings.get(R.string.subagent_status_stopped, "Stopped"))
             return
         }
         val session = run.session
@@ -1014,7 +1016,7 @@ internal class AgentRuntimeService : Service(), LifecycleOwner, SavedStateRegist
                 state.value = (owner?.overlayState ?: AgentOverlayState.Initial).copy(
                     phase = AgentOverlayPhase.PAUSED,
                     status = AgentOverlayStatus.Paused,
-                    detailText = "手机操作已暂停",
+                    detailText = AppStrings.get(R.string.runtime_detail_gui_paused, "Phone control paused"),
                 )
                 owner?.overlayState = state.value
                 syncActiveRunOverlayVisibility(owner ?: displayedRun)

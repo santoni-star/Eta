@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Tüm tarayıcı verilerini temizle</string>
+    <string name="browser_clear_shared_data_message">Tüm sayfalar kapatılacak. Oturum açma bilgileri dahil çerezler, önbellek ve web sitesi verileri temizlenecektir.</string>
+    <string name="browser_user_action_failed">Tarayıcı işlemi tamamlanamadı. Lütfen tekrar deneyin.</string>
+</resources>

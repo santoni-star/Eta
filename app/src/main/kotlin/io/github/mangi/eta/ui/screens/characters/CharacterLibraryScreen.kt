@@ -3,6 +3,8 @@ package io.github.mangi.eta.ui.screens.characters
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -76,18 +78,18 @@ internal fun CharacterLibraryScreen(
     when (LocalUiStyle.current) {
         AppearanceUiStyle.COUI -> {
             CouiLazyScaffoldPage(
-                title = "角色",
+                title = stringResource(R.string.route_characters),
                 onBack = onBack,
                 actions = {
                     CouiTopAppBarIconButton(
                         icon = Icons.Rounded.FileUpload,
-                        contentDescription = "导入角色卡",
+                        contentDescription = stringResource(R.string.char_import_card),
                         enabled = !store.busy,
                         onClick = importCard,
                     )
                     CouiTopAppBarIconButton(
                         icon = CouiIcons.Outlined.Add,
-                        contentDescription = "创建角色",
+                        contentDescription = stringResource(R.string.char_create),
                         enabled = !store.busy,
                         onClick = createCharacter,
                     )
@@ -97,7 +99,7 @@ internal fun CharacterLibraryScreen(
                     CouiSearchBarBox(
                         query = store.query,
                         onQueryChange = { store.query = it },
-                        placeholder = "搜索名称或标签",
+                        placeholder = stringResource(R.string.char_search_hint),
                     )
                 }
                 when {
@@ -114,18 +116,18 @@ internal fun CharacterLibraryScreen(
                     store.characters.isEmpty() -> {
                         item(key = "empty-library") {
                             ListEmptyState(
-                                title = "还没有角色",
-                                summary = "创建一个角色，或导入 PNG、JSON 角色卡开始对话",
+                                title = stringResource(R.string.char_empty_title),
+                                summary = stringResource(R.string.char_empty_summary),
                                 icon = Icons.Rounded.SportsBar,
                                 action = {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         CouiButton(
-                                            text = "恢复默认角色",
+                                            text = stringResource(R.string.char_restore_default),
                                             onClick = { store.restoreDefaultCharacter() },
                                             enabled = !store.busy,
                                         )
                                         CouiButton(
-                                            text = "创建角色",
+                                            text = stringResource(R.string.char_create),
                                             onClick = createCharacter,
                                             role = CouiButtonRole.Primary,
                                         )
@@ -137,8 +139,8 @@ internal fun CharacterLibraryScreen(
                     store.filteredCharacters.isEmpty() -> {
                         item(key = "empty-search") {
                             ListEmptyState(
-                                title = "没有找到匹配的角色",
-                                summary = "换个关键词试试，搜索会匹配名称与标签",
+                                title = stringResource(R.string.char_no_match_title),
+                                summary = stringResource(R.string.char_no_match_summary),
                                 icon = Icons.Rounded.SearchOff,
                             )
                         }
@@ -173,10 +175,10 @@ internal fun CharacterLibraryScreen(
                     }
                 }
                 item(key = "persona") {
-                    Group(title = "我的") {
+                    Group(title = stringResource(R.string.char_section_mine)) {
                         CouiPreference(
-                            title = "我的人设",
-                            summary = "角色对你的称呼与你在故事中的身份",
+                            title = stringResource(R.string.route_character_persona),
+                            summary = stringResource(R.string.char_persona_summary),
                             onClick = { onNavigate(AppRoute.CharacterPersona) },
                         )
                     }
@@ -186,14 +188,14 @@ internal fun CharacterLibraryScreen(
 
         AppearanceUiStyle.MIUIX -> {
             MiuixScaffoldPage(
-                title = "角色",
+                title = stringResource(R.string.route_characters),
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = importCard, enabled = !store.busy) {
-                        Icon(Icons.Rounded.FileUpload, contentDescription = "导入角色卡")
+                        Icon(Icons.Rounded.FileUpload, contentDescription = stringResource(R.string.char_import_card))
                     }
                     IconButton(onClick = createCharacter, enabled = !store.busy) {
-                        Icon(Icons.Rounded.Add, contentDescription = "创建角色")
+                        Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.char_create))
                     }
                 },
             ) {
@@ -213,7 +215,7 @@ internal fun CharacterLibraryScreen(
                                 onSearch = { store.query = it },
                                 expanded = false,
                                 onExpandedChange = {},
-                                label = "搜索名称或标签",
+                                label = stringResource(R.string.char_search_hint),
                             )
                         },
                         content = {},
@@ -233,18 +235,18 @@ internal fun CharacterLibraryScreen(
                     store.characters.isEmpty() -> {
                         item(key = "empty-library") {
                             ListEmptyState(
-                                title = "还没有角色",
-                                summary = "创建一个角色，或导入 PNG、JSON 角色卡开始对话",
+                                title = stringResource(R.string.char_empty_title),
+                                summary = stringResource(R.string.char_empty_summary),
                                 icon = Icons.Rounded.SportsBar,
                                 action = {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         TextButton(
-                                            text = "恢复默认角色",
+                                            text = stringResource(R.string.char_restore_default),
                                             onClick = { store.restoreDefaultCharacter() },
                                             enabled = !store.busy,
                                         )
                                         TextButton(
-                                            text = "创建角色",
+                                            text = stringResource(R.string.char_create),
                                             onClick = createCharacter,
                                             colors = ButtonDefaults.textButtonColorsPrimary(),
                                         )
@@ -256,8 +258,8 @@ internal fun CharacterLibraryScreen(
                     store.filteredCharacters.isEmpty() -> {
                         item(key = "empty-search") {
                             ListEmptyState(
-                                title = "没有找到匹配的角色",
-                                summary = "换个关键词试试，搜索会匹配名称与标签",
+                                title = stringResource(R.string.char_no_match_title),
+                                summary = stringResource(R.string.char_no_match_summary),
                                 icon = Icons.Rounded.SearchOff,
                             )
                         }
@@ -292,15 +294,15 @@ internal fun CharacterLibraryScreen(
                     }
                 }
                 item(key = "persona") {
-                    SmallTitle("我的")
+                    SmallTitle(stringResource(R.string.char_section_mine))
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
                             .padding(bottom = 12.dp),
                     ) {
                         ArrowPreference(
-                            title = "我的人设",
-                            summary = "角色对你的称呼与你在故事中的身份",
+                            title = stringResource(R.string.route_character_persona),
+                            summary = stringResource(R.string.char_persona_summary),
                             onClick = { onNavigate(AppRoute.CharacterPersona) },
                         )
                     }

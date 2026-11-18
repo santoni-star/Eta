@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Vymazat všechna data prohlížeče</string>
+    <string name="browser_clear_shared_data_message">Všechny stránky se zavřou. Soubory cookie, mezipaměť a data webů včetně přihlašovacích relací budou vymazány.</string>
+    <string name="browser_user_action_failed">Akci prohlížeče se nepodařilo dokončit. Zkuste to prosím znovu.</string>
+</resources>

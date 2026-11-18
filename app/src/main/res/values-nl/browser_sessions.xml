@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Alle browsergegevens wissen</string>
+    <string name="browser_clear_shared_data_message">Alle pagina’s worden gesloten. Cookies, cache en websitegegevens, inclusief aanmeldsessies, worden gewist.</string>
+    <string name="browser_user_action_failed">De browseractie kon niet worden voltooid. Probeer het opnieuw.</string>
+</resources>

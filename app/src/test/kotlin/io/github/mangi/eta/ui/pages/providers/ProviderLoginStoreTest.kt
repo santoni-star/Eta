@@ -48,7 +48,7 @@ class ProviderLoginStoreTest {
             val state = withTimeout(2_000) { store.state.first { !it.isBusy } }
 
             assertEquals(listOf("save"), operations.calls.toList())
-            assertEquals("登录失败，请重试", state.message)
+            assertEquals("Sign-in failed, please retry", state.message)
             assertNull(state.prompt)
         } finally {
             store.close()
@@ -76,7 +76,7 @@ class ProviderLoginStoreTest {
             store.load(provider.authMode, interrupted = true)
             val state = withTimeout(2_000) { store.state.first { !it.isBusy } }
 
-            assertEquals("登录已中断，请重试", state.message)
+            assertEquals("Sign-in interrupted, please retry", state.message)
             assertNull(state.prompt)
             assertTrue(operations.calls.isEmpty())
         } finally {
@@ -110,7 +110,7 @@ class ProviderLoginStoreTest {
             store.disconnect()
             val state = withTimeout(2_000) { store.state.first { !it.isBusy } }
             assertNull(state.account)
-            assertEquals("已退出登录，远端撤销未确认", state.message)
+            assertEquals("Signed out, remote revocation unconfirmed", state.message)
             assertFalse(state.isBusy)
         } finally {
             store.close()
@@ -130,7 +130,7 @@ class ProviderLoginStoreTest {
             release.complete(Unit)
             val done = withTimeout(2_000) { store.state.first { !it.isBusy } }
             assertEquals(listOf("save", "login", "sync"), operations.calls.toList())
-            assertEquals("已登录，已同步 2 个远端模型", done.message)
+            assertEquals("Signed in, synced 2 remote models", done.message)
         } finally { store.close() }
     }
 
@@ -142,7 +142,7 @@ class ProviderLoginStoreTest {
             store.login(provider)
             val state = withTimeout(2_000) { store.state.first { !it.isBusy } }
             assertEquals(account, state.account)
-            assertEquals("已登录，模型同步失败，请在模型页重新拉取", state.message)
+            assertEquals("Signed in, but model sync failed; please refresh on the Models tab", state.message)
             assertEquals(listOf("save", "login", "sync"), operations.calls.toList())
         } finally { store.close() }
     }

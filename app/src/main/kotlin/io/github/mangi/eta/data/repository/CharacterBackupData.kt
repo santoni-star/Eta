@@ -1,7 +1,9 @@
 package io.github.mangi.eta.data.repository
 
 import android.content.Context
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.roleplay.CharacterCardCodec
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.roleplay.CharacterCardPng
 import io.github.mangi.eta.agent.roleplay.RoleplayBinding
 import io.github.mangi.eta.agent.roleplay.RoleplayMessageState
@@ -59,33 +61,49 @@ internal object CharacterBackupTransfer {
 
     fun validate(data: CharacterBackupData, bindingIds: Set<String>) {
         val ids = data.characters.map { it.id }
-        require(ids.size == ids.toSet().size && ids.all(::validId)) { "备份中的角色 ID 重复或无效" }
+        require(ids.size == ids.toSet().size && ids.all(::validId)) {
+            AppStrings.get(R.string.backup_err_char_dup_id, "Duplicate or invalid character ID in backup")
+        }
         data.characters.forEach { character ->
             val card = CharacterCardCodec.decodeJson(character.cardJson)
-            require(card.name.length <= 512) { "备份中的角色名称过长" }
+            require(card.name.length <= 512) {
+                AppStrings.get(R.string.backup_err_char_name_long, "Character name in backup is too long")
+            }
         }
         val assets = data.assets.map { it.characterId }
-        require(assets.size == assets.toSet().size && assets.all { it in ids || it in bindingIds }) { "备份中的角色资源无效" }
+        require(assets.size == assets.toSet().size && assets.all { it in ids || it in bindingIds }) {
+            AppStrings.get(R.string.backup_err_char_asset_invalid, "Invalid character asset in backup")
+        }
         data.assets.forEach { asset ->
-            require(asset.memoryMd.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "角色记忆超过 1 MiB 限制" }
+            require(asset.memoryMd.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) {
+                AppStrings.get(R.string.backup_err_char_memory_limit, "Character memory exceeds 1 MiB limit")
+            }
             asset.avatarBase64?.let {
                 val bytes = Base64.getDecoder().decode(it)
-                require(bytes.size <= CharacterRepository.MAX_FILE_BYTES && CharacterCardPng.isPng(bytes)) { "备份中的角色图片无效" }
+                require(bytes.size <= CharacterRepository.MAX_FILE_BYTES && CharacterCardPng.isPng(bytes)) {
+                    AppStrings.get(R.string.backup_err_char_image_invalid, "Invalid character image in backup")
+                }
                 CharacterCardPng.validate(bytes)
             }
         }
         data.persona?.let {
-            require(it.id == "main" && it.name.isNotBlank() && it.name.length <= 256) { "备份中的用户人设无效" }
-            require(it.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) { "用户设定超过 1 MiB 限制" }
+            require(it.id == "main" && it.name.isNotBlank() && it.name.length <= 256) {
+                AppStrings.get(R.string.backup_err_persona_invalid, "Invalid user persona in backup")
+            }
+            require(it.description.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) {
+                AppStrings.get(R.string.backup_err_persona_limit, "User persona exceeds 1 MiB limit")
+            }
         }
     }
 
     fun validateBindings(conversations: List<ConversationEntity>): List<RoleplayBinding> =
         conversations.mapNotNull { binding(it) }.onEach { binding ->
-            require(validId(binding.characterId)) { "备份中的角色会话 ID 无效" }
+            require(validId(binding.characterId)) {
+                AppStrings.get(R.string.backup_err_char_binding_id, "Invalid character conversation ID in backup")
+            }
             CharacterCardCodec.decodeJson(binding.cardSnapshotJson)
             require(binding.userName.length <= 256 && binding.userDescription.toByteArray(Charsets.UTF_8).size <= 1024 * 1024) {
-                "备份中的角色用户设定过大"
+                AppStrings.get(R.string.backup_err_char_persona_large, "Character user persona in backup is too large")
             }
         }
 
@@ -94,17 +112,17 @@ internal object CharacterBackupTransfer {
         val state = json.decodeFromString<RoleplayMessageState>(row.revisionsJson)
         state.links.forEach { (id, link) ->
             require(messageTypes[id] in setOf("user", "assistant") && link.transcriptMessageId.isNotBlank() && link.blockOrder >= 0) {
-                "备份中的正文关联缺少有效消息"
+                AppStrings.get(R.string.backup_err_char_missing_msg, "Story binding in backup is missing a valid message")
             }
         }
         state.revisions.forEach { (id, revision) ->
             require(id in state.links && revision.candidates.isNotEmpty() && revision.selected in revision.candidates.indices) {
-                "备份中的正文候选或选中版本无效"
+                AppStrings.get(R.string.backup_err_char_candidate_invalid, "Invalid story candidate or selected version in backup")
             }
         }
         state.pendingRewrites.forEach { (runId, target) ->
             require(runId.isNotBlank() && target in state.links && messageTypes[target] == "assistant") {
-                "备份中的重新生成目标无效"
+                AppStrings.get(R.string.backup_err_char_regen_invalid, "Invalid regeneration target in backup")
             }
         }
     }

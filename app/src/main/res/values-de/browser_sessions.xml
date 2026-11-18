@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Alle Browserdaten löschen</string>
+    <string name="browser_clear_shared_data_message">Alle Seiten werden geschlossen. Cookies, Cache und Websitedaten einschließlich Anmeldesitzungen werden gelöscht.</string>
+    <string name="browser_user_action_failed">Die Browseraktion konnte nicht abgeschlossen werden. Bitte versuche es erneut.</string>
+</resources>

@@ -1,5 +1,6 @@
 package io.github.mangi.eta.data.repository
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.auth.ProviderAuthException
 import io.github.mangi.eta.agent.auth.ProviderCredentialBinding
 import io.github.mangi.eta.agent.model.AgentHttpClient
@@ -10,6 +11,7 @@ import io.github.mangi.eta.agent.model.ProviderUrls
 import io.github.mangi.eta.agent.runtime.AgentRunCancelledException
 import io.github.mangi.eta.agent.runtime.AgentRunController
 import io.github.mangi.eta.core.AndroidAgentLogger
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.model.GeminiProviderSetting
 import io.github.mangi.eta.data.model.AnthropicProviderSetting
 import io.github.mangi.eta.data.model.Model
@@ -72,13 +74,21 @@ internal object RemoteModelFetcher {
                 val models = if (profile == ProviderConnectionProfile.OPENAI_CODEX) fetched else fetched.filter(::isChatCapableModel)
                 controller.throwIfCancelled()
                 if (binding != null && !credentials.isCurrent(binding)) {
-                    throw ProviderAuthException("oauth_session_changed", "登录账号已变更，请重新拉取模型")
+                    throw ProviderAuthException(
+                        "oauth_session_changed",
+                        AppStrings.get(R.string.model_err_session_changed, "Login session changed; please fetch models again"),
+                    )
                 }
                 continuation.resume(Result.success(RemoteModelCatalog(models, provider, binding)))
             } catch (cancelled: CancellationException) {
                 continuation.cancel(cancelled)
             } catch (cancelled: AgentRunCancelledException) {
-                continuation.cancel(CancellationException("模型目录读取已取消", cancelled))
+                continuation.cancel(
+                    CancellationException(
+                        AppStrings.get(R.string.remote_model_err_cancelled, "Model catalog read was cancelled"),
+                        cancelled,
+                    ),
+                )
             } catch (failure: Exception) {
                 continuation.resume(Result.failure(failure))
             }
@@ -101,7 +111,7 @@ internal object RemoteModelFetcher {
     internal fun parseOpenAiModels(body: String): List<Model> =
         modelArray(body, "data").map { element ->
             element.jsonObjectOrNull()?.toModel(defaultOwnedBy = null)
-                ?: error("服务商模型目录包含无效模型项")
+                ?: error(AppStrings.get(R.string.remote_model_err_invalid_item, "Provider model catalog contains an invalid model item"))
         }
 
     internal fun parseCodexModels(body: String): List<Model> = CodexModelCatalog.parse(modelArray(body, "models"))
@@ -116,20 +126,21 @@ internal object RemoteModelFetcher {
     internal fun parseAnthropicModels(body: String): List<Model> =
         modelArray(body, "data").map { element ->
             element.jsonObjectOrNull()?.toAnthropicModel()
-                ?: error("Anthropic 模型目录包含无效模型项")
+                ?: error(AppStrings.get(R.string.remote_model_err_invalid_item, "Provider model catalog contains an invalid model item"))
         }
 
     private fun modelArray(body: String, field: String): JsonArray {
         val root = try {
             json.parseToJsonElement(body).jsonObjectOrNull()
         } catch (_: SerializationException) {
-            error("服务商模型目录不是有效的 JSON")
+            error(AppStrings.get(R.string.remote_model_err_invalid_json, "Provider model catalog is not valid JSON"))
         }
-            ?: error("服务商模型目录格式无效")
+            ?: error(AppStrings.get(R.string.remote_model_err_invalid_format, "Invalid provider model catalog format"))
         require(root["error"] == null || root["error"] == JsonNull) {
-            "服务商返回了模型目录错误"
+            AppStrings.get(R.string.remote_model_err_provider_error, "Provider returned a model catalog error")
         }
-        return root[field]?.jsonArrayOrNull() ?: error("服务商模型目录缺少 $field 列表")
+        return root[field]?.jsonArrayOrNull()
+            ?: error(AppStrings.get(R.string.remote_model_err_missing_list, "Provider model catalog is missing %1\$s list", field))
     }
 
     private fun fetchOpenAiCompatible(
@@ -211,7 +222,9 @@ internal object RemoteModelFetcher {
             throw AgentModelFailure.http(response.code, response.peekBody(16_384).string())
         }
         val body = response.peekBody(maxBytes + 1).bytes()
-        require(body.size <= maxBytes) { "服务商模型目录超过大小限制" }
+        require(body.size <= maxBytes) {
+            AppStrings.get(R.string.remote_model_err_size_limit, "Provider model catalog exceeded size limit")
+        }
         body.toString(Charsets.UTF_8)
     }
 

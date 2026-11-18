@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_view_description">説明を表示</string>
+    <string name="ui_description_named">%1$s の説明を表示</string>
+    <string name="skills_more_named">%1$s のその他の操作</string>
+    <string name="tools_manage_permissions">権限を管理</string>
+    <string name="tools_view_enhancements">システム拡張を表示</string>
+</resources>

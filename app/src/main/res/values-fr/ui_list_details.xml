@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_view_description">Voir la description</string>
+    <string name="ui_description_named">Voir la description de %1$s</string>
+    <string name="skills_more_named">Plus d\'actions pour %1$s</string>
+    <string name="tools_manage_permissions">Gérer les autorisations</string>
+    <string name="tools_view_enhancements">Voir les améliorations système</string>
+</resources>

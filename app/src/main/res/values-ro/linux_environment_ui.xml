@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Configurarea mediului</string>
+    <string name="linux_environment_files">Fișiere și directoare</string>
+    <string name="linux_environment_base_ready">Mediul de bază este gata; instalează instrumentele de bază în continuare</string>
+    <string name="linux_environment_tools_ready">Instrumentele de bază sunt gata; instalează instrumentele de extensie după necesitate</string>
+    <string name="linux_environment_shared_folders_summary">Montează directoarele Android în mediul Linux</string>
+    <string name="linux_debian_repair_failed">Verificarea sau recuperarea pachetelor Debian nu s-a finalizat. Asigură-te că nu rulează nicio altă sarcină a managerului de pachete, apoi încearcă din nou. Dacă tot eșuează, rulează dpkg --configure -a și apt-get --fix-broken install în terminalul Debian pentru a inspecta eroarea.</string>
+    <string name="linux_debian_install_timeout">Instalarea instrumentelor de bază Debian a expirat. Încearcă din nou pentru a verifica și recupera operațiunile de pachete neterminate.</string>
+    <string name="linux_debian_install_failed">Instalarea instrumentelor de bază Debian a eșuat. Verifică depozitele, alte sarcini ale managerului de pachete și spațiul disponibil în terminalul Debian.</string>
+</resources>

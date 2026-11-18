@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">実行中のタスク</string>
+    <string name="execution_title">Eta 実行中</string>
+    <plurals name="execution_summary">
+        <item quantity="other">%1$d 件のタスクを実行中です。Eta に戻って進行状況を確認できます。</item>
+    </plurals>
+    <string name="execution_stop">実行中のタスクを停止</string>
+    <string name="execution_chip_running">処理中</string>
+    <string name="execution_chip_answering">回答中</string>
+</resources>

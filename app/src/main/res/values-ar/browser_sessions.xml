@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">مسح جميع بيانات المتصفح</string>
+    <string name="browser_clear_shared_data_message">ستُغلق جميع الصفحات. سيتم مسح ملفات تعريف الارتباط وذاكرة التخزين المؤقت وبيانات المواقع، بما في ذلك جلسات تسجيل الدخول.</string>
+    <string name="browser_user_action_failed">تعذّر إكمال إجراء المتصفح. يرجى المحاولة مرة أخرى.</string>
+</resources>

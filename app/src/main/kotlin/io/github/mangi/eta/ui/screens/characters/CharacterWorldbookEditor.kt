@@ -6,7 +6,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import com.itos.coui.layout.CouiPageDefaults
 import com.itos.coui.layout.Divider
 import com.itos.coui.layout.Group
@@ -41,13 +44,13 @@ internal fun LazyListScope.characterWorldbookEditor(
     val card = store.draft ?: return
     val book = card.worldbookDraft()
     val enabled = !store.busy
-    item(key = "worldbook-title") { CharacterSectionHeader("世界书") }
+    item(key = "worldbook-title") { CharacterSectionHeader(stringResource(R.string.char_worldbook)) }
     item(key = "worldbook-header") {
-        val summary = "${book.entries.size} 个条目 · ${if (expanded) "收起" else "展开编辑"}"
+        val summary = stringResource(if (expanded) R.string.char_worldbook_summary_expanded else R.string.char_worldbook_summary_collapsed, book.entries.size)
         if (LocalUiStyle.current == AppearanceUiStyle.COUI) {
             Group {
                 CouiPreference(
-                    title = "内嵌世界书",
+                    title = stringResource(R.string.char_worldbook_enable),
                     summary = summary,
                     onClick = onToggleExpanded,
                 )
@@ -59,7 +62,7 @@ internal fun LazyListScope.characterWorldbookEditor(
                     .padding(bottom = 12.dp),
             ) {
                 ArrowPreference(
-                    title = "内嵌世界书",
+                    title = stringResource(R.string.char_worldbook_enable),
                     summary = summary,
                     onClick = onToggleExpanded,
                 )
@@ -68,15 +71,15 @@ internal fun LazyListScope.characterWorldbookEditor(
     }
     if (!expanded) return
     item(key = "worldbook-name") {
-        CharacterTextField("世界书名称", book.name, { value -> store.updateWorldbook { it.copy(name = value) } }, enabled, singleLine = true)
+        CharacterTextField(stringResource(R.string.char_worldbook_name), book.name, { value -> store.updateWorldbook { it.copy(name = value) } }, enabled, singleLine = true)
     }
     item(key = "worldbook-depth") {
-        CharacterTextField("扫描最近消息数（留空使用默认值）", book.scanDepth?.toString().orEmpty(), { value ->
+        CharacterTextField(stringResource(R.string.char_worldbook_scan_depth), book.scanDepth?.toString().orEmpty(), { value ->
             optionalNonNegativeInt(value) { number -> store.updateWorldbook { it.copy(scanDepth = number) } }
         }, enabled, singleLine = true)
     }
     item(key = "worldbook-budget") {
-        CharacterTextField("Token 预算（留空自动分配）", book.tokenBudget?.toString().orEmpty(), { value ->
+        CharacterTextField(stringResource(R.string.char_worldbook_token_budget), book.tokenBudget?.toString().orEmpty(), { value ->
             optionalNonNegativeInt(value) { number -> store.updateWorldbook { it.copy(tokenBudget = number) } }
         }, enabled, singleLine = true)
     }
@@ -84,8 +87,8 @@ internal fun LazyListScope.characterWorldbookEditor(
         if (LocalUiStyle.current == AppearanceUiStyle.COUI) {
             Group {
                 CouiSwitchPreference(
-                    title = "递归匹配",
-                    summary = "使用已匹配条目的内容继续寻找相关条目",
+                    title = stringResource(R.string.char_worldbook_recursive),
+                    summary = stringResource(R.string.char_worldbook_recursive_summary),
                     checked = book.recursiveScanning == true,
                     enabled = enabled,
                     onCheckedChange = { value -> store.updateWorldbook { it.copy(recursiveScanning = value) } },
@@ -97,8 +100,8 @@ internal fun LazyListScope.characterWorldbookEditor(
                     .padding(horizontal = CharacterCardPadding, vertical = 6.dp),
             ) {
                 SwitchPreference(
-                    title = "递归匹配",
-                    summary = "使用已匹配条目的内容继续寻找相关条目",
+                    title = stringResource(R.string.char_worldbook_recursive),
+                    summary = stringResource(R.string.char_worldbook_recursive_summary),
                     checked = book.recursiveScanning == true,
                     enabled = enabled,
                     onCheckedChange = { value -> store.updateWorldbook { it.copy(recursiveScanning = value) } },
@@ -106,15 +109,15 @@ internal fun LazyListScope.characterWorldbookEditor(
             }
         }
     }
-    item(key = "worldbook-entries-title") { CharacterSectionHeader("条目") }
+    item(key = "worldbook-entries-title") { CharacterSectionHeader(stringResource(R.string.char_worldbook_entries)) }
     val unsupported = CharacterWorldbook.unsupportedEntries(card).associate { it.index to it.reasons }
     itemsIndexed(book.entries, key = { index, _ -> "worldbook-entry-$index" }) { index, entry ->
-        val entryTitle = entry.name.take(120).ifBlank { "条目 ${index + 1}" }
+        val entryTitle = entry.name.take(120).ifBlank { AppStrings.get(R.string.char_worldbook_entry_indexed, "Entry %1\$d", index + 1) }
         val entrySummary = when {
-            !entry.enabled -> "已停用"
-            !unsupported[index].isNullOrEmpty() -> "已跳过：${unsupported[index].orEmpty().joinToString("；")}"
-            entry.constant -> "始终参与上下文"
-            else -> entry.keys.take(4).joinToString("、").take(160).ifBlank { "尚未设置触发关键词" }
+            !entry.enabled -> stringResource(R.string.char_worldbook_entry_disabled)
+            !unsupported[index].isNullOrEmpty() -> stringResource(R.string.char_worldbook_entry_skipped, unsupported[index].orEmpty().joinToString("; "))
+            entry.constant -> stringResource(R.string.char_worldbook_entry_constant)
+            else -> entry.keys.take(4).joinToString(", ").take(160).ifBlank { stringResource(R.string.char_worldbook_entry_no_keys) }
         }
         val onToggleEntry: (Boolean) -> Unit = { value ->
             store.updateWorldbook { current ->
@@ -196,7 +199,7 @@ internal fun LazyListScope.characterWorldbookEditor(
         }
         if (LocalUiStyle.current == AppearanceUiStyle.COUI) {
             CouiButton(
-                text = "添加条目",
+                text = stringResource(R.string.char_worldbook_add_entry),
                 enabled = enabled,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -205,7 +208,7 @@ internal fun LazyListScope.characterWorldbookEditor(
             )
         } else {
             TextButton(
-                text = "添加条目",
+                text = stringResource(R.string.char_worldbook_add_entry),
                 enabled = enabled,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,70 +230,70 @@ private fun CharacterWorldbookEntryEditor(
     val uiStyle = LocalUiStyle.current
     if (unsupported.isNotEmpty()) {
         Text(
-            "此条目暂不参与匹配：${unsupported.joinToString("；")}",
+            stringResource(R.string.char_worldbook_entry_unsupported, unsupported.joinToString("; ")),
             style = MiuixTheme.textStyles.body2,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
         )
     }
-    CharacterFieldGroupLabel("内容")
-    CharacterTextField("条目标题", entry.name, { onChange(entry.copy(name = it)) }, enabled, singleLine = true, inGroup = true)
-    CharacterTextField("内容", entry.content, { onChange(entry.copy(content = it)) }, enabled, minLines = 4, inGroup = true)
-    CharacterFieldGroupLabel("触发")
-    CharacterTextField("主关键词（每行一个）", entry.keys.joinToString("\n"), { onChange(entry.copy(keys = it.lines())) }, enabled, inGroup = true)
-    CharacterTextField("次级关键词（每行一个）", entry.secondaryKeys.joinToString("\n"), { onChange(entry.copy(secondaryKeys = it.lines())) }, enabled, inGroup = true)
+    CharacterFieldGroupLabel(stringResource(R.string.char_worldbook_group_content))
+    CharacterTextField(stringResource(R.string.char_worldbook_entry_title), entry.name, { onChange(entry.copy(name = it)) }, enabled, singleLine = true, inGroup = true)
+    CharacterTextField(stringResource(R.string.char_worldbook_group_content), entry.content, { onChange(entry.copy(content = it)) }, enabled, minLines = 4, inGroup = true)
+    CharacterFieldGroupLabel(stringResource(R.string.char_worldbook_group_trigger))
+    CharacterTextField(stringResource(R.string.char_worldbook_keys_primary), entry.keys.joinToString("\n"), { onChange(entry.copy(keys = it.lines())) }, enabled, inGroup = true)
+    CharacterTextField(stringResource(R.string.char_worldbook_keys_secondary), entry.secondaryKeys.joinToString("\n"), { onChange(entry.copy(secondaryKeys = it.lines())) }, enabled, inGroup = true)
     if (uiStyle == AppearanceUiStyle.COUI) {
         CouiSwitchPreference(
-            title = "同时匹配次级关键词",
+            title = stringResource(R.string.char_worldbook_selective),
             checked = entry.selective,
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(selective = it)) },
         )
     } else {
         SwitchPreference(
-            title = "同时匹配次级关键词",
+            title = stringResource(R.string.char_worldbook_selective),
             checked = entry.selective,
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(selective = it)) },
         )
     }
-    CharacterFieldGroupLabel("插入")
+    CharacterFieldGroupLabel(stringResource(R.string.char_worldbook_group_insertion))
     if (uiStyle == AppearanceUiStyle.COUI) {
         CouiSwitchPreference(
-            title = "常驻上下文",
+            title = stringResource(R.string.char_worldbook_constant),
             checked = entry.constant,
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(constant = it)) },
         )
         Divider()
         CouiSwitchPreference(
-            title = "放在角色设定之前",
-            summary = "关闭时放在角色设定之后",
+            title = stringResource(R.string.char_worldbook_before_char),
+            summary = stringResource(R.string.char_worldbook_before_char_summary),
             checked = entry.position == "before_char",
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(position = if (it) "before_char" else "after_char")) },
         )
     } else {
         SwitchPreference(
-            title = "常驻上下文",
+            title = stringResource(R.string.char_worldbook_constant),
             checked = entry.constant,
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(constant = it)) },
         )
         SwitchPreference(
-            title = "放在角色设定之前",
-            summary = "关闭时放在角色设定之后",
+            title = stringResource(R.string.char_worldbook_before_char),
+            summary = stringResource(R.string.char_worldbook_before_char_summary),
             checked = entry.position == "before_char",
             enabled = enabled,
             onCheckedChange = { onChange(entry.copy(position = if (it) "before_char" else "after_char")) },
         )
     }
-    CharacterTextField("插入顺序", entry.insertionOrder.toString(), { value ->
+    CharacterTextField(stringResource(R.string.char_worldbook_insertion_order), entry.insertionOrder.toString(), { value ->
         value.toIntOrNull()?.takeIf { it >= 0 }?.let { onChange(entry.copy(insertionOrder = it)) }
     }, enabled, singleLine = true, inGroup = true)
     if (uiStyle == AppearanceUiStyle.COUI) {
         CouiButton(
-            text = "移除条目",
+            text = stringResource(R.string.char_worldbook_remove_entry),
             enabled = enabled,
             role = CouiButtonRole.Destructive,
             onClick = onDelete,
@@ -300,7 +303,7 @@ private fun CharacterWorldbookEntryEditor(
         )
     } else {
         TextButton(
-            text = "移除条目",
+            text = stringResource(R.string.char_worldbook_remove_entry),
             enabled = enabled,
             onClick = onDelete,
             modifier = Modifier

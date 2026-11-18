@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ui_view_description">Xem mô tả</string>
+    <string name="ui_description_named">Xem mô tả cho %1$s</string>
+    <string name="skills_more_named">Thêm thao tác cho %1$s</string>
+    <string name="tools_manage_permissions">Quản lý quyền</string>
+    <string name="tools_view_enhancements">Xem tính năng nâng cao hệ thống</string>
+</resources>

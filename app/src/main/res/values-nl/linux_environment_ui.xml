@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Omgevingsconfiguratie</string>
+    <string name="linux_environment_files">Bestanden en mappen</string>
+    <string name="linux_environment_base_ready">Basisomgeving gereed; installeer hierna de basistools</string>
+    <string name="linux_environment_tools_ready">Basistools gereed; installeer indien nodig uitbreidingstools</string>
+    <string name="linux_environment_shared_folders_summary">Android-mappen aankoppelen in de Linux-omgeving</string>
+    <string name="linux_debian_repair_failed">De pakketcontroles of het herstel van Debian zijn niet voltooid. Zorg ervoor dat er geen andere pakketbeheertaak actief is en probeer het opnieuw. Als het blijft mislukken, voer dan dpkg --configure -a en apt-get --fix-broken install uit in de Debian-terminal om de fout te bekijken.</string>
+    <string name="linux_debian_install_timeout">Time-out bij installatie van Debian-basistools. Probeer het opnieuw om onvoltooide pakketbewerkingen te controleren en te herstellen.</string>
+    <string name="linux_debian_install_failed">Installatie van Debian-basistools mislukt. Controleer de pakketbronnen, andere pakketbeheertaken en de beschikbare opslagruimte in de Debian-terminal.</string>
+</resources>

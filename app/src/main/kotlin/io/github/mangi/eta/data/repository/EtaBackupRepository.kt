@@ -2,6 +2,8 @@ package io.github.mangi.eta.data.repository
 
 import android.content.Context
 import androidx.room.withTransaction
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.data.db.ConversationContextCheckpointEntity
 import io.github.mangi.eta.data.db.ConversationEntity
 import io.github.mangi.eta.data.db.ConversationMessageEntity
@@ -235,7 +237,10 @@ internal object EtaBackupRepository {
                         }
                     } catch (failure: Exception) {
                         throw IllegalStateException(
-                            "数据已导入，但订阅登录清理未完成。订阅连接保持停用，请重新选择登录方式并登录。",
+                            AppStrings.get(
+                                R.string.backup_err_oauth_cleanup,
+                                "Data imported, but subscription login cleanup did not finish. Subscription connections stay disabled; please re-select a login method and sign in.",
+                            ),
                             failure,
                         )
                     }
@@ -246,7 +251,13 @@ internal object EtaBackupRepository {
                         ProviderRepository.ensureBuiltInsMerged()
                         ProviderRepository.repairSelection()
                     } catch (failure: Exception) {
-                        throw IllegalStateException("数据已导入，但默认模型设置未完全恢复，请重新选择服务商和模型。", failure)
+                        throw IllegalStateException(
+                            AppStrings.get(
+                                R.string.backup_err_default_model,
+                                "Data imported, but default model settings were not fully restored; please re-select provider and model.",
+                            ),
+                            failure,
+                        )
                     }
                 }
                 summary

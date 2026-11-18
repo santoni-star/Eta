@@ -1,5 +1,7 @@
 package io.github.mangi.eta.agent.model
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -34,25 +36,30 @@ internal class AgentModelFailure(
             }
             authenticationFailure(error)?.let { return it }
             if (isContextOverflow(error)) return AgentModelFailure(
-                "CONTEXT_OVERFLOW", false, "模型上下文超过容量限制。",
+                "CONTEXT_OVERFLOW", false, AppStrings.get(R.string.model_err_context_overflow, "Model context exceeds capacity limit."),
             )
             val permanent = isPermanent(error, body)
             if (status == 400 && includeParameterDetails && !permanent) {
                 ProviderParameterDiagnostics.describe(error)?.let { details ->
-                    return AgentModelFailure("HTTP_400", false, "模型请求参数无效（HTTP 400；$details），请检查模型配置。")
+                    return AgentModelFailure(
+                        "HTTP_400",
+                        false,
+                        AppStrings.get(R.string.model_err_http_400_detail, "Invalid model request parameters (HTTP 400; %1\$s); check model configuration.", details),
+                    )
                 }
             }
             return AgentModelFailure(
                 code = "HTTP_$status",
                 retryable = status in transientStatus && !permanent,
-                message = if (permanent) "模型接口额度或计费受限（HTTP $status），请检查服务商账户。"
-                else when (status) {
-                    400 -> "模型请求参数无效（HTTP 400），请检查模型配置。"
-                    401 -> "模型接口认证失败（HTTP 401），请检查 API Key。"
-                    403 -> "模型接口拒绝访问（HTTP 403），请检查账户与模型权限。"
-                    404 -> "模型接口或模型不存在（HTTP 404），请检查接口地址与模型名称。"
-                    429 -> "模型接口暂时限流（HTTP 429）。"
-                    else -> "模型接口返回 HTTP $status"
+                message = if (permanent) {
+                    AppStrings.get(R.string.model_err_quota, "Model API quota or billing limit reached (HTTP %1\$d); check your provider account.", status)
+                } else when (status) {
+                    400 -> AppStrings.get(R.string.model_err_http_400, "Invalid model request parameters (HTTP 400); check model configuration.")
+                    401 -> AppStrings.get(R.string.model_err_http_401, "Model API authentication failed (HTTP 401); check your API Key.")
+                    403 -> AppStrings.get(R.string.model_err_http_403, "Model API access denied (HTTP 403); check account and model permissions.")
+                    404 -> AppStrings.get(R.string.model_err_http_404, "Model endpoint or model not found (HTTP 404); check endpoint URL and model name.")
+                    429 -> AppStrings.get(R.string.model_err_http_429, "Model API temporarily rate-limited (HTTP 429).")
+                    else -> AppStrings.get(R.string.model_err_http_status, "Model API returned HTTP %1\$d", status)
                 },
             )
         }
@@ -60,7 +67,7 @@ internal class AgentModelFailure(
         fun stream(error: JSONObject, message: String): AgentModelFailure {
             authenticationFailure(error)?.let { return it }
             if (isContextOverflow(error)) return AgentModelFailure(
-                "CONTEXT_OVERFLOW", false, "模型上下文超过容量限制。",
+                "CONTEXT_OVERFLOW", false, AppStrings.get(R.string.model_err_context_overflow, "Model context exceeds capacity limit."),
             )
             val codes = listOf(
                 error.optString("code"),
@@ -82,12 +89,19 @@ internal class AgentModelFailure(
             is AgentModelFailure -> failure
             is InterruptedIOException -> AgentModelFailure(
                 "MODEL_TIMEOUT", true,
-                "模型请求等待超时（连接或写入超时，或读取响应等待超过 ${AgentHttpClient.MODEL_READ_TIMEOUT_MS / 60_000} 分钟）。",
+                AppStrings.get(
+                    R.string.model_err_timeout,
+                    "Model request timed out (connect/write timeout, or reading response exceeded %1\$d min).",
+                    AgentHttpClient.MODEL_READ_TIMEOUT_MS / 60_000,
+                ),
                 failure,
             )
             is SSLException, is ProtocolException -> null
             is IOException -> AgentModelFailure(
-                "MODEL_CONNECTION_FAILED", true, "模型连接中断或暂时无法建立，请检查网络与服务商状态。", failure,
+                "MODEL_CONNECTION_FAILED",
+                true,
+                AppStrings.get(R.string.model_err_connection_failed, "Model connection interrupted or failed; check network and provider status."),
+                failure,
             )
             else -> null
         }
@@ -113,7 +127,7 @@ internal class AgentModelFailure(
                 details?.optJSONObject(index)?.optString("reason") in invalidApiKeyReasons
             }
             return if (invalidKey || error.optString("status") == "UNAUTHENTICATED") {
-                AgentModelFailure("PROVIDER_AUTH_FAILED", false, "模型接口认证失败，请检查 API Key。")
+                AgentModelFailure("PROVIDER_AUTH_FAILED", false, AppStrings.get(R.string.model_err_auth_failed, "Model API authentication failed; check your API Key."))
             } else null
         }
 

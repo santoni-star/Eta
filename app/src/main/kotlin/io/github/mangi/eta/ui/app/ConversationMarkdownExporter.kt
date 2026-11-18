@@ -1,5 +1,7 @@
 package io.github.mangi.eta.ui.app
 
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.model.AgentFileReferencePromptCodec
 import io.github.mangi.eta.ui.model.AgentChatMessageUi
 import io.github.mangi.eta.ui.model.AgentMessageUi
@@ -38,7 +40,7 @@ internal object ConversationMarkdownExporter {
         val noticeModelRetry: String,
         val noticeRuntimeFailed: String,
         val noticeInterrupted: String,
-        val noticeContextCompaction: String = "上下文压缩",
+        val noticeContextCompaction: String = AppStrings.get(R.string.export_notice_context_compaction, "Context compaction"),
     ) {
         fun toolStatus(status: ToolActivityStatusUi): String = when (status) {
             ToolActivityStatusUi.Running -> toolStatusRunning

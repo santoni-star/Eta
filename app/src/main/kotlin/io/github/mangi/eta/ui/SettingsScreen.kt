@@ -633,7 +633,7 @@ private fun SettingsPageContent(
                     )
                     CouiIconDivider()
                     CouiPreference(
-                        title = "角色",
+                        title = stringResource(R.string.route_characters),
                         icon = {
                             CouiSettingsIcon(
                                 Icons.Rounded.SportsBar,
@@ -1005,7 +1005,7 @@ private fun SettingsPageContent(
                             onClick = { onNavigate(AppRoute.McpServers) },
                         )
                         ArrowPreference(
-                            title = "角色",
+                            title = stringResource(R.string.route_characters),
                             startAction = { SettingsIcon(Icons.Rounded.SportsBar) },
                             onClick = { onNavigate(AppRoute.Characters) },
                         )

@@ -90,7 +90,11 @@ android {
     }
 
     androidResources {
-        localeFilters += listOf("en", "b+zh+Hans", "b+zh+Hant")
+        localeFilters += listOf(
+            "en", "uk", "ru", "pl", "de", "fr", "es", "it", "pt", "nl",
+            "cs", "ro", "tr", "ar", "ja", "ko", "vi", "id", "in", "hi",
+            "b+zh+Hans", "b+zh+Hant",
+        )
     }
 
     packaging {

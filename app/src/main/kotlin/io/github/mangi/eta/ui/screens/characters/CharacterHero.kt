@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.screens.characters
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -140,7 +142,7 @@ internal fun CharacterHero(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.PhotoCamera,
-                        contentDescription = "更换头像",
+                        contentDescription = stringResource(R.string.char_change_avatar),
                         modifier = Modifier.size(18.dp),
                         tint = colors.onSurface,
                     )
@@ -161,14 +163,14 @@ internal fun CharacterHero(
                 IconButton(onClick = onToggleFavorite, enabled = !busy, minWidth = 36.dp, minHeight = 36.dp) {
                     Icon(
                         imageVector = if (card.favorite) Icons.Rounded.Star else Icons.Rounded.StarOutline,
-                        contentDescription = if (card.favorite) "取消收藏" else "收藏",
+                        contentDescription = stringResource(if (card.favorite) R.string.char_unfavorite else R.string.char_favorite),
                         modifier = Modifier.size(20.dp),
                         tint = if (card.favorite) FavoriteColor else colors.onSurfaceVariantSummary,
                     )
                 }
             }
             val byline = listOfNotNull(
-                card.creator.takeIf(String::isNotBlank)?.let { "作者 $it" },
+                card.creator.takeIf(String::isNotBlank)?.let { stringResource(R.string.char_creator_prefix, it) },
                 card.version.takeIf(String::isNotBlank)?.let { "v$it" },
             ).joinToString(" · ")
             if (byline.isNotEmpty()) {
@@ -218,7 +220,7 @@ internal fun CharacterHero(
             Spacer(Modifier.height(20.dp))
             if (LocalUiStyle.current == AppearanceUiStyle.COUI) {
                 CouiButton(
-                    text = "开始对话",
+                    text = stringResource(R.string.char_start_chat),
                     enabled = !busy,
                     onClick = onStart,
                     role = CouiButtonRole.Primary,
@@ -226,7 +228,7 @@ internal fun CharacterHero(
                 )
             } else {
                 TextButton(
-                    text = "开始对话",
+                    text = stringResource(R.string.char_start_chat),
                     enabled = !busy,
                     onClick = onStart,
                     modifier = Modifier.fillMaxWidth(),
@@ -291,7 +293,7 @@ internal fun GreetingPager(
                             if (page == pagerState.settledPage) {
                                 Icon(
                                     imageVector = Icons.Rounded.Check,
-                                    contentDescription = "已选择",
+                                    contentDescription = stringResource(R.string.char_selected),
                                     modifier = Modifier.size(12.dp),
                                     tint = colors.onPrimary,
                                 )
@@ -301,7 +303,7 @@ internal fun GreetingPager(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = text.ifBlank { "没有预设开场白，由你先开口" },
+                    text = text.ifBlank { stringResource(R.string.char_no_greeting_hint) },
                     style = MiuixTheme.textStyles.body2,
                     color = if (text.isBlank()) colors.onSurfaceVariantSummary else colors.onSurface,
                     maxLines = 6,
@@ -310,7 +312,7 @@ internal fun GreetingPager(
                 )
                 if (text.isNotBlank()) {
                     Text(
-                        text = "阅读全文",
+                        text = stringResource(R.string.char_read_more),
                         style = MiuixTheme.textStyles.footnote1,
                         color = colors.primary,
                     )

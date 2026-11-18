@@ -1,6 +1,8 @@
 package io.github.mangi.eta.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import io.github.mangi.eta.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -72,12 +74,13 @@ internal fun OptionalModelPickerContent(
                 CouiSearchBarBox(
                     query = query,
                     onQueryChange = { query = it },
-                    placeholder = "搜索模型或服务商",
+                    placeholder = stringResource(R.string.model_picker_search_placeholder),
                     backgroundColor = Color.Transparent,
                 )
                 if (pickerState.providerGroups.size > 1) {
-                    val tabItems = remember(pickerState.providerGroups) {
-                        listOf("" to "全部") + pickerState.providerGroups.map { it.providerId to it.providerName }
+                    val allLabel = stringResource(R.string.model_picker_all)
+                    val tabItems = remember(pickerState.providerGroups, allLabel) {
+                        listOf("" to allLabel) + pickerState.providerGroups.map { it.providerId to it.providerName }
                     }
                     CouiChipTabs(
                         items = tabItems,
@@ -94,7 +97,7 @@ internal fun OptionalModelPickerContent(
                     onSearch = {},
                     expanded = false,
                     onExpandedChange = {},
-                    label = "搜索模型或服务商",
+                    label = stringResource(R.string.model_picker_search_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -106,7 +109,7 @@ internal fun OptionalModelPickerContent(
                     ) {
                         item(key = "filter:all") {
                             EtaChoiceChip(
-                                text = "全部",
+                                text = stringResource(R.string.model_picker_all),
                                 selected = providerFilter == null,
                                 onClick = { providerFilter = null },
                             )

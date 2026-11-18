@@ -1,5 +1,6 @@
 package io.github.mangi.eta.ui.components
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,13 +79,17 @@ internal fun SubagentActivityRow(
     val taskTitle = snapshot.description.ifBlank { message.argumentsSummary.ifBlank { "Subagent" } }
     val subtitle = when {
         running -> snapshot.currentAction.takeIf { it.isNotBlank() }
-            ?: if (snapshot.toolStepCount > 0) "已执行 ${snapshot.toolStepCount} 步" else "正在运行…"
+            ?: if (snapshot.toolStepCount > 0) {
+                stringResource(R.string.subagent_sheet_steps_executed, snapshot.toolStepCount)
+            } else {
+                stringResource(R.string.subagent_sheet_running)
+            }
         failed -> snapshot.error?.lineSequence()?.firstOrNull()?.takeIf { it.isNotBlank() }
             ?: message.outcomeLine()
-            ?: "执行未完成"
+            ?: stringResource(R.string.subagent_sheet_incomplete)
         else -> when {
-            snapshot.toolStepCount > 0 -> "完成 · ${snapshot.toolStepCount} 次工具调用"
-            else -> message.outcomeLine() ?: "完成"
+            snapshot.toolStepCount > 0 -> stringResource(R.string.subagent_status_done_tools, snapshot.toolStepCount)
+            else -> message.outcomeLine() ?: stringResource(R.string.subagent_status_done)
         }
     }
 
@@ -139,7 +144,7 @@ internal fun SubagentActivityRow(
             }
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = "查看 Subagent 详情",
+                contentDescription = stringResource(R.string.subagent_sheet_view_details),
                 modifier = Modifier
                     .padding(start = 6.dp, end = 8.dp)
                     .size(14.dp),
@@ -365,7 +370,7 @@ private fun SubagentInspectorContent(
                             contentAlignment = Alignment.CenterStart,
                         ) {
                             ShimmerText(
-                                text = snapshot.currentAction.ifBlank { "正在运行…" },
+                                text = snapshot.currentAction.ifBlank { stringResource(R.string.subagent_sheet_running) },
                                 active = true,
                                 style = MiuixTheme.textStyles.body2,
                                 color = MiuixTheme.colorScheme.onSurface,
@@ -442,7 +447,7 @@ private fun SubagentStepRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ShimmerText(
-                text = step.title.ifBlank { step.toolName.ifBlank { "步骤" } },
+                text = step.title.ifBlank { step.toolName.ifBlank { stringResource(R.string.subagent_sheet_step_fallback) } },
                 active = running,
                 style = MiuixTheme.textStyles.body2,
                 color = when {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">모든 브라우저 데이터 지우기</string>
+    <string name="browser_clear_shared_data_message">모든 페이지가 닫힙니다. 로그인 세션을 포함한 쿠키, 캐시, 웹사이트 데이터가 모두 지워집니다.</string>
+    <string name="browser_user_action_failed">브라우저 작업을 완료하지 못했습니다. 다시 시도해 주세요.</string>
+</resources>

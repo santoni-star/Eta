@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">Spuštěné úlohy</string>
+    <string name="execution_title">Eta pracuje</string>
+    <plurals name="execution_summary">
+        <item quantity="one">Běží %1$d úloha. Vraťte se do Eta a zkontrolujte průběh.</item>
+        <item quantity="few">Běží %1$d úlohy. Vraťte se do Eta a zkontrolujte průběh.</item>
+        <item quantity="many">Běží %1$d úlohy. Vraťte se do Eta a zkontrolujte průběh.</item>
+        <item quantity="other">Běží %1$d úloh. Vraťte se do Eta a zkontrolujte průběh.</item>
+    </plurals>
+    <string name="execution_stop">Zastavit spuštěné úlohy</string>
+    <string name="execution_chip_running">Pracuje</string>
+    <string name="execution_chip_answering">Odpovídá</string>
+</resources>

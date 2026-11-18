@@ -4,6 +4,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import io.github.mangi.eta.R
+import io.github.mangi.eta.core.AppStrings
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -49,12 +51,14 @@ internal class McpSecretStore(context: Context) {
             preferences.edit()
             .putString(tokenKey(serverId), Base64.encodeToString(payload, Base64.NO_WRAP))
             .commit()
-        ) { "MCP 凭据保存失败" }
+        ) { AppStrings.get(R.string.mcp_err_save_credentials, "Failed to save MCP credentials") }
     }
 
     @Synchronized
     fun clear(serverId: String) {
-        check(preferences.edit().remove(tokenKey(serverId)).commit()) { "MCP 凭据删除失败" }
+        check(preferences.edit().remove(tokenKey(serverId)).commit()) {
+            AppStrings.get(R.string.mcp_err_delete_credentials, "Failed to delete MCP credentials")
+        }
     }
 
     private fun secretKey(): SecretKey {

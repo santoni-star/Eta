@@ -178,7 +178,7 @@ class AgentModelPickerProjectorTest {
         assertEquals(82_000, usage.contextTokens)
         assertEquals(100_000, usage.contextWindow)
         assertEquals(0.82f, usage.progress ?: 0f, 0.0001f)
-        assertEquals("82K / 100K tokens · 82.0%", formatContextUsage(usage))
+        assertEquals("82K / 100K tokens · 82.0%", formatContextUsage(usage, locale = java.util.Locale.US))
     }
 
     @Test
@@ -188,7 +188,7 @@ class AgentModelPickerProjectorTest {
         assertNull(contextUsageProgress(10_000, 0))
         assertEquals(0f, contextUsageProgress(0, 100_000) ?: -1f, 0f)
         assertEquals(1f, contextUsageProgress(120_000, 100_000) ?: -1f, 0f)
-        assertEquals("1.05M", formatCompactTokenCount(1_050_000))
+        assertEquals("1.05M", formatCompactTokenCount(1_050_000, java.util.Locale.US))
         assertEquals(
             "No usage data yet",
             formatContextUsage(AgentContextUsageUi(contextTokens = null, contextWindow = 100_000)),
@@ -283,8 +283,8 @@ class AgentModelPickerProjectorTest {
         assertEquals(200, stats.reasoningTokens)
         assertEquals(3_600, stats.totalTokens)
         assertEquals("80", formatCacheHitPercent(stats.cachedTokens, stats.promptTokens))
-        assertEquals("2.4秒", formatStatDuration(2_400L))
-        assertEquals("1分5秒", formatStatDuration(65_000L))
+        assertEquals("2.4s", formatStatDuration(2_400L))
+        assertEquals("1m 5s", formatStatDuration(65_000L))
         assertEquals("200", formatTokensPerSecond(200.4))
         assertEquals("6.8", formatTokensPerSecond(6.81))
     }

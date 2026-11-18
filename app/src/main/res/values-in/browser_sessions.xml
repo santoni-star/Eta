@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Hapus semua data browser</string>
+    <string name="browser_clear_shared_data_message">Semua halaman akan ditutup. Cookie, cache, dan data situs web, termasuk sesi login, akan dihapus.</string>
+    <string name="browser_user_action_failed">Tindakan browser tidak dapat diselesaikan. Silakan coba lagi.</string>
+</resources>

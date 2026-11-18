@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">실행 중인 작업</string>
+    <string name="execution_title">Eta 실행 중</string>
+    <plurals name="execution_summary">
+        <item quantity="other">%1$d개의 작업이 실행 중입니다. Eta로 돌아가 진행 상황을 확인하세요.</item>
+    </plurals>
+    <string name="execution_stop">실행 중인 작업 중지</string>
+    <string name="execution_chip_running">작업 중</string>
+    <string name="execution_chip_answering">답변 중</string>
+</resources>

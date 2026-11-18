@@ -1,6 +1,8 @@
 package io.github.mangi.eta.agent.model
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.runtime.AgentEvent
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.runtime.AgentRunController
 import io.github.mangi.eta.agent.memory.AgentMemoryContext
 import io.github.mangi.eta.agent.skill.SkillContext
@@ -268,24 +270,30 @@ internal object AgentModelClient {
         (0 until tools.length()).mapNotNullTo(mutableSetOf()) { toolName(tools.getJSONObject(it)) }
 
     private fun ModelConfig.validate() {
-        require(baseUrl.isNotBlank()) { "请先配置 API 地址" }
+        require(baseUrl.isNotBlank()) { AppStrings.get(R.string.model_client_err_no_base_url, "Please configure API Base URL first") }
         when {
-            authMode == ProviderAuthModes.API_KEY -> require(apiKey.isNotBlank()) { "请先配置 API Key" }
+            authMode == ProviderAuthModes.API_KEY -> require(apiKey.isNotBlank()) { AppStrings.get(R.string.model_client_err_no_api_key, "Please configure API Key first") }
             ProviderAuthModes.isOAuth(authMode) -> {
-                require(providerId.isNotBlank()) { "账号登录缺少服务商标识，请重新选择服务商" }
-                require(apiKey.isEmpty()) { "账号登录配置不能包含 API Key" }
+                require(providerId.isNotBlank()) { AppStrings.get(R.string.model_client_err_no_provider_id, "Account login is missing provider ID; please re-select provider") }
+                require(apiKey.isEmpty()) { AppStrings.get(R.string.model_client_err_oauth_has_key, "Account login config must not contain an API Key") }
             }
-            else -> error("不支持的服务商认证方式")
+            else -> error(AppStrings.get(R.string.model_client_err_unsupported_auth, "Unsupported provider authentication mode"))
         }
-        require(model.isNotBlank()) { "请先配置模型名" }
+        require(model.isNotBlank()) { AppStrings.get(R.string.model_client_err_no_model, "Please configure model name first") }
         require(
             reasoningCapabilities?.mandatory != true ||
                 effectiveReasoningEffort != ReasoningEffort.OFF
-        ) { "当前模型强制启用思考，不能选择 Off 或禁用思考权限" }
+        ) { AppStrings.get(R.string.model_client_err_thinking_required, "This model requires thinking enabled; Off cannot be selected") }
         if (extraBodyJson.isNotBlank()) {
             runCatching { JSONObject(extraBodyJson) }
                 .getOrElse { throwable ->
-                    error("额外请求体 JSON 无效：${throwable.message ?: throwable.javaClass.simpleName}")
+                    error(
+                        AppStrings.get(
+                            R.string.model_client_err_extra_body,
+                            "Invalid extra request body JSON: %1\$s",
+                            throwable.message ?: throwable.javaClass.simpleName,
+                        ),
+                    )
                 }
         }
     }

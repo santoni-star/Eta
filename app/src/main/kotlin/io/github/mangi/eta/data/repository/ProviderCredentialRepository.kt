@@ -1,7 +1,9 @@
 package io.github.mangi.eta.data.repository
 
 import android.content.Context
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.auth.EncryptedProviderCredentialStorage
+import io.github.mangi.eta.core.AppStrings
 import io.github.mangi.eta.agent.auth.LiveProviderOAuthClient
 import io.github.mangi.eta.agent.auth.ProviderAccountSummary
 import io.github.mangi.eta.agent.auth.ProviderAuthException
@@ -41,5 +43,8 @@ internal object ProviderCredentialRepository {
     fun forget(providerId: String) = sessions().forget(providerId)
 
     private fun sessions(): ProviderCredentialSessions = sessions
-        ?: throw ProviderAuthException("oauth_not_initialized", "登录服务尚未就绪，请重新打开 Eta")
+        ?: throw ProviderAuthException(
+            "oauth_not_initialized",
+            AppStrings.get(R.string.oauth_err_not_initialized, "Login service is not ready yet; please reopen Eta"),
+        )
 }

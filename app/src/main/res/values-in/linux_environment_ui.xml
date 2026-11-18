@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="linux_environment_configuration">Konfigurasi lingkungan</string>
+    <string name="linux_environment_files">File dan direktori</string>
+    <string name="linux_environment_base_ready">Lingkungan dasar siap; instal alat dasar berikutnya</string>
+    <string name="linux_environment_tools_ready">Alat dasar siap; instal alat ekstensi sesuai kebutuhan</string>
+    <string name="linux_environment_shared_folders_summary">Pasang direktori Android di lingkungan Linux</string>
+    <string name="linux_debian_repair_failed">Pemeriksaan atau pemulihan paket Debian tidak selesai. Pastikan tidak ada tugas pengelola paket lain yang berjalan, lalu coba lagi. Jika masih gagal, jalankan dpkg --configure -a dan apt-get --fix-broken install di terminal Debian untuk memeriksa galat.</string>
+    <string name="linux_debian_install_timeout">Instalasi alat dasar Debian kehabisan waktu. Coba lagi untuk memeriksa dan memulihkan operasi paket yang belum selesai.</string>
+    <string name="linux_debian_install_failed">Instalasi alat dasar Debian gagal. Periksa repositori, tugas pengelola paket lainnya, dan ruang penyimpanan yang tersedia di terminal Debian.</string>
+</resources>

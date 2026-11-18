@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">ब्राउज़र का सारा डेटा साफ़ करें</string>
+    <string name="browser_clear_shared_data_message">सभी पेज बंद हो जाएंगे। कुकीज़, कैश और साइन-इन सत्रों सहित वेबसाइट डेटा साफ़ हो जाएगा।</string>
+    <string name="browser_user_action_failed">ब्राउज़र कार्रवाई पूरी नहीं हो सकी। कृपया पुनः प्रयास करें।</string>
+</resources>

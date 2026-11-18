@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_clear_shared_data">Очистить все данные браузера</string>
+    <string name="browser_clear_shared_data_message">Все страницы будут закрыты. Файлы cookie, кэш и данные сайтов, включая сеансы входа, будут удалены.</string>
+    <string name="browser_user_action_failed">Не удалось выполнить действие в браузере. Попробуйте ещё раз.</string>
+</resources>

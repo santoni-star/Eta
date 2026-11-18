@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="execution_channel">Tâches en cours</string>
+    <string name="execution_title">Eta est en cours d\'exécution</string>
+    <plurals name="execution_summary">
+        <item quantity="one">%1$d tâche est en cours. Revenez dans Eta pour suivre sa progression.</item>
+        <item quantity="other">%1$d tâches sont en cours. Revenez dans Eta pour suivre leur progression.</item>
+    </plurals>
+    <string name="execution_stop">Arrêter les tâches en cours</string>
+    <string name="execution_chip_running">En cours</string>
+    <string name="execution_chip_answering">Réponse</string>
+</resources>

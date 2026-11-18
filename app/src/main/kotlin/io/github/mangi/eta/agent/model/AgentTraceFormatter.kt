@@ -1,8 +1,10 @@
 package io.github.mangi.eta.agent.model
 
+import io.github.mangi.eta.R
 import io.github.mangi.eta.agent.subagent.AgentSubagentToolCatalog
 import io.github.mangi.eta.agent.subagent.SubagentActivitySnapshot
 import io.github.mangi.eta.agent.subagent.SubagentProfile
+import io.github.mangi.eta.core.AppStrings
 import java.net.URI
 import java.util.Locale
 import org.json.JSONObject
@@ -12,64 +14,112 @@ internal class AgentTraceFormatter {
     fun summarizeArguments(toolCall: AgentModelClient.ToolCall): String =
         when (toolCall.name) {
             BROWSER_TOOL_NAME -> summarizeBrowserArguments(toolCall.argumentsJson)
-            "web_search" -> "搜索网页"
+            "web_search" -> AppStrings.get(R.string.trace_web_search, "Web search")
             "fetch_url" -> summarizeFetchArguments(toolCall.argumentsJson)
             "open_uri" -> summarizeOpenUriArguments(toolCall.argumentsJson)
             in AgentTerminalToolCatalog.names -> summarizeTerminalArguments(toolCall.name, toolCall.argumentsJson)
-            "run_command" -> "执行命令 · Android"
-            "write_file" -> summarizeTextLength("写入文件", toolCall.argumentsJson, "content")
-            "read_file" -> "读取文件"
-            "list_directory" -> "列出目录"
-            "edit_file" -> "精确编辑文件"
-            "stat_file" -> "查看文件信息"
-            "glob_files" -> "按路径查找文件"
-            "grep_files" -> "搜索文件内容"
-            "inspect_app" -> "检查应用"
+            "run_command" -> AppStrings.get(R.string.trace_run_command_android, "Run command · Android")
+            "write_file" -> summarizeTextLength(
+                AppStrings.get(R.string.trace_write_file, "Write file"),
+                toolCall.argumentsJson,
+                "content",
+            )
+            "read_file" -> AppStrings.get(R.string.trace_read_file, "Read file")
+            "list_directory" -> AppStrings.get(R.string.trace_list_directory, "List directory")
+            "edit_file" -> AppStrings.get(R.string.trace_edit_file, "Edit file")
+            "stat_file" -> AppStrings.get(R.string.trace_stat_file, "File info")
+            "glob_files" -> AppStrings.get(R.string.trace_glob_files, "Find files")
+            "grep_files" -> AppStrings.get(R.string.trace_grep_files, "Search file contents")
+            "inspect_app" -> AppStrings.get(R.string.trace_inspect_app, "Inspect app")
             "type_text" -> summarizeTypeText(toolCall.argumentsJson)
-            "input_text" -> summarizeTextLength("输入文本", toolCall.argumentsJson, "text")
-            "replace_text" -> summarizeTextLength("替换文本", toolCall.argumentsJson, "text")
+            "input_text" -> summarizeTextLength(
+                AppStrings.get(R.string.trace_input_text, "Enter text"),
+                toolCall.argumentsJson,
+                "text",
+            )
+            "replace_text" -> summarizeTextLength(
+                AppStrings.get(R.string.trace_replace_text, "Replace text"),
+                toolCall.argumentsJson,
+                "text",
+            )
             "paste_text", "set_clipboard" ->
-                summarizeTextLength("粘贴文本", toolCall.argumentsJson, "text")
-            "clear_text" -> "清空文本"
-            "get_clipboard" -> "读取剪贴板"
-            "search_apps" -> summarizeQueryArguments("搜索应用", toolCall.argumentsJson)
-            "launch_app" -> "打开应用"
-            "present_to_user" -> "呈现到主屏"
-            "get_current_context" -> "读取时间与位置"
+                summarizeTextLength(
+                    AppStrings.get(R.string.trace_paste_text, "Paste text"),
+                    toolCall.argumentsJson,
+                    "text",
+                )
+            "clear_text" -> AppStrings.get(R.string.trace_clear_text, "Clear text")
+            "get_clipboard" -> AppStrings.get(R.string.trace_get_clipboard, "Read clipboard")
+            "search_apps" -> summarizeQueryArguments(
+                AppStrings.get(R.string.trace_search_apps, "Search apps"),
+                toolCall.argumentsJson,
+            )
+            "launch_app" -> AppStrings.get(R.string.trace_launch_app, "Open app")
+            "present_to_user" -> AppStrings.get(R.string.trace_present_to_user, "Present to main screen")
+            "get_current_context" -> AppStrings.get(R.string.trace_get_current_context, "Time and location")
             "observe_screen" -> summarizeObservationArguments(toolCall.argumentsJson)
-            "tap" -> summarizePointArguments("点击屏幕", toolCall.argumentsJson)
-            "long_press" -> summarizePointArguments("长按屏幕", toolCall.argumentsJson)
-            "tap_area" -> "点击区域"
-            "tap_element" -> summarizeElementArguments("点击元素", toolCall.argumentsJson)
-            "long_press_element" -> summarizeElementArguments("长按元素", toolCall.argumentsJson)
-            "swipe" -> "滑动屏幕"
-            "scroll" -> summarizeScrollArguments("滚动屏幕", toolCall.argumentsJson)
+            "tap" -> summarizePointArguments(
+                AppStrings.get(R.string.trace_tap_screen, "Tap screen"),
+                toolCall.argumentsJson,
+            )
+            "long_press" -> summarizePointArguments(
+                AppStrings.get(R.string.trace_long_press_screen, "Long press screen"),
+                toolCall.argumentsJson,
+            )
+            "tap_area" -> AppStrings.get(R.string.trace_tap_area, "Tap area")
+            "tap_element" -> summarizeElementArguments(
+                AppStrings.get(R.string.trace_tap_element, "Tap element"),
+                toolCall.argumentsJson,
+            )
+            "long_press_element" -> summarizeElementArguments(
+                AppStrings.get(R.string.trace_long_press_element, "Long-press element"),
+                toolCall.argumentsJson,
+            )
+            "swipe" -> AppStrings.get(R.string.trace_swipe, "Swipe screen")
+            "scroll" -> summarizeScrollArguments(
+                AppStrings.get(R.string.trace_scroll_screen, "Scroll screen"),
+                toolCall.argumentsJson,
+            )
             "scroll_element" ->
-                summarizeScrollArguments("滚动元素", toolCall.argumentsJson, withIndex = true)
+                summarizeScrollArguments(
+                    AppStrings.get(R.string.trace_scroll_element, "Scroll element"),
+                    toolCall.argumentsJson,
+                    withIndex = true,
+                )
             "press_key" -> summarizePressKeyArguments(toolCall.argumentsJson)
             "wait" -> summarizeWaitArguments(toolCall.argumentsJson)
-            "wait_for_text" -> "等待文本出现"
-            "wait_for_package" -> "等待应用就绪"
-            "open_system_panel" -> "打开系统面板"
-            "read_image" -> "查看图片"
+            "wait_for_text" -> AppStrings.get(R.string.trace_wait_for_text, "Wait for text")
+            "wait_for_package" -> AppStrings.get(R.string.trace_wait_for_package, "Wait for app")
+            "open_system_panel" -> AppStrings.get(R.string.trace_open_system_panel, "Open system panel")
+            "read_image" -> AppStrings.get(R.string.trace_read_image, "View image")
             AgentSubagentToolCatalog.TOOL_NAME -> summarizeSubagentArguments(toolCall.argumentsJson)
             AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> summarizeSubagentProfileArguments(toolCall.argumentsJson)
-            AgentConversationToolCatalog.READ_HISTORY -> "读取当前会话历史"
+            AgentConversationToolCatalog.READ_HISTORY -> AppStrings.get(R.string.trace_read_history, "Read conversation history")
             "memory_get", "character_memory_get", "memory_write", "character_memory_write" ->
-                AgentPersonalResultFormatter.summarizeArguments(toolCall.name, toolCall.argumentsJson) ?: "记忆"
-            "skills_list" -> "查看技能列表"
-            "skills_read" -> "读取技能"
-            "skills_read_resource" -> "读取技能资源"
-            "skills_list_curated" -> "浏览精选技能"
-            "skills_inspect_github" -> "查看技能详情"
-            "skills_install_from_github" -> "安装技能"
+                AgentPersonalResultFormatter.summarizeArguments(toolCall.name, toolCall.argumentsJson)
+                    ?: AppStrings.get(R.string.trace_memory, "Memory")
+            "skills_list" -> AppStrings.get(R.string.trace_skills_list, "List skills")
+            "skills_read" -> AppStrings.get(R.string.trace_skills_read, "Read skill")
+            "skills_read_resource" -> AppStrings.get(R.string.trace_skills_read_resource, "Read skill resource")
+            "skills_list_curated" -> AppStrings.get(R.string.trace_skills_list_curated, "Browse curated skills")
+            "skills_inspect_github" -> AppStrings.get(R.string.trace_skills_inspect_github, "Inspect skill details")
+            "skills_install_from_github" -> AppStrings.get(R.string.trace_skills_install_from_github, "Install skill")
             else -> {
-                val label = DEVICE_ACTION_LABELS[toolCall.name]
-                    ?: AgentPhoneToolCatalog.entries.firstOrNull { it.name == toolCall.name }?.title
-                    ?: io.github.mangi.eta.agent.context.PersonalSearchTools.searches.firstOrNull { it.name == toolCall.name }?.title
-                    ?: when (toolCall.name) { "search_notes" -> "查询便签"; "search_system_memories" -> "查询系统记忆"; "read_personal_item" -> "读取检索详情"; "summarize_bills" -> "汇总账单"; else -> null }
+                val label = DEVICE_ACTION_LABELS[toolCall.name]?.let { (resId, fallback) ->
+                    AppStrings.get(resId, fallback)
+                }
+                    ?: AgentPhoneToolCatalog.entries.firstOrNull { it.name == toolCall.name }?.localizedTitle()
+                    ?: io.github.mangi.eta.agent.context.PersonalSearchTools.searches
+                        .firstOrNull { it.name == toolCall.name }?.localizedTitle()
+                    ?: when (toolCall.name) {
+                        "search_notes" -> AppStrings.get(R.string.trace_search_notes, "Search notes")
+                        "search_system_memories" -> AppStrings.get(R.string.trace_search_system_memories, "Search system memories")
+                        "read_personal_item" -> AppStrings.get(R.string.trace_read_personal_item, "Read item details")
+                        "summarize_bills" -> AppStrings.get(R.string.trace_summarize_bills, "Summarize bills")
+                        else -> null
+                    }
                 when {
-                    label == null -> "准备执行"
+                    label == null -> AppStrings.get(R.string.trace_preparing, "Preparing")
                     toolCall.name.startsWith("search_") ->
                         summarizeQueryArguments(label, toolCall.argumentsJson)
                     else -> label
@@ -93,26 +143,30 @@ internal class AgentTraceFormatter {
             null
         }
 
-    private fun String.redactDisplaySecrets(): String =
-        replace(SENSITIVE_ASSIGNMENT) { match ->
-            "${match.groupValues[1]}=<已隐藏>"
+    private fun String.redactDisplaySecrets(): String {
+        val redacted = AppStrings.get(R.string.trace_redacted, "<redacted>")
+        return replace(SENSITIVE_ASSIGNMENT) { match ->
+            "${match.groupValues[1]}=$redacted"
         }
             .replace(SENSITIVE_FLAG) { match ->
-                "${match.groupValues[1]}<已隐藏>"
+                "${match.groupValues[1]}$redacted"
             }
             .replace(SENSITIVE_HEADER) { match ->
-                "${match.groupValues[1]}${match.groupValues[2]}<已隐藏>"
+                "${match.groupValues[1]}${match.groupValues[2]}$redacted"
             }
+    }
 
     /** 外部 URI 摘要不记录 path、query、fragment 或用户信息。 */
-    fun summarizeOpenUriArguments(argumentsJson: String): String =
-        runCatching {
+    fun summarizeOpenUriArguments(argumentsJson: String): String {
+        val base = AppStrings.get(R.string.trace_open_external_app, "Open in external app")
+        return runCatching {
             val raw = JSONObject(argumentsJson).optString("uri").trim()
             val uri = URI(raw)
             val scheme = uri.scheme?.lowercase()?.take(24)
             val host = uri.host?.lowercase()?.take(160)
-            listOfNotNull("交给外部应用", scheme, host).joinToString(" · ")
-        }.getOrDefault("交给外部应用")
+            listOfNotNull(base, scheme, host).joinToString(" · ")
+        }.getOrDefault(base)
+    }
 
     /** browser_use 摘要只暴露动作和安全提取的 host。 */
     fun summarizeBrowserArguments(argumentsJson: String): String =
@@ -121,13 +175,17 @@ internal class AgentTraceFormatter {
             val action = arguments.optString("action").browserActionLabel()
             val host = safeHttpHost(arguments.optString("url"))
             listOfNotNull(action, host).joinToString(" · ")
-        }.getOrElse { "浏览器操作" }
+        }.getOrElse { AppStrings.get(R.string.trace_browser_action, "Browser action") }
 
     private fun summarizeFetchArguments(argumentsJson: String): String = runCatching {
         val arguments = JSONObject(argumentsJson)
-        val label = if (arguments.has("document_id")) "继续读取网页" else "读取网页"
+        val label = if (arguments.has("document_id")) {
+            AppStrings.get(R.string.trace_fetch_continue, "Continue reading web page")
+        } else {
+            AppStrings.get(R.string.trace_fetch_page, "Read web page")
+        }
         listOfNotNull(label, safeHttpHost(arguments.optString("url"))?.removePrefix("www.")).joinToString(" · ")
-    }.getOrDefault("读取网页")
+    }.getOrDefault(AppStrings.get(R.string.trace_fetch_page, "Read web page"))
 
     private fun summarizeTerminalArguments(toolName: String, argumentsJson: String): String =
         runCatching {
@@ -144,9 +202,11 @@ internal class AgentTraceFormatter {
                 add(action)
                 environment?.let(::add)
                 identity?.let(::add)
-                if (arguments.optBoolean("async", false)) add("后台")
+                if (arguments.optBoolean("async", false)) {
+                    add(AppStrings.get(R.string.trace_terminal_async, "Background"))
+                }
             }.joinToString(" · ")
-        }.getOrDefault("终端")
+        }.getOrDefault(AppStrings.get(R.string.trace_terminal, "Terminal"))
 
     private fun summarizeTextLength(
         label: String,
@@ -155,7 +215,8 @@ internal class AgentTraceFormatter {
     ): String =
         runCatching {
             val chars = JSONObject(argumentsJson).optString(key).length
-            "$label · $chars 字符"
+            val countText = AppStrings.quantity(R.plurals.trace_chars_count, chars, "%d char", "%d chars", chars)
+            "$label · $countText"
         }.getOrDefault(label)
 
     /** 只展示动作与长度，不回显正文：输入内容可能是密码或私人消息。 */
@@ -164,16 +225,21 @@ internal class AgentTraceFormatter {
             val args = JSONObject(argumentsJson)
             val chars = args.optString("text").length
             val label = when {
-                chars == 0 -> "清空文本"
-                args.optString("mode") == "append" -> "追加文本"
-                else -> "输入文本"
+                chars == 0 -> AppStrings.get(R.string.trace_clear_text, "Clear text")
+                args.optString("mode") == "append" -> AppStrings.get(R.string.trace_append_text, "Append text")
+                else -> AppStrings.get(R.string.trace_input_text, "Enter text")
             }
             buildString {
                 append(label)
-                if (chars > 0) append(" · $chars 字符")
-                if (args.optBoolean("submit")) append(" · 提交")
+                if (chars > 0) {
+                    val countText = AppStrings.quantity(R.plurals.trace_chars_count, chars, "%d char", "%d chars", chars)
+                    append(" · $countText")
+                }
+                if (args.optBoolean("submit")) {
+                    append(" · ${AppStrings.get(R.string.trace_submit_suffix, "Submit")}")
+                }
             }
-        }.getOrDefault("输入文本")
+        }.getOrDefault(AppStrings.get(R.string.trace_input_text, "Enter text"))
 
     /** 搜索关键词是用户自己发起的查询，直接展示；仍做单行化与长度截断。 */
     private fun summarizeQueryArguments(label: String, argumentsJson: String): String =
@@ -213,34 +279,41 @@ internal class AgentTraceFormatter {
             }.joinToString(" · ")
         }.getOrDefault(label)
 
-    private fun summarizePressKeyArguments(argumentsJson: String): String =
-        runCatching {
+    private fun summarizePressKeyArguments(argumentsJson: String): String {
+        val base = AppStrings.get(R.string.trace_press_key, "Key press")
+        return runCatching {
             val button = JSONObject(argumentsJson).optString("button").pressKeyLabel()
-            listOfNotNull("按键", button).joinToString(" · ")
-        }.getOrDefault("按键")
+            listOfNotNull(base, button).joinToString(" · ")
+        }.getOrDefault(base)
+    }
 
-    private fun summarizeWaitArguments(argumentsJson: String): String =
-        runCatching {
+    private fun summarizeWaitArguments(argumentsJson: String): String {
+        val base = AppStrings.get(R.string.trace_wait, "Wait")
+        return runCatching {
             val durationMs = JSONObject(argumentsJson).optInt("duration_ms", 1_000)
                 .coerceAtLeast(0)
             val duration = if (durationMs >= 1_000) {
-                String.format(Locale.US, "%.1f", durationMs / 1_000f)
-                    .trimEnd('0').trimEnd('.') + " 秒"
+                val sec = String.format(Locale.US, "%.1f", durationMs / 1_000f)
+                    .trimEnd('0').trimEnd('.')
+                AppStrings.get(R.string.trace_wait_seconds, "%1\$s s", sec)
             } else {
-                "$durationMs 毫秒"
+                AppStrings.get(R.string.trace_wait_millis, "%1\$d ms", durationMs)
             }
-            "等待 · $duration"
-        }.getOrDefault("等待")
+            "$base · $duration"
+        }.getOrDefault(base)
+    }
 
-    private fun summarizeObservationArguments(argumentsJson: String): String =
-        runCatching {
+    private fun summarizeObservationArguments(argumentsJson: String): String {
+        val base = AppStrings.get(R.string.trace_observe_screen, "Observe screen")
+        return runCatching {
             val options = AgentScreenObservationContract.resolve(JSONObject(argumentsJson))
             buildList {
-                add("观察屏幕")
-                if (options.includeScreenshot) add("含截图")
-                if (options.includeUiTree) add("含界面树")
+                add(base)
+                if (options.includeScreenshot) add(AppStrings.get(R.string.trace_with_screenshot, "With screenshot"))
+                if (options.includeUiTree) add(AppStrings.get(R.string.trace_with_ui_tree, "With UI tree"))
             }.joinToString(" · ")
-        }.getOrDefault("观察屏幕")
+        }.getOrDefault(base)
+    }
 
     /** 结果成败供事件与 UI 状态使用，不再依赖摘要文本里的标记。 */
     fun isSuccessResult(result: AgentModelClient.ToolResult): Boolean =
@@ -256,7 +329,9 @@ internal class AgentTraceFormatter {
         if (toolName in AgentTerminalToolCatalog.names || toolName == "run_command") {
             return summarizeTerminalResult(toolName, json)
         }
-        if (json?.optString("status") == "unconfirmed") return "操作已提交，效果未确认"
+        if (json?.optString("status") == "unconfirmed") {
+            return AppStrings.get(R.string.trace_action_unconfirmed, "Action submitted, outcome unconfirmed")
+        }
         if (!isSuccessResult(result)) return summarizeFailure(json)
         if (json != null) {
             val summary = AgentDeviceResultFormatter.summarize(toolName, json)
@@ -265,32 +340,39 @@ internal class AgentTraceFormatter {
                 ?: AgentFileResultFormatter.summarize(toolName, json)
             if (summary != null) return summary
         }
+        val done = AppStrings.get(R.string.trace_done, "Done")
         return when (toolName) {
-            BROWSER_TOOL_NAME -> json?.let(::summarizeBrowserResult) ?: "浏览器操作完成"
-            AgentSubagentToolCatalog.TOOL_NAME -> json?.let(::summarizeSubagentResult) ?: "完成"
-            AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> json?.let(::summarizeSubagentProfileResult) ?: "完成"
-            AgentConversationToolCatalog.READ_HISTORY -> "已读取历史分页"
-            "observe_screen" -> if (result.images.isNotEmpty()) "已截取当前屏幕" else "已获取当前界面"
-            "tap", "tap_element", "tap_area" -> "已点击"
-            "long_press", "long_press_element" -> "已长按"
-            "swipe" -> "已滑动"
-            "scroll", "scroll_element" -> "已滚动"
-            "type_text", "input_text", "paste_text" -> "已输入文本"
-            "clear_text" -> "已清空文本"
-            "press_key" -> "已按键"
-            "wait" -> "等待完成"
-            "wait_for_text" -> "已出现目标文本"
-            "wait_for_package" -> "应用已就绪"
-            "inspect_app" -> "已获取应用信息"
-            "get_clipboard" -> "已读取剪贴板"
-            "set_clipboard" -> "已复制到剪贴板"
-            "search_apps" -> json?.let(::summarizeSearchAppsResult) ?: "完成"
-            "launch_app" -> json?.let(::summarizeLaunchAppResult) ?: "已打开"
-            "present_to_user" -> json?.let(::summarizePresentToUserResult) ?: "已呈现到主屏"
+            BROWSER_TOOL_NAME -> json?.let(::summarizeBrowserResult)
+                ?: AppStrings.get(R.string.trace_browser_done, "Browser action completed")
+            AgentSubagentToolCatalog.TOOL_NAME -> json?.let(::summarizeSubagentResult) ?: done
+            AgentSubagentToolCatalog.PROFILE_TOOL_NAME -> json?.let(::summarizeSubagentProfileResult) ?: done
+            AgentConversationToolCatalog.READ_HISTORY -> AppStrings.get(R.string.trace_history_page_read, "History page read")
+            "observe_screen" -> if (result.images.isNotEmpty()) {
+                AppStrings.get(R.string.trace_screen_captured, "Screen captured")
+            } else {
+                AppStrings.get(R.string.trace_screen_read, "Screen UI read")
+            }
+            "tap", "tap_element", "tap_area" -> AppStrings.get(R.string.trace_tapped, "Tapped")
+            "long_press", "long_press_element" -> AppStrings.get(R.string.trace_long_pressed, "Long pressed")
+            "swipe" -> AppStrings.get(R.string.trace_swiped, "Swiped")
+            "scroll", "scroll_element" -> AppStrings.get(R.string.trace_scrolled, "Scrolled")
+            "type_text", "input_text", "paste_text" -> AppStrings.get(R.string.trace_text_entered, "Text entered")
+            "clear_text" -> AppStrings.get(R.string.trace_text_cleared, "Text cleared")
+            "press_key" -> AppStrings.get(R.string.trace_key_pressed, "Key pressed")
+            "wait" -> AppStrings.get(R.string.trace_wait_done, "Wait completed")
+            "wait_for_text" -> AppStrings.get(R.string.trace_text_appeared, "Target text appeared")
+            "wait_for_package" -> AppStrings.get(R.string.trace_app_ready, "App ready")
+            "inspect_app" -> AppStrings.get(R.string.trace_app_inspected, "App info retrieved")
+            "get_clipboard" -> AppStrings.get(R.string.trace_clipboard_read, "Clipboard read")
+            "set_clipboard" -> AppStrings.get(R.string.trace_clipboard_copied, "Copied to clipboard")
+            "search_apps" -> json?.let(::summarizeSearchAppsResult) ?: done
+            "launch_app" -> json?.let(::summarizeLaunchAppResult) ?: AppStrings.get(R.string.trace_app_opened, "Opened")
+            "present_to_user" -> json?.let(::summarizePresentToUserResult)
+                ?: AppStrings.get(R.string.trace_presented_to_user, "Presented to main screen")
             "skills_list", "skills_list_curated", "skills_inspect_github", "skills_install_from_github" -> json?.let {
                 summarizeSkillResult(toolName, it) ?: summarizeGenericResult(it, result)
-            } ?: "完成"
-            else -> json?.let { summarizeGenericResult(it, result) } ?: "完成"
+            } ?: done
+            else -> json?.let { summarizeGenericResult(it, result) } ?: done
         }
     }
 
@@ -302,34 +384,47 @@ internal class AgentTraceFormatter {
      * 结果只给出结论，避免工作过程同一行重复。
      */
     private fun summarizeWebResult(toolName: String, json: JSONObject?): String {
-        val label = if (toolName == "web_search") "网页搜索" else "网页读取"
-        if (json == null) return "完成"
+        val label = if (toolName == "web_search") {
+            AppStrings.get(R.string.trace_web_search_label, "Web search")
+        } else {
+            AppStrings.get(R.string.trace_web_fetch_label, "Web read")
+        }
+        val done = AppStrings.get(R.string.trace_done, "Done")
+        if (json == null) return done
         if (!json.optBoolean("ok", true)) {
             val code = json.optString("code").takeIf { it.matches(Regex("[A-Z][A-Z0-9_]{0,79}")) }
-            return listOfNotNull("${label}失败", code?.let { "code=$it" }).joinToString(" · ")
+            return listOfNotNull(
+                AppStrings.get(R.string.trace_label_failed, "%1\$s failed", label),
+                code?.let { "code=$it" },
+            ).joinToString(" · ")
         }
         if (toolName == "web_search") {
             val count = json.optJSONArray("results")?.length() ?: json.firstNonNegativeInt("count")
             return when (count) {
-                null -> "完成"
-                0 -> "未找到相关结果"
-                else -> "找到 $count 条搜索结果"
+                null -> done
+                0 -> AppStrings.get(R.string.trace_no_results, "No results found")
+                else -> AppStrings.quantity(R.plurals.trace_web_search_results, count, "Found %d result", "Found %d results", count)
             }
         }
         val chars = (json.opt("text") as? String)?.length
             ?: json.firstNonNegativeInt("returned_chars", "text_chars")
-            ?: return "完成"
-        return if (json.optBoolean("has_more")) "已读前 ${formatCharCount(chars)}" else "已读 ${formatCharCount(chars)}"
+            ?: return done
+        val formatted = formatCharCount(chars)
+        return if (json.optBoolean("has_more")) {
+            AppStrings.get(R.string.trace_read_prefix, "Read first %1\$s", formatted)
+        } else {
+            AppStrings.get(R.string.trace_read_exact, "Read %1\$s", formatted)
+        }
     }
 
-    /** 失败摘要保留 code= 标记，供运行日志提取稳定错误码；message 是工具侧给出的中文原因。 */
+    /** 失败摘要保留 code= 标记，供运行日志提取稳定错误码；message 是工具侧给出的原因。 */
     private fun summarizeFailure(json: JSONObject?): String {
         val code = json?.optString("code")?.takeIf { it.isNotBlank() }
         val reason = json?.optString("message")
             ?.let(::sanitizeSummaryValue)
             ?.takeIf { it.isNotBlank() }
         return buildList {
-            add("失败")
+            add(AppStrings.get(R.string.trace_failed, "Failed"))
             reason?.let(::add)
             code?.let { add("code=$it") }
         }.joinToString(" · ")
@@ -350,7 +445,11 @@ internal class AgentTraceFormatter {
 
     private fun summarizeSubagentResult(json: JSONObject): String {
         val toolCalls = json.optInt("tool_calls", 0)
-        return if (toolCalls > 0) "完成 · $toolCalls 次工具调用" else "完成"
+        return if (toolCalls > 0) {
+            AppStrings.quantity(R.plurals.trace_subagent_calls, toolCalls, "Done · %d tool call", "Done · %d tool calls", toolCalls)
+        } else {
+            AppStrings.get(R.string.trace_done, "Done")
+        }
     }
 
     private fun summarizeSubagentProfileArguments(argumentsJson: String): String = runCatching {
@@ -358,31 +457,63 @@ internal class AgentTraceFormatter {
         val action = args.optString("action").trim().lowercase()
         val name = sanitizeSummaryValue(args.optString("name"), 32)
         val label = when (action) {
-            "save" -> "保存 Subagent"
-            "delete" -> "删除 Subagent"
-            "get" -> "读取 Subagent"
-            else -> "查看 Subagent 列表"
+            "save" -> AppStrings.get(R.string.trace_subagent_save, "Save Subagent")
+            "delete" -> AppStrings.get(R.string.trace_subagent_delete, "Delete Subagent")
+            "get" -> AppStrings.get(R.string.trace_subagent_get, "Read Subagent")
+            else -> AppStrings.get(R.string.trace_subagent_list, "List Subagents")
         }
         if (name.isNotBlank() && action != "list") "$label · $name" else label
-    }.getOrDefault("管理 Subagent")
+    }.getOrDefault(AppStrings.get(R.string.trace_subagent_manage, "Manage Subagent"))
 
     private fun summarizeSubagentProfileResult(json: JSONObject): String =
         when (json.optString("action")) {
-            "save" -> listOfNotNull("已保存", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
-            "delete" -> listOfNotNull("已删除", json.optString("name").takeIf(String::isNotBlank)).joinToString(" · ")
-            "list" -> "${json.optJSONArray("profiles")?.length() ?: 0} 个 Subagent"
-            else -> "完成"
+            "save" -> listOfNotNull(
+                AppStrings.get(R.string.trace_saved, "Saved"),
+                json.optString("name").takeIf(String::isNotBlank),
+            ).joinToString(" · ")
+            "delete" -> listOfNotNull(
+                AppStrings.get(R.string.trace_deleted, "Deleted"),
+                json.optString("name").takeIf(String::isNotBlank),
+            ).joinToString(" · ")
+            "list" -> {
+                val count = json.optJSONArray("profiles")?.length() ?: 0
+                AppStrings.quantity(R.plurals.trace_subagent_count, count, "%d Subagent", "%d Subagents", count)
+            }
+            else -> AppStrings.get(R.string.trace_done, "Done")
         }
 
     private fun summarizeSkillResult(toolName: String, json: JSONObject): String? {
         if (toolName == "skills_install_from_github") {
             val installed = json.optJSONArray("installed") ?: return null
-            return "已安装 ${installed.length()} 个技能" +
-                if (json.optString("available") == "next_turn") " · 下一轮可用" else ""
+            val base = AppStrings.quantity(
+                R.plurals.trace_skills_installed,
+                installed.length(),
+                "Installed %d skill",
+                "Installed %d skills",
+                installed.length(),
+            )
+            return base + if (json.optString("available") == "next_turn") {
+                " · ${AppStrings.get(R.string.trace_available_next_turn, "Available next turn")}"
+            } else ""
         }
         val items = json.optJSONArray("items") ?: return null
         val installed = (0 until items.length()).count { items.optJSONObject(it)?.opt("installed") == true }
-        return "找到 ${items.length()} 个技能" + if (installed > 0) " · $installed 个已安装" else ""
+        val base = AppStrings.quantity(
+            R.plurals.trace_skills_found,
+            items.length(),
+            "Found %d skill",
+            "Found %d skills",
+            items.length(),
+        )
+        return base + if (installed > 0) {
+            " · " + AppStrings.quantity(
+                R.plurals.trace_skills_already_installed,
+                installed,
+                "%d installed",
+                "%d installed",
+                installed,
+            )
+        } else ""
     }
 
     private fun summarizeGenericResult(
@@ -391,7 +522,7 @@ internal class AgentTraceFormatter {
     ): String =
         buildList {
             if (json.has("verified") && !json.optBoolean("verified")) {
-                add("已执行，效果未确认")
+                add(AppStrings.get(R.string.trace_executed_unconfirmed, "Executed, outcome unconfirmed"))
             }
             val items = json.optJSONArray("items") ?: json.optJSONArray("results")
             val matches = json.optJSONArray("matches")
@@ -401,46 +532,72 @@ internal class AgentTraceFormatter {
 
             when {
                 items != null -> {
-                    if (items.length() == 0) add("未找到相关结果")
-                    else add("找到 ${items.length()} 条结果")
+                    val count = items.length()
+                    if (count == 0) add(AppStrings.get(R.string.trace_no_results, "No results found"))
+                    else add(AppStrings.quantity(R.plurals.trace_generic_results, count, "Found %d result", "Found %d results", count))
                 }
                 matches != null -> {
-                    if (matches.length() == 0) add("未找到匹配内容")
-                    else add("找到 ${matches.length()} 处匹配")
+                    val count = matches.length()
+                    if (count == 0) add(AppStrings.get(R.string.trace_no_matches, "No matches found"))
+                    else add(AppStrings.quantity(R.plurals.trace_generic_matches, count, "Found %d match", "Found %d matches", count))
                 }
                 entries != null -> {
-                    if (entries.length() == 0) add("暂无内容")
-                    else add("已获取 ${entries.length()} 项内容")
+                    val count = entries.length()
+                    if (count == 0) add(AppStrings.get(R.string.trace_empty_entries, "No items"))
+                    else add(AppStrings.quantity(R.plurals.trace_generic_entries, count, "Retrieved %d item", "Retrieved %d items", count))
                 }
                 apps != null -> {
-                    if (apps.length() == 0) add("未找到匹配应用")
-                    else add("找到 ${apps.length()} 个应用")
+                    val count = apps.length()
+                    if (count == 0) add(AppStrings.get(R.string.trace_no_matching_apps, "No matching apps found"))
+                    else add(AppStrings.quantity(R.plurals.trace_generic_apps, count, "Found %d app", "Found %d apps", count))
                 }
-                candidates != null -> add("${candidates.length()} 个候选")
-                json.has("bytes_read") -> add("已读 ${json.optLong("bytes_read")} 字节")
-                json.has("replacements") -> add("已替换 ${json.optInt("replacements")} 处")
-                result.images.isNotEmpty() -> add("${result.images.size} 张图片")
-                isEmpty() -> add("完成")
+                candidates != null -> {
+                    val count = candidates.length()
+                    add(AppStrings.quantity(R.plurals.trace_generic_candidates, count, "%d candidate", "%d candidates", count))
+                }
+                json.has("bytes_read") -> {
+                    val bytes = json.optLong("bytes_read").toInt().coerceAtLeast(0)
+                    add(AppStrings.quantity(R.plurals.trace_bytes_read, bytes, "Read %d byte", "Read %d bytes", bytes))
+                }
+                json.has("replacements") -> {
+                    val count = json.optInt("replacements")
+                    add(AppStrings.quantity(R.plurals.trace_replacements, count, "Replaced %d occurrence", "Replaced %d occurrences", count))
+                }
+                result.images.isNotEmpty() -> {
+                    val count = result.images.size
+                    add(AppStrings.quantity(R.plurals.trace_images_count, count, "%d image", "%d images", count))
+                }
+                isEmpty() -> add(AppStrings.get(R.string.trace_done, "Done"))
             }
-            if (json.optBoolean("truncated") || json.optBoolean("has_more")) add("还有更多")
-            if (json.optBoolean("partial") || json.optBoolean("scan_limited")) add("采集范围有限")
+            if (json.optBoolean("truncated") || json.optBoolean("has_more")) {
+                add(AppStrings.get(R.string.trace_has_more, "More available"))
+            }
+            if (json.optBoolean("partial") || json.optBoolean("scan_limited")) {
+                add(AppStrings.get(R.string.trace_partial_scope, "Limited scan scope"))
+            }
         }.joinToString(" · ")
 
     private fun summarizeSearchAppsResult(json: JSONObject): String {
-        val apps = json.optJSONArray("apps") ?: return "未找到匹配应用"
+        val apps = json.optJSONArray("apps")
+            ?: return AppStrings.get(R.string.trace_no_matching_apps, "No matching apps found")
         val total = apps.length()
-        if (total == 0) return "未找到匹配应用"
+        if (total == 0) return AppStrings.get(R.string.trace_no_matching_apps, "No matching apps found")
         val names = (0 until total).mapNotNull { index ->
             apps.optJSONObject(index)?.optString("app_name")
                 ?.let(::sanitizeSummaryValue)
                 ?.takeIf { it.isNotBlank() }
         }
         return buildString {
-            append("已找到 $total 个应用")
+            append(AppStrings.quantity(R.plurals.trace_generic_apps, total, "Found %d app", "Found %d apps", total))
             val shown = names.take(MAX_LISTED_APP_NAMES)
             if (shown.isNotEmpty()) {
-                append(" · ").append(shown.joinToString("、"))
-                if (total > shown.size) append(" 等")
+                val joined = shown.joinToString(", ")
+                val suffix = if (total > shown.size) {
+                    AppStrings.get(R.string.trace_apps_etc, "%1\$s, etc.", joined)
+                } else {
+                    joined
+                }
+                append(" · ").append(suffix)
             }
         }
     }
@@ -448,14 +605,22 @@ internal class AgentTraceFormatter {
     private fun summarizeLaunchAppResult(json: JSONObject): String {
         val appName = sanitizeSummaryValue(json.optString("app_name"))
         val virtual = json.optString("canvas") == "virtual"
-        val action = if (json.optString("launch_status") == "unconfirmed") "已请求打开，待确认" else "已打开"
+        val action = if (json.optString("launch_status") == "unconfirmed") {
+            AppStrings.get(R.string.trace_app_open_requested, "Open requested, unconfirmed")
+        } else {
+            AppStrings.get(R.string.trace_app_opened, "Opened")
+        }
         val base = if (appName.isNotBlank()) "$action · $appName" else action
-        return if (virtual) "$base · 虚拟屏" else base
+        return if (virtual) "$base · ${AppStrings.get(R.string.trace_virtual_screen, "Virtual screen")}" else base
     }
 
     private fun summarizePresentToUserResult(json: JSONObject): String {
         val appName = sanitizeSummaryValue(json.optString("app_name"))
-        return if (appName.isNotBlank()) "已呈现到主屏 · $appName" else "已呈现到主屏"
+        return if (appName.isNotBlank()) {
+            AppStrings.get(R.string.trace_presented_to_user_named, "Presented to main screen · %1\$s", appName)
+        } else {
+            AppStrings.get(R.string.trace_presented_to_user, "Presented to main screen")
+        }
     }
 
     /**
@@ -467,14 +632,18 @@ internal class AgentTraceFormatter {
         if (json.optString("code").isNotBlank()) return summarizeFailure(json)
         if (!json.has("exit_code") || json.isNull("exit_code")) {
             val action = terminalActionLabel(toolName, json.optString("action"))
-            return if (json.optBoolean("ok", true)) "${terminalLabel(toolName)} · $action" else "失败 · $action"
+            return if (json.optBoolean("ok", true)) {
+                "${terminalLabel(toolName)} · $action"
+            } else {
+                "${AppStrings.get(R.string.trace_failed, "Failed")} · $action"
+            }
         }
         val exitCode = json.optInt("exit_code")
         val timedOut = json.optBoolean("timed_out", false)
         val status = when {
-            timedOut -> "失败 · 执行超时"
-            exitCode == 0 -> "执行完成"
-            else -> "失败 · 退出码 $exitCode"
+            timedOut -> AppStrings.get(R.string.trace_terminal_timed_out, "Failed · Timed out")
+            exitCode == 0 -> AppStrings.get(R.string.trace_terminal_completed, "Completed")
+            else -> AppStrings.get(R.string.trace_terminal_exit_code, "Failed · Exit code %1\$d", exitCode)
         }
         val output = if (exitCode == 0) {
             json.optString("stdout", json.optString("output"))
@@ -539,20 +708,26 @@ internal class AgentTraceFormatter {
         return buildList {
             add(action.browserSuccessLabel())
             host?.let(::add)
-            title?.let { add("《$it》") }
+            title?.let { add("“$it”") }
             if (action in BROWSER_TEXT_ACTIONS) {
-                textChars?.let { add("约 ${formatCharCount(it)}") }
+                textChars?.let { add(AppStrings.get(R.string.trace_about_chars, "~%1\$s", formatCharCount(it))) }
             }
-            elementCount?.let { add("$it 个元素") }
-            if (json.optBoolean("truncated", false)) add("已截断")
+            elementCount?.let {
+                add(AppStrings.quantity(R.plurals.trace_elements_count, it, "%d element", "%d elements", it))
+            }
+            if (json.optBoolean("truncated", false)) {
+                add(AppStrings.get(R.string.trace_truncated, "Truncated"))
+            }
         }.joinToString(" · ")
     }
 
     private fun formatCharCount(chars: Int): String =
         if (chars >= 10_000) {
-            String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.') + " 万字"
+            val tenK = String.format(Locale.US, "%.1f", chars / 10_000f).trimEnd('0').trimEnd('.')
+            val k = String.format(Locale.US, "%.1f", chars / 1_000f).trimEnd('0').trimEnd('.')
+            AppStrings.get(R.string.trace_char_unit_ten_thousand, "%2\$sk chars", tenK, k)
         } else {
-            "$chars 字"
+            AppStrings.get(R.string.trace_char_unit_exact, "%1\$d chars", chars)
         }
 
     private fun JSONObject.firstNonNegativeInt(vararg keys: String): Int? =
@@ -585,97 +760,97 @@ internal class AgentTraceFormatter {
             }
 
     private fun String.browserActionLabel(): String = when (this) {
-        "navigate" -> "打开网页"
-        "get_readable" -> "提取正文"
-        "get_text" -> "读取文本"
-        "find_elements" -> "查找元素"
-        "click" -> "点击网页"
-        "type" -> "输入内容"
-        "scroll" -> "滚动网页"
-        "screenshot" -> "网页截图"
-        "get_page_info" -> "查看网页信息"
-        "go_back" -> "网页后退"
-        "go_forward" -> "网页前进"
-        "reload" -> "刷新网页"
-        "wait_for_selector" -> "等待网页元素"
-        else -> "浏览器操作"
+        "navigate" -> AppStrings.get(R.string.trace_browser_nav_open, "Open web page")
+        "get_readable" -> AppStrings.get(R.string.trace_browser_nav_readable, "Extract text")
+        "get_text" -> AppStrings.get(R.string.trace_browser_nav_get_text, "Read text")
+        "find_elements" -> AppStrings.get(R.string.trace_browser_nav_find_elements, "Find elements")
+        "click" -> AppStrings.get(R.string.trace_browser_nav_click, "Click web element")
+        "type" -> AppStrings.get(R.string.trace_browser_nav_type, "Type text")
+        "scroll" -> AppStrings.get(R.string.trace_browser_nav_scroll, "Scroll web page")
+        "screenshot" -> AppStrings.get(R.string.trace_browser_nav_screenshot, "Web screenshot")
+        "get_page_info" -> AppStrings.get(R.string.trace_browser_nav_page_info, "Page info")
+        "go_back" -> AppStrings.get(R.string.trace_browser_nav_back, "Go back")
+        "go_forward" -> AppStrings.get(R.string.trace_browser_nav_forward, "Go forward")
+        "reload" -> AppStrings.get(R.string.trace_browser_nav_reload, "Reload page")
+        "wait_for_selector" -> AppStrings.get(R.string.trace_browser_nav_wait_selector, "Wait for element")
+        else -> AppStrings.get(R.string.trace_browser_action, "Browser action")
     }
 
     private fun String.browserSuccessLabel(): String = when (this) {
-        "navigate" -> "已打开"
-        "get_readable" -> "已提取正文"
-        "get_text" -> "已读取文本"
-        "find_elements" -> "已找到元素"
-        "click" -> "已点击网页"
-        "type" -> "已输入内容"
-        "scroll" -> "已滚动网页"
-        "screenshot" -> "已截图"
-        "get_page_info" -> "已读取页面信息"
-        "go_back" -> "已后退"
-        "go_forward" -> "已前进"
-        "reload" -> "已刷新"
-        "wait_for_selector" -> "已等到目标元素"
-        else -> "浏览器操作完成"
+        "navigate" -> AppStrings.get(R.string.trace_browser_ok_open, "Opened")
+        "get_readable" -> AppStrings.get(R.string.trace_browser_ok_readable, "Text extracted")
+        "get_text" -> AppStrings.get(R.string.trace_browser_ok_get_text, "Text read")
+        "find_elements" -> AppStrings.get(R.string.trace_browser_ok_find_elements, "Elements found")
+        "click" -> AppStrings.get(R.string.trace_browser_ok_click, "Clicked")
+        "type" -> AppStrings.get(R.string.trace_browser_ok_type, "Text entered")
+        "scroll" -> AppStrings.get(R.string.trace_browser_ok_scroll, "Scrolled")
+        "screenshot" -> AppStrings.get(R.string.trace_browser_ok_screenshot, "Screenshot taken")
+        "get_page_info" -> AppStrings.get(R.string.trace_browser_ok_page_info, "Page info read")
+        "go_back" -> AppStrings.get(R.string.trace_browser_ok_back, "Went back")
+        "go_forward" -> AppStrings.get(R.string.trace_browser_ok_forward, "Went forward")
+        "reload" -> AppStrings.get(R.string.trace_browser_ok_reload, "Reloaded")
+        "wait_for_selector" -> AppStrings.get(R.string.trace_browser_ok_wait_selector, "Element appeared")
+        else -> AppStrings.get(R.string.trace_browser_done, "Browser action completed")
     }
 
     private fun String.scrollDirectionLabel(): String? = when (lowercase(Locale.US)) {
-        "up" -> "向上"
-        "down" -> "向下"
-        "left" -> "向左"
-        "right" -> "向右"
+        "up" -> AppStrings.get(R.string.trace_dir_up, "Up")
+        "down" -> AppStrings.get(R.string.trace_dir_down, "Down")
+        "left" -> AppStrings.get(R.string.trace_dir_left, "Left")
+        "right" -> AppStrings.get(R.string.trace_dir_right, "Right")
         else -> null
     }
 
     private fun String.pressKeyLabel(): String? = when (lowercase(Locale.US)) {
-        "back" -> "返回"
-        "home" -> "主页"
-        "recents", "recent" -> "最近任务"
-        "notifications" -> "通知栏"
-        "quick_settings" -> "控制中心"
-        "power" -> "电源"
-        "volume_up" -> "音量加"
-        "volume_down" -> "音量减"
-        "mute" -> "静音"
+        "back" -> AppStrings.get(R.string.trace_key_back, "Back")
+        "home" -> AppStrings.get(R.string.trace_key_home, "Home")
+        "recents", "recent" -> AppStrings.get(R.string.trace_key_recents, "Recents")
+        "notifications" -> AppStrings.get(R.string.trace_key_notifications, "Notifications")
+        "quick_settings" -> AppStrings.get(R.string.trace_key_quick_settings, "Quick Settings")
+        "power" -> AppStrings.get(R.string.trace_key_power, "Power")
+        "volume_up" -> AppStrings.get(R.string.trace_key_volume_up, "Volume Up")
+        "volume_down" -> AppStrings.get(R.string.trace_key_volume_down, "Volume Down")
+        "mute" -> AppStrings.get(R.string.trace_key_mute, "Mute")
         else -> null
     }
 
     private fun terminalLabel(toolName: String): String = when (toolName) {
-        "terminal_job" -> "异步命令"
-        "terminal_daemon" -> "后台服务"
-        else -> "终端"
+        "terminal_job" -> AppStrings.get(R.string.trace_terminal_job, "Async command")
+        "terminal_daemon" -> AppStrings.get(R.string.trace_terminal_daemon, "Background service")
+        else -> AppStrings.get(R.string.trace_terminal, "Terminal")
     }
 
     private fun terminalActionLabel(toolName: String, action: String): String = when (toolName) {
         "terminal_job" -> when (action) {
-            "start" -> "启动命令"
-            "list" -> "任务列表"
-            "read" -> "读取输出"
-            "wait" -> "等待完成"
-            "stop" -> "停止命令"
-            else -> "任务操作"
+            "start" -> AppStrings.get(R.string.trace_term_job_start, "Start command")
+            "list" -> AppStrings.get(R.string.trace_term_job_list, "Task list")
+            "read" -> AppStrings.get(R.string.trace_term_job_read, "Read output")
+            "wait" -> AppStrings.get(R.string.trace_term_job_wait, "Wait for completion")
+            "stop" -> AppStrings.get(R.string.trace_term_job_stop, "Stop command")
+            else -> AppStrings.get(R.string.trace_term_job_op, "Task action")
         }
         "terminal_daemon" -> when (action) {
-            "start" -> "启动服务"
-            "list" -> "服务列表"
-            "logs" -> "查看日志"
-            "stop" -> "停止服务"
-            else -> "服务操作"
+            "start" -> AppStrings.get(R.string.trace_term_daemon_start, "Start service")
+            "list" -> AppStrings.get(R.string.trace_term_daemon_list, "Service list")
+            "logs" -> AppStrings.get(R.string.trace_term_daemon_logs, "View logs")
+            "stop" -> AppStrings.get(R.string.trace_term_daemon_stop, "Stop service")
+            else -> AppStrings.get(R.string.trace_term_daemon_op, "Service action")
         }
         else -> action.terminalActionLabel()
     }
 
     private fun String.terminalActionLabel(): String = when (this) {
-        "check_root" -> "检测 Root 授权"
-        "open" -> "创建会话"
-        "exec" -> "执行命令"
-        "open_and_exec" -> "单次执行"
-        "read_async_result" -> "读取后台输出"
-        "close" -> "关闭终端"
-        "daemon_start" -> "启动守护任务"
-        "daemon_list" -> "守护任务列表"
-        "daemon_logs" -> "查看守护日志"
-        "daemon_stop" -> "停止守护任务"
-        else -> "终端操作"
+        "check_root" -> AppStrings.get(R.string.trace_term_check_root, "Check Root access")
+        "open" -> AppStrings.get(R.string.trace_term_open, "Create session")
+        "exec" -> AppStrings.get(R.string.trace_term_exec, "Run command")
+        "open_and_exec" -> AppStrings.get(R.string.trace_term_open_exec, "Single command")
+        "read_async_result" -> AppStrings.get(R.string.trace_term_read_async, "Read background output")
+        "close" -> AppStrings.get(R.string.trace_term_close, "Close terminal")
+        "daemon_start" -> AppStrings.get(R.string.trace_term_daemon_start, "Start service")
+        "daemon_list" -> AppStrings.get(R.string.trace_term_daemon_list, "Service list")
+        "daemon_logs" -> AppStrings.get(R.string.trace_term_daemon_logs, "View logs")
+        "daemon_stop" -> AppStrings.get(R.string.trace_term_daemon_stop, "Stop service")
+        else -> AppStrings.get(R.string.trace_term_op, "Terminal action")
     }
 
     private fun String.terminalEnvironmentLabel(): String = when (this) {
@@ -719,49 +894,49 @@ internal class AgentTraceFormatter {
         val BROWSER_TEXT_ACTIONS = setOf("get_readable", "get_text")
 
         /** 结构化设备工具只展示动作标签，不暴露任何参数。 */
-        val DEVICE_ACTION_LABELS = mapOf(
-            "set_alarm" to "设置闹钟",
-            "set_timer" to "设置计时器",
-            "device_status" to "查看设备状态",
-            "network_info" to "查看网络信息",
-            "top_memory_apps" to "查看内存占用排行",
-            "top_storage_apps" to "查看存储占用排行",
-            "media_control" to "控制媒体播放",
-            "set_volume" to "调整音量",
-            "get_setting" to "读取系统设置",
-            "wifi_credentials" to "读取 Wi-Fi 密码",
-            "recent_notifications" to "读取最近通知",
-            "search_notification_history" to "搜索通知历史",
-            "recent_app_activity" to "查看应用活动",
-            "app_usage_summary" to "查看应用使用统计",
-            "get_current_location" to "获取当前位置",
-            "get_device_environment" to "查看设备环境",
-            "list_alarms" to "查看闹钟列表",
-            "list_active_timers" to "查看计时器",
-            "search_clipboard_history" to "搜索剪贴板历史",
-            "get_health_summary" to "查看健康摘要",
-            "read_sms_code" to "读取短信验证码",
-            "get_logcat" to "读取系统日志",
-            "search_media" to "搜索媒体文件",
-            "search_audio" to "搜索音频",
-            "search_recordings" to "搜索录音",
-            "search_files" to "搜索文件",
-            "search_calendar_events" to "搜索日程",
-            "search_contacts" to "搜索联系人",
-            "search_call_history" to "搜索通话记录",
-            "search_messages" to "搜索短信",
-            "search_downloads" to "搜索下载内容",
-            "search_coloros_notes" to "搜索便签",
-            "search_coloros_recordings" to "搜索录音机",
-            "search_recording_summaries" to "搜索录音摘要",
-            "search_coloros_memories" to "搜索小布记忆",
-            "search_saved_places" to "搜索收藏地点",
-            "search_personal_orders" to "搜索个人订单",
-            "search_qq_chat_images" to "搜索 QQ 聊天图片",
-            "search_wechat_chat_images" to "搜索微信聊天图片",
-            "set_setting" to "修改系统设置",
-            "set_device_state" to "修改设备状态",
-            "app_state_control" to "管理应用状态",
+        val DEVICE_ACTION_LABELS: Map<String, Pair<Int, String>> = mapOf(
+            "set_alarm" to (R.string.trace_action_set_alarm to "Set alarm"),
+            "set_timer" to (R.string.trace_action_set_timer to "Set timer"),
+            "device_status" to (R.string.trace_action_device_status to "Device status"),
+            "network_info" to (R.string.trace_action_network_info to "Network info"),
+            "top_memory_apps" to (R.string.trace_action_top_memory_apps to "Top memory apps"),
+            "top_storage_apps" to (R.string.trace_action_top_storage_apps to "Top storage apps"),
+            "media_control" to (R.string.trace_action_media_control to "Media controls"),
+            "set_volume" to (R.string.trace_action_set_volume to "Adjust volume"),
+            "get_setting" to (R.string.trace_action_get_setting to "Read system setting"),
+            "wifi_credentials" to (R.string.trace_action_wifi_credentials to "Read Wi‑Fi password"),
+            "recent_notifications" to (R.string.trace_action_recent_notifications to "Read recent notifications"),
+            "search_notification_history" to (R.string.trace_action_search_notification_history to "Search notification history"),
+            "recent_app_activity" to (R.string.trace_action_recent_app_activity to "Recent app activity"),
+            "app_usage_summary" to (R.string.trace_action_app_usage_summary to "App usage stats"),
+            "get_current_location" to (R.string.trace_action_get_current_location to "Get current location"),
+            "get_device_environment" to (R.string.trace_action_get_device_environment to "Device environment"),
+            "list_alarms" to (R.string.trace_action_list_alarms to "List alarms"),
+            "list_active_timers" to (R.string.trace_action_list_active_timers to "List timers"),
+            "search_clipboard_history" to (R.string.trace_action_search_clipboard_history to "Search clipboard history"),
+            "get_health_summary" to (R.string.trace_action_get_health_summary to "Health summary"),
+            "read_sms_code" to (R.string.trace_action_read_sms_code to "Read SMS code"),
+            "get_logcat" to (R.string.trace_action_get_logcat to "Read system logs"),
+            "search_media" to (R.string.trace_action_search_media to "Search media"),
+            "search_audio" to (R.string.trace_action_search_audio to "Search audio"),
+            "search_recordings" to (R.string.trace_action_search_recordings to "Search recordings"),
+            "search_files" to (R.string.trace_action_search_files to "Search files"),
+            "search_calendar_events" to (R.string.trace_action_search_calendar_events to "Search calendar events"),
+            "search_contacts" to (R.string.trace_action_search_contacts to "Search contacts"),
+            "search_call_history" to (R.string.trace_action_search_call_history to "Search call history"),
+            "search_messages" to (R.string.trace_action_search_messages to "Search messages"),
+            "search_downloads" to (R.string.trace_action_search_downloads to "Search downloads"),
+            "search_coloros_notes" to (R.string.trace_action_search_coloros_notes to "Search notes"),
+            "search_coloros_recordings" to (R.string.trace_action_search_coloros_recordings to "Search recordings"),
+            "search_recording_summaries" to (R.string.trace_action_search_recording_summaries to "Search recording summaries"),
+            "search_coloros_memories" to (R.string.trace_action_search_coloros_memories to "Search system memories"),
+            "search_saved_places" to (R.string.trace_action_search_saved_places to "Search saved places"),
+            "search_personal_orders" to (R.string.trace_action_search_personal_orders to "Search personal orders"),
+            "search_qq_chat_images" to (R.string.trace_action_search_qq_chat_images to "Search QQ chat images"),
+            "search_wechat_chat_images" to (R.string.trace_action_search_wechat_chat_images to "Search WeChat chat images"),
+            "set_setting" to (R.string.trace_action_set_setting to "Change system setting"),
+            "set_device_state" to (R.string.trace_action_set_device_state to "Change device state"),
+            "app_state_control" to (R.string.trace_action_app_state_control to "Manage app state"),
         )
     }
 }
