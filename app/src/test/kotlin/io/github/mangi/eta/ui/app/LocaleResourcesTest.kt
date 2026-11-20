@@ -38,8 +38,15 @@ class LocaleResourcesTest {
         assertEquals("外观与主题", localizedString("zh-CN", R.string.appearance_title))
         assertEquals("外觀與主題", localizedString("zh-TW", R.string.appearance_title))
         assertEquals("Appearance & Theme", localizedString("fr-FR", R.string.appearance_title))
+        assertEquals("Налаштування", localizedString("uk-UA", R.string.route_settings))
+        assertEquals("Зовнішній вигляд і тема", localizedString("uk-UA", R.string.appearance_title))
+        assertEquals("Поточний пристрій", localizedString("uk-UA", R.string.capability_current_device))
+        assertEquals("Eta працює", localizedString("uk-UA", R.string.execution_title))
         assertEquals("1 model", localizedQuantity("en-US", R.plurals.provider_models_count, 1))
         assertEquals("2 models", localizedQuantity("en-US", R.plurals.provider_models_count, 2))
+        assertEquals("1 модель", localizedQuantity("uk-UA", R.plurals.provider_models_count, 1))
+        assertEquals("2 моделі", localizedQuantity("uk-UA", R.plurals.provider_models_count, 2))
+        assertEquals("5 моделей", localizedQuantity("uk-UA", R.plurals.provider_models_count, 5))
     }
 
     @Test

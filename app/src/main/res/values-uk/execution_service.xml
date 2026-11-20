@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="execution_channel">Активні завдання</string>
+  <string name="execution_title">Eta працює</string>
+  <plurals name="execution_summary">
+    <item quantity="one">Виконується %1$d завдання. Поверніться в Eta, щоб перевірити прогрес.</item>
+    <item quantity="few">Виконується %1$d завдання. Поверніться в Eta, щоб перевірити прогрес.</item>
+    <item quantity="many">Виконується %1$d завдань. Поверніться в Eta, щоб перевірити прогрес.</item>
+    <item quantity="other">Виконується %1$d завдання. Поверніться в Eta, щоб перевірити прогрес.</item>
+  </plurals>
+  <string name="execution_stop">Зупинити активні завдання</string>
+  <string name="execution_action_open">Відкрити</string>
+  <string name="execution_action_stop">Зупинити</string>
+  <string name="execution_chip_running">Виконання</string>
+  <string name="execution_chip_answering">Відповідь</string>
+  <string name="execution_bg_cmd_channel">Результати фонових команд</string>
+  <string name="execution_bg_cmd_completed">Фонову команду завершено</string>
+  <string name="execution_bg_cmd_timed_out">Час очікування фонової команди вичерпано</string>
+  <string name="execution_bg_cmd_stopped">Фонову команду зупинено</string>
+  <string name="execution_bg_cmd_interrupted">Фонову команду перервано</string>
+  <string name="execution_bg_cmd_failed">Фонова команда завершилася помилкою</string>
+  <string name="execution_bg_cmd_open_hint">Статус і журнали дивіться у фонових завданнях у Терміналі</string>
+  <string name="execution_bg_cmd_exit_code">Код завершення %1$d</string>
+</resources>

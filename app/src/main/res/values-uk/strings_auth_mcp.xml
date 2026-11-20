@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="auth_err_codex_callback_start">Не вдалося запустити зворотний виклик входу Codex. Завершіть інший вхід і повторіть спробу.</string>
+  <string name="auth_err_code_expired">Термін дії коду підтвердження минув. Увійдіть знову.</string>
+  <string name="auth_err_access_denied">Вхід не було авторизовано.</string>
+  <string name="auth_err_account_mismatch">Обліковий запис, у який виконано вхід, не збігається з початковим. Створіть нове підключення провайдера.</string>
+  <string name="auth_err_account_context_mismatch">Оновлений контекст облікового запису не збігається. Увійдіть знову.</string>
+  <string name="auth_err_session_expired">Сеанс входу завершився. Увійдіть знову.</string>
+  <string name="auth_err_client_rejected">Служба авторизації не прийняла цього клієнта.</string>
+  <string name="auth_err_request_failed">Запит авторизації не вдався (HTTP %1$d). Спробуйте пізніше.</string>
+  <string name="auth_err_incomplete_response">Служба авторизації повернула неповні дані.</string>
+  <string name="auth_err_invalid_response">Служба авторизації повернула некоректні дані.</string>
+  <string name="auth_err_login_required">Спершу увійдіть в обліковий запис цього провайдера.</string>
+  <string name="auth_err_plan_permission_required">Облікові дані не можна використати для цього підключення за підпискою. Увійдіть знову.</string>
+  <string name="auth_err_provider_missing">Підключення провайдера не існує.</string>
+  <string name="auth_err_session_changed">Стан входу змінився. Повторіть спробу.</string>
+  <string name="auth_err_unsupported_auth_mode">Це підключення не підтримує вхід в обліковий запис.</string>
+  <string name="auth_err_response_too_large">Служба авторизації повернула забагато даних.</string>
+  <string name="auth_err_invalid_http_response">Служба авторизації повернула некоректну відповідь (HTTP %1$d).</string>
+  <string name="auth_err_network">Не вдалося підключитися до служби авторизації. Перевірте мережу й повторіть спробу.</string>
+  <string name="auth_err_codex_account_missing">В облікових даних Codex бракує відомостей про робочий простір. Увійдіть знову.</string>
+  <string name="auth_err_key_unavailable">Ключ шифрування облікових даних недоступний. Вийдіть і увійдіть знову.</string>
+  <string name="auth_err_storage_failed">Не вдалося прочитати або записати облікові дані входу. Вийдіть і увійдіть знову.</string>
+  <string name="auth_callback_success_html">Авторизацію отримано. Поверніться до Eta, щоб завершити вхід.</string>
+  <string name="auth_callback_failed_html">Авторизацію не завершено. Поверніться до Eta й повторіть спробу.</string>
+  <string name="auth_err_login_timeout">Час очікування входу вичерпано. Повторіть спробу.</string>
+  <string name="auth_err_callback_unavailable">Не вдалося отримати зворотний виклик входу. Повторіть спробу.</string>
+  <string name="auth_err_callback_invalid">Некоректний зворотний виклик входу.</string>
+  <string name="auth_err_oidc_keys_unavailable">Наразі не вдалося підтвердити особу облікового запису. Спробуйте пізніше.</string>
+  <string name="auth_err_oidc_invalid_keys">Служба авторизації повернула некоректні ключі перевірки особи.</string>
+  <string name="auth_err_oidc_identity_invalid">Не вдалося підтвердити обліковий запис, у який виконано вхід. Увійдіть знову.</string>
+  <string name="auth_err_oidc_token_invalid">Служба авторизації повернула некоректні облікові дані особи.</string>
+  <string name="mcp_err_server_not_found">Сервер MCP не існує.</string>
+  <string name="mcp_err_tool_empty">Інструмент MCP повернув порожню відповідь.</string>
+  <string name="mcp_err_init_empty">Ініціалізація MCP повернула порожню відповідь.</string>
+  <string name="mcp_err_unsupported_protocol">Сервер MCP повернув непідтримувану версію протоколу.</string>
+  <string name="mcp_err_client_closed">Клієнт MCP закрито.</string>
+  <string name="mcp_err_tools_list_empty">MCP tools/list повернув порожню відповідь.</string>
+  <string name="mcp_err_tools_list_legacy">MCP tools/list повернув результат застарілого протоколу.</string>
+  <string name="mcp_err_tools_list_unsupported">MCP tools/list повернув непідтримуваний тип результату.</string>
+  <string name="mcp_err_client_busy">Клієнт MCP виконує інший запит.</string>
+  <string name="mcp_err_body_empty">Тіло відповіді MCP порожнє.</string>
+  <string name="mcp_err_id_mismatch">Невідповідність ID відповіді MCP.</string>
+  <string name="mcp_err_missing_result">У відповіді MCP відсутній результат.</string>
+  <string name="mcp_err_response_too_large">Відповідь MCP перевищує обмеження розміру.</string>
+  <string name="mcp_err_http_status">Помилка запиту MCP: HTTP %1$d %2$s</string>
+  <string name="mcp_err_protocol_code">Помилка протоколу MCP: code=%1$d %2$s</string>
+  <string name="mcp_err_invalid_url">Некоректний URL MCP.</string>
+</resources>
